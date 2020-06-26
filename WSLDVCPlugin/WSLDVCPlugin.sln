@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30413.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WSLDVCPlugin", "WSLDVCPlugin.vcxproj", "{B7E66936-5220-4D77-AA10-C26A7F6F42D6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Debug|ARM64.Build.0 = Debug|ARM64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Debug|x64.ActiveCfg = Debug|x64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Debug|x64.Build.0 = Debug|x64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Debug|x86.ActiveCfg = Debug|Win32
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Debug|x86.Build.0 = Debug|Win32
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Release|ARM64.ActiveCfg = Release|ARM64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Release|ARM64.Build.0 = Release|ARM64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Release|x64.ActiveCfg = Release|x64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Release|x64.Build.0 = Release|x64
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Release|x86.ActiveCfg = Release|Win32
+		{B7E66936-5220-4D77-AA10-C26A7F6F42D6}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EB2D28FB-D37D-4286-A386-7723B34EF53F}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!--
+***********************************************************************************************
+Copyright (C) Microsoft Corporation. All rights reserved.
+***********************************************************************************************
+-->
+<package>
+  <metadata>
+    <id>Microsoft.WSLg</id>
+    <version>0.2.12</version>
+    <authors>Microsoft</authors>
+    <owners>Microsoft, WSL Team</owners>
+    <projectUrl>https://github.com/microsoft/wslg/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>WSLg support package.</description>
+    <summary>Enabling the Windows Subsystem for Linux to include support for Wayland and X server related scenarios.</summary>
+    <releaseNotes>ebad9c1</releaseNotes>
+    <copyright>Copyright © Microsoft Corporation 2021</copyright>
+    <tags>native</tags>
+  </metadata>
+  <files>
+    <file src="Microsoft.WSLg.targets" target="build/Microsoft.WSLg.targets" />
+    <file src="package/system_x64.vhd" target="build/native/bin/x64/system.vhd" />
+    <file src="package/WSLDVCPlugin_x64.dll" target="build/native/bin/x64/WSLDVCPlugin.dll" />
+    <file src="package/system_ARM64.vhd" target="build/native/bin/arm64/system.vhd" />
+    <file src="package/WSLDVCPlugin_ARM64.dll" target="build/native/bin/arm64/WSLDVCPlugin.dll" />
+    <file src="package/wslg.rdp" target="build/native/bin/wslg.rdp" />
+  </files>
+</package>

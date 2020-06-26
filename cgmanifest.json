@@ -1,0 +1,44 @@
+{
+    "Registrations": [ 
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/pulseaudio/pulseaudio", 
+                    "CommitHash": "0e691b96640919b1c7ed91ae9240761c5775deeb"
+                }
+            },
+            "DevelopmentDependency": false
+        },
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/wayland-project/weston", 
+                    "CommitHash": "04d3ae265d8d8f84352c8dac21ec40b2fe07e7d2"
+                }
+            },
+            "DevelopmentDependency": false
+        },
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/FreeRDP/FreeRDP", 
+                    "CommitHash": "39f56443f2dc50e0dcfa52d4f8f15008d5b8ed8e"
+                }
+            },
+            "DevelopmentDependency": false
+        },        
+        {
+            "Component": { 
+                "Type": "mesa", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/mesa3d/mesa", 
+                    "CommitHash": "731ea06758663a2de3a2bd1f12eb8809d4c136fd"
+                }
+            },
+            "DevelopmentDependency": false
+        },
+    ]
+}

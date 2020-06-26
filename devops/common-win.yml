@@ -1,0 +1,3 @@
+steps:
+- script: 'choco install gitversion.portable --pre'
+  displayName: 'Install GitVersion'

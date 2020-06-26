@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+***********************************************************************************************
+Copyright (C) Microsoft Corporation. All rights reserved.
+***********************************************************************************************
+-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+      <WslgBinDirectory>$(MSBuildThisFileDirectory)native\bin\$(Platform)</WslgBinDirectory>
+      <WslgBinDirectory2>$(MSBuildThisFileDirectory)native\bin</WslgBinDirectory2>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <WslgFile Include="$(WslgBinDirectory)\system.vhd"/>
+    <WslgFile Include="$(WslgBinDirectory)\WSLDVCPlugin.dll"/>
+    <WslgFile Include="$(WslgBinDirectory2)\wslg.rdp"/>
+  </ItemGroup>
+  
+  <Target Name="WslCopyFiles" AfterTargets="CopyFilesToOutputDirectory">
+    <Copy SourceFiles="@(WslgFile)" DestinationFolder="$(OutDir)"/>
+  </Target>
+</Project>

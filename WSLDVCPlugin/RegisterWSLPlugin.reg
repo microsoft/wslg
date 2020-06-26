@@ -1,0 +1,4 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Microsoft\Terminal Server Client\Default\AddIns\WSLDVCPlugin]
+"Name"="C:\\WINDOWS\\system32\\WSLDVCPlugin.dll"
