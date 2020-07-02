@@ -1,20 +1,70 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# Introduction
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+This repository contains a Dockerfile and supporting tools to build the WSL GUI system distro image.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+## Quick start
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+0. Install and start Docker in a Linux or WSL2 environment.
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+1. Clone the FreeRDP and Weston repositories and checkout the "working" branch from each:
+
+    ```bash
+    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/FreeRDP vendor/FreeRDP -b working
+
+    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/weston vendor/weston -b working
+    ```
+
+2. Build the image:
+
+    ```bash
+    docker build -t wsl-system-distro .
+    ```
+
+    This builds a container image called "wsl-system-distro" that will run weston when it starts.
+
+3. Run the image, allowing port 3391 out and bind mounting the Unix sockets:
+
+    ```bash
+    docker run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -v /tmp/xdg-runtime-dir:/tmp/xdg-runtime-dir wsl-system-distro
+    ```
+
+4. Start mstsc:
+
+    ```bash
+    mstsc.exe /v:localhost:3391 rail-weston.rdp
+    ```
+
+5. In another terminal, set the environment appropraitely and run apps:
+
+    ```bash
+    export DISPLAY=:0
+    export WAYLAND_DISPLAY=/tmp/xdg-runtime-dir/wayland-0
+    gimp
+    ```
+
+6. Make changes to vendor/FreeRDP or vendor/weston and repeat steps 2 through 5.
+
+## Advanced
+
+By default, `docker build` only saves the runtime image. Internally, there is
+also a build environment with all the packages needed to build Weston and
+FreeRDP, and there is a development environment that has Weston and FreeRDP
+built but also includes all the development packages. You can get access to
+these via the `--target` option to `docker build`.
+
+For example, to just get a build environment and to run it with the source mapped in instead of copied:
+
+```
+docker build --target build-env -t wsl-weston-build-env .
+docker run -it --rm -v $PWD/vendor /work/vendor wsl-weston-build-env
+
+# inside the docker container
+cd vendor/weston
+meson --prefix=/usr/local/weston build -Dpipewire=false
+ninja -C build
+```
+
+## TODO
+
+* Show how to get a distro image
+* Show how to build a squashfs
