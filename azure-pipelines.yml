@@ -47,16 +47,13 @@ steps:
   - script: docker build -t wsl-system-distro ./SystemDistro
     displayName: 'Create docker image'
 
-  - script: docker export `docker run -d wsl-system-distro` > $(Agent.BuildDirectory)/systemdistro.tar
-    displayName: 'Export systemdistro.tar'
-
   - script:   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&
-              tar2sqfs $(Agent.BuildDirectory)/system.sqfs < $(Agent.BuildDirectory)/systemdistro.tar
+              tar2sqfs $(Agent.BuildDirectory)/system.squashfs < docker export `docker run -d wsl-system-distro`
     displayName: 'Create SquashFS'
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish SquashFS artifact'
     inputs:
-      targetPath: $(Agent.BuildDirectory)/system.sqfs
-      artifact: 'system.sqfs'
+      targetPath: $(Agent.BuildDirectory)/system.squashfs
+      artifact: 'system.squashfs'
       publishLocation: 'pipeline'
