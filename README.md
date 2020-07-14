@@ -72,10 +72,8 @@ To build the system distro squashfs you need to use `docker export`
 Docker export only works when the image is running:
 
 ```
-docker export `sudo docker run -d wsl-weston-build-env` > systemdistro.tar
-tar2sqfs system.sqfs < systemdistro.tar
+tar2sqfs system.squashfs < docker export `sudo docker run -d wsl-weston-build-env`
 ```
-
 
 * Show how to get a distro image
 * Show how to build a squashfs
