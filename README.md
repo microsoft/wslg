@@ -6,12 +6,14 @@ This repository contains a Dockerfile and supporting tools to build the WSL GUI 
 
 0. Install and start Docker in a Linux or WSL2 environment.
 
-1. Clone the FreeRDP and Weston repositories and checkout the "working" branch from each:
+1. Clone the FreeRDP ,Weston and PulseAudio side by side this repo repositories and checkout the "working" branch from each:
 
     ```bash
     git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/FreeRDP vendor/FreeRDP -b working
 
     git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/weston vendor/weston -b working
+
+    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/pulseaudio vendor/pulseaudio -b working
     ```
 
 2. Build the image:
@@ -64,7 +66,16 @@ meson --prefix=/usr/local/weston build -Dpipewire=false
 ninja -C build
 ```
 
-## TODO
+## Build SquashFS
+
+To build the system distro squashfs you need to use `docker export`
+Docker export only works when the image is running:
+
+```
+docker export `sudo docker run -d wsl-weston-build-env` > systemdistro.tar
+tar2sqfs system.sqfs < systemdistro.tar
+```
+
 
 * Show how to get a distro image
 * Show how to build a squashfs

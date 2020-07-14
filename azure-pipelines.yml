@@ -27,9 +27,13 @@ steps:
   - checkout: pulseaudio
   - checkout: self
 
-  - script: sudo apt-get update && sudo apt-get install --no-install-recommends -y
-            squashfs-tools
-    displayName: 'Install Dependencies'
+  - script: git clone --branch v1.0.0 https://github.com/AgentD/squashfs-tools-ng.git &&
+            cd squashfs-tools-ng &&
+            ./autogen.sh &&
+            ./configure &&
+            make && sudo make install &&
+            cd ..
+    displayName: 'Build squashfs-tools-ng since is not supported on 18.04 using apt'
 
   - task: DockerInstaller@0
     inputs:
@@ -38,7 +42,21 @@ steps:
   - script: mv FreeRDP/ SystemDistro/vendor/ &&
             mv weston/ SystemDistro/vendor/ &&
             mv pulseaudio/ SystemDistro/vendor/
-
     displayName: 'Move sub projects (FreeRDP, Weston)'
 
   - script: docker build -t wsl-system-distro ./SystemDistro
+    displayName: 'Create docker image'
+
+  - script: docker export `docker run -d wsl-system-distro` > $(Agent.BuildDirectory)/systemdistro.tar
+    displayName: 'Export systemdistro.tar'
+
+  - script:   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&
+              tar2sqfs $(Agent.BuildDirectory)/system.sqfs < $(Agent.BuildDirectory)/systemdistro.tar
+    displayName: 'Create SquashFS'
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish SquashFS artifact'
+    inputs:
+      targetPath: $(Agent.BuildDirectory)/system.sqfs
+      artifact: 'system.sqfs'
+      publishLocation: 'pipeline'

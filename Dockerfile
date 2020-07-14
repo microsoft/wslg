@@ -5,10 +5,14 @@ FROM ubuntu:20.04 AS build-env
 # longer than necessary.
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    autopoint \
+    autoconf \
     build-essential \
     cmake \
+    gettext \
     git \
     libcairo2-dev \
+    libcap-dev \
     libcolord-dev \
     libdbus-glib-1-dev \
     libdrm-dev \
@@ -20,9 +24,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libinput-dev \
     libjpeg-dev \
     liblcms2-dev \
+    libltdl-dev \
     libpam-dev \
     libpango1.0-dev \
     libpixman-1-dev \
+    libsndfile1 \
+    libsndfile-dev \
     libssl-dev \
     libsystemd-dev \
     libtool \
@@ -45,6 +52,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxkbcommon-dev \
     libxkbfile-dev \
     libxml2-dev \
+    libxml-parser-perl \
     libxrandr-dev \
     libxrender-dev \
     libxtst-dev \
@@ -65,7 +73,7 @@ CMD /bin/bash
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
 
-ENV prefix=/usr/local/weston
+ENV prefix=/usr/local
 ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/x86_64-linux-gnu/pkgconfig:${prefix}/share/pkgconfig
 
 # Build FreeRDP
@@ -86,6 +94,14 @@ WORKDIR /work/vendor/weston
 RUN meson --prefix=${prefix} build -Dpipewire=false && \
     ninja -C build -j8 && \
     ninja -C build install
+
+# Build PulseAudio
+COPY vendor/pulseaudio /work/vendor/pulseaudio
+WORKDIR /work/vendor/pulseaudio
+RUN ./bootstrap.sh && \
+    ./configure --prefix=${prefix} && \
+    make && \
+    make install
 
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
@@ -111,7 +127,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     xwayland
 
 # Setup the container environment variable state.
-ENV weston_path=/usr/local/weston
+ENV weston_path=/usr/local
 ENV XDG_RUNTIME_DIR=/tmp/xdg-runtime-dir
 ENV WAYLAND_DISPLAY=wayland-0
 ENV LD_LIBRARY_PATH=${weston_path}/lib:${weston_path}/lib/x86_64-linux-gnu
