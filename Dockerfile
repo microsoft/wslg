@@ -107,8 +107,16 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxcb-composite0-dev \
     libxcursor1 \
     libxkbcommon0 \
+    tzdata \
     xinit \
     xwayland
+
+# Install packages to aid in development.
+# TODO: these should not be included when building the retail image.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    gdb \
+    nano \
+    vim
 
 # Setup the container environment variable state.
 ENV weston_path=/usr/local/weston
