@@ -48,7 +48,8 @@ steps:
     displayName: 'Create docker image'
 
   - script:   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&
-              tar2sqfs $(Agent.BuildDirectory)/system.squashfs < docker export `docker run -d wsl-system-distro`
+              docker export `docker run -d wsl-system-distro` > system.tar &&
+              tar2sqfs $(Agent.BuildDirectory)/system.squashfs < system.tar
     displayName: 'Create SquashFS'
 
   - task: PublishPipelineArtifact@1
