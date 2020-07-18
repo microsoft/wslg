@@ -84,37 +84,43 @@ RUN cmake -G Ninja \
         -DCMAKE_INSTALL_PREFIX=${prefix} \
         -DCMAKE_INSTALL_LIBDIR=${prefix}/lib \
         -DCMAKE_BUILD_TYPE=Release \
-        -DWITH_SERVER=ON && \
-    ninja -C build -j8 && \
-    ninja -C build install
+        -DWITH_SERVER=ON \
+        -DWITH_SAMPLE=OFF && \
+    ninja -C build -j8 install
 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
-RUN meson --prefix=${prefix} build -Dpipewire=false && \
-    ninja -C build -j8 && \
-    ninja -C build install
+RUN meson --prefix=${prefix} build -Dpipewire=false -Ddemo-clients=false && \
+    ninja -C build -j8 install
 
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
-RUN ./bootstrap.sh && \
-    ./configure --prefix=${prefix} && \
-    make && \
-    make install
+RUN meson --prefix=${prefix} build -Ddatabase=simple -Dbluez5=false -Dtests=false
+RUN ninja -C build -j8 install
 
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
+
+COPY config/weston.ini /root/.config/
+COPY config/wsl.conf /etc/wsl.conf
+COPY config/x86_64-system-distro.conf /etc/ld.so.conf.d/x86_64-system-distro.conf
+COPY launch.sh /root/launch.sh
 
 # Install the packages needed to run weston, freerdp, and xwayland.
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libcairo2 \
+    libcap-dev \
+    libdbus-1-3 \
     libegl1 \
     libinput10 \
     libjpeg8 \
+    liborc-0.4-0 \
     libpango-1.0.0 \
     libpangocairo-1.0.0 \
+    libsndfile1 \
     libssl1.1 \
     libwayland-client0 \
     libwayland-cursor0 \
@@ -125,6 +131,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxkbcommon0 \
     tzdata \
     xinit \
+    xcursor-themes \
     xwayland
 
 # Install packages to aid in development.
@@ -136,15 +143,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Setup the container environment variable state.
 ENV weston_path=/usr/local
-ENV XDG_RUNTIME_DIR=/tmp/xdg-runtime-dir
-ENV WAYLAND_DISPLAY=wayland-0
-ENV LD_LIBRARY_PATH=${weston_path}/lib:${weston_path}/lib/x86_64-linux-gnu
-ENV PATH="${weston_path}/bin:${PATH}"
-ENV DISPLAY=:0
 
-# Make sure the directories for Wayland and X11 sockets are present.
-RUN mkdir "${XDG_RUNTIME_DIR}" && chmod 0700 "${XDG_RUNTIME_DIR}"
-RUN mkdir /tmp/.X11-unix && chmod 777 /tmp/.X11-unix
+# Create a fake /mnt/wsl in the actual system-distro this wont be needed
+RUN mkdir /mnt/wsl
 
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
@@ -156,4 +157,4 @@ COPY --from=dev ${weston_path} ${weston_path}
 # --xwayland : enable X11 app support in weston.
 #
 EXPOSE 3391/tcp
-CMD weston --backend=rdp-backend.so --port=3391 --xwayland
+CMD /root/launch.sh

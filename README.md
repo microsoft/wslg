@@ -27,13 +27,21 @@ This repository contains a Dockerfile and supporting tools to build the WSL GUI 
 3. Run the image, allowing port 3391 out and bind mounting the Unix sockets:
 
     ```bash
-    docker run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -v /tmp/xdg-runtime-dir:/tmp/xdg-runtime-dir wsl-system-distro
+    docker run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -v /tmp/xdg-runtime-dir:/mnt/wsl/system-distro/ -p 3391:3391 wsl-system-distro
     ```
 
 4. Start mstsc:
 
+    Get the IP address of your WSL instance:
+
+    ```
+    hostname -I
+    ```
+
+    From the Windows start mstsc.exe
+
     ```bash
-    mstsc.exe /v:localhost:3391 rail-weston.rdp
+    mstsc.exe /v:172.25.228.118:3391 rail-weston.rdp
     ```
 
 5. In another terminal, set the environment appropraitely and run apps:
@@ -41,8 +49,16 @@ This repository contains a Dockerfile and supporting tools to build the WSL GUI 
     ```bash
     export DISPLAY=:0
     export WAYLAND_DISPLAY=/tmp/xdg-runtime-dir/wayland-0
-    gimp
+    sudo gimp
     ```
+
+If you are running from docker right now due an issue they with the permissions of 
+`/tmp/.X11-unix/X0` only root can launch gui applications.
+Other users will fail to open the display, you may see a message like 
+
+```
+cannot open display: :0
+```
 
 6. Make changes to vendor/FreeRDP or vendor/weston and repeat steps 2 through 5.
 
@@ -58,7 +74,7 @@ For example, to just get a build environment and to run it with the source mappe
 
 ```
 docker build --target build-env -t wsl-weston-build-env .
-docker run -it --rm -v $PWD/vendor /work/vendor wsl-weston-build-env
+docker run -it --rm -v $PWD/vendor:/work/vendor wsl-weston-build-env
 
 # inside the docker container
 cd vendor/weston
@@ -75,5 +91,17 @@ Docker export only works when the image is running:
 tar2sqfs system.squashfs < docker export `sudo docker run -d wsl-weston-build-env`
 ```
 
-* Show how to get a distro image
-* Show how to build a squashfs
+# Distro Image
+
+* To get the SystemDistro image you can grab the latest from the [AzDO Pipeline](https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_build?definitionId=55011)
+
+* Go to the lastest build > Pipeline Artifacts > Download `system.squashfs`
+
+* Add an entry to your `%USERPROFILE%\.wslconfig`
+
+```
+[wsl2]
+systemDistro=C:\\Users\\MyUser\\system.squashfs
+```
+
+
