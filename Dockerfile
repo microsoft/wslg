@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     autopoint \
     autoconf \
     build-essential \
+    clang \
     cmake \
     gettext \
     git \
