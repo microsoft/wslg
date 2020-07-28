@@ -87,8 +87,23 @@ ninja -C build
 To build the system distro squashfs you need to use `docker export`
 Docker export only works when the image is running:
 
+You will need `tar2sqfs` in order to create the squashFS
+if you are running Ubuntu 20.04 you can install from the package `apt install squashfs-tools-ng`, 
+otherwise you will have to build from the source.
+
 ```
-tar2sqfs system.squashfs < docker export `sudo docker run -d wsl-weston-build-env`
+git clone --branch v1.0.0 https://github.com/AgentD/squashfs-tools-ng.git &&
+cd squashfs-tools-ng &&
+./autogen.sh &&
+./configure &&
+make && sudo make install
+```
+Use docker export to create the tar with the contents of the image, and 
+tar2sqfs to create the SquashFS file
+
+```
+docker export `docker create wsl-system-distro` > system.tar &&
+tar2sqfs $(Agent.BuildDirectory)/system.squashfs < system.tar
 ```
 
 # Distro Image
