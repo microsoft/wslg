@@ -74,6 +74,7 @@ CMD /bin/bash
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
 
+ARG SYSTEMDISTRO_VERSION="<current>"
 ENV prefix=/usr/local
 ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/x86_64-linux-gnu/pkgconfig:${prefix}/share/pkgconfig
 
@@ -88,26 +89,34 @@ RUN cmake -G Ninja \
         -DWITH_SERVER=ON \
         -DWITH_SAMPLE=OFF && \
     ninja -C build -j8 install
+RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` > /work/versions.txt
 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
 RUN meson --prefix=${prefix} build -Dpipewire=false -Ddemo-clients=false && \
     ninja -C build -j8 install
+RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
 RUN meson --prefix=${prefix} build -Ddatabase=simple -Dbluez5=false -Dtests=false
 RUN ninja -C build -j8 install
+RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
+
+COPY WSLGd /work/WSLGd
+WORKDIR /work/WSLGd
+RUN make && make install
+RUN echo "SystemDistro:" ${SYSTEMDISTRO_VERSION}  >> /work/versions.txt
 
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
 
-COPY config/weston.ini /root/.config/
+ARG  USERHOME=/home/wslg
+COPY config/weston.ini $USERHOME/.config/
 COPY config/wsl.conf /etc/wsl.conf
 COPY config/x86_64-system-distro.conf /etc/ld.so.conf.d/x86_64-system-distro.conf
-COPY launch.sh /root/launch.sh
 
 # Install the packages needed to run weston, freerdp, and xwayland.
 ENV DEBIAN_FRONTEND=noninteractive
@@ -145,11 +154,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Setup the container environment variable state.
 ENV weston_path=/usr/local
 
-# Create a fake /mnt/wsl in the actual system-distro this wont be needed
-RUN mkdir /mnt/wsl
+# Create wslg user
+RUN useradd -u 1000 wslg
 
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
+COPY --from=dev /work/versions.txt /etc/versions.txt
 
 # start weston with RDP.
 #
@@ -158,4 +168,5 @@ COPY --from=dev ${weston_path} ${weston_path}
 # --xwayland : enable X11 app support in weston.
 #
 EXPOSE 3391/tcp
-CMD /root/launch.sh
+
+CMD /usr/local/bin/WSLGd

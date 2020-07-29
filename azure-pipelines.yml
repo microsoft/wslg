@@ -44,7 +44,7 @@ steps:
             mv pulseaudio/ SystemDistro/vendor/
     displayName: 'Move sub projects (FreeRDP, Weston)'
 
-  - script: docker build -t wsl-system-distro ./SystemDistro
+  - script: docker build -t wsl-system-distro ./SystemDistro --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=SystemDistro/.git rev-parse --verify HEAD`
     displayName: 'Create docker image'
 
   - script:   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&

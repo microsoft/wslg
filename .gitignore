@@ -3,3 +3,5 @@ vendor/*
 out
 tmp
 
+*.squashfs
+*.tar

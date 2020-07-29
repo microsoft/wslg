@@ -1,6 +1,8 @@
 CXX := clang++
 TARGET := WSLGd
 SRC_DIRS := .
+INSTALL := install -p
+INSTALL_PREFIX= /usr/local/bin
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
 OBJS := $(addsuffix .o,$(basename $(SRCS)))
@@ -17,5 +19,8 @@ $(TARGET): $(OBJS)
 .PHONY: clean
 clean:
 	$(RM) $(TARGET) $(OBJS) $(DEPS)
+
+install:
+	$(INSTALL) $(TARGET) $(INSTALL_PREFIX)
 
 -include $(DEPS)
