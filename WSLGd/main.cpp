@@ -131,7 +131,8 @@ try {
         {"XCURSOR_THEME", "whiteglass"},
         {"XCURSOR_SIZE", "16"},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
-        {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"}
+        {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
+        {"USE_VSOCK", "1"}
     };
 
     for (auto &var : variables) {
