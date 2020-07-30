@@ -1,11 +1,7 @@
-#include <sys/ioctl.h>
 #include <sys/signalfd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -33,18 +29,6 @@
 #define XDG_RUNTIME_DIR SHARE_PATH "/xdg-runtime-dir"
 
 static int g_logFd = STDERR_FILENO;
-
-std::string GetIpAddress()
-{
-    wil::unique_fd fd = socket(AF_INET, SOCK_DGRAM, 0);
-    THROW_LAST_ERROR_IF(!fd);
-
-    ifreq request{};
-    strcpy(request.ifr_name, ETH0);
-    THROW_LAST_ERROR_IF(ioctl(fd.get(), SIOCGIFADDR, &request));
-
-    return inet_ntoa(((sockaddr_in *)&request.ifr_addr)->sin_addr);
-}
 
 int LaunchProcess(passwd* passwordEntry, const std::vector<std::string>& Argv)
 {
@@ -83,7 +67,10 @@ int LaunchProcess(passwd* passwordEntry, const std::vector<std::string>& Argv)
 void LogException(const char *message, const char *exceptionDescription) noexcept
 {
     if (message) {
-        LOG_ERROR("%s %s", message ? message : "", exceptionDescription);
+        dprintf(g_logFd, "<3>WSLGd: %s %s", message , exceptionDescription);
+
+    } else {
+        dprintf(g_logFd, "<3>WSLGd: Exception: %s", exceptionDescription);
     }
 
     return;
@@ -110,7 +97,7 @@ try {
     auto passwordEntry = getpwnam(USERNAME);
     if (!passwordEntry) {
         LOG_ERROR("getpwnam(%s) failed, using root.", USERNAME);
-        THROW_ERRNO_IF(ENOENT, ((passwordEntry = getpwuid(0)) == NULL));
+        THROW_ERRNO_IF(ENOENT, ((passwordEntry = getpwuid(0)) == nullptr));
     }
 
     // Make directories and ensure the correct permissions.
@@ -173,26 +160,24 @@ try {
     children[childPid] = std::move(arguments);
 
     // Launch mstsc.exe.
-    //
-    // TODO: Figure out a way to pass the path to mstsc.exe in case it is on a different drive than C:\, or
-    //       we decide we want to be able to use a non-inbox client.
-    // TODO: Switch to hvsocket.
-    // TODO: Figure out right way to pass rdp file. The rdp file should only
-    //       be needed in the short term.
-    // arguments.clear();
-    // arguments.push_back("/mnt/c/Windows/System32/mstsc.exe");
-    // auto address = GetIpAddress();
-    // address += ":" RDP_PORT;
-    // arguments.push_back("/v:" + address);
-    // arguments.push_back("rail-weston.rdp");
-    // childPid = LaunchProcess(passwordEntry, arguments);
-    // children[childPid] = std::move(arguments);
+    const char* vmId;
+    THROW_ERRNO_IF(EINVAL, ((vmId = getenv("WSL2_VM_ID")) == nullptr));
+
+    std::string remote("/v:");
+    remote += vmId;
+
+    arguments.clear();
+    arguments.push_back("/mnt/c/Windows/System32/mstsc.exe");
+    arguments.push_back(std::move(remote));
+    arguments.push_back("C:\\ProgramData\\Miscrosoft\\WSL\\wslg.rdp");
+    childPid = LaunchProcess(passwordEntry, arguments);
+    children[childPid] = std::move(arguments);
 
     // Configure a signalfd to track when child processes exit.
     sigset_t SignalMask;
     sigemptyset(&SignalMask);
     sigaddset(&SignalMask, SIGCHLD);
-    THROW_LAST_ERROR_IF(sigprocmask(SIG_BLOCK, &SignalMask, NULL) < 0);
+    THROW_LAST_ERROR_IF(sigprocmask(SIG_BLOCK, &SignalMask, nullptr) < 0);
 
     wil::unique_fd signalFd{signalfd(-1, &SignalMask, 0)};
     THROW_LAST_ERROR_IF(!signalFd);
