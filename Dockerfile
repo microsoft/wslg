@@ -153,8 +153,6 @@ ENV weston_path=/usr/local
 RUN useradd -u 1000 --create-home wslg
 
 # Copy config files.
-ARG  USERHOME=/home/wslg
-COPY --chown=wslg:wslg config/weston.ini $USERHOME/.config/
 COPY config/wsl.conf /etc/wsl.conf
 COPY config/x86_64-system-distro.conf /etc/ld.so.conf.d/x86_64-system-distro.conf
 

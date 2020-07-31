@@ -132,16 +132,12 @@ try {
     std::map<int, std::vector<std::string>> children{};
 
     // Launch weston.
-    std::string config("--config=");
-    config += passwordEntry->pw_dir;
-    config += "/.config/weston.ini";
     std::vector<std::string> westonArgs{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
         "--port=" RDP_PORT,
         "--shell=rdprail-shell.so",
-        std::move(config),
         "--log=" SHARE_PATH "/weston.log"
     };
 
