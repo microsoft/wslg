@@ -20,8 +20,8 @@
 
 #define DEV_KMSG "/dev/kmsg"
 #define ETH0 "eth0"
-#define LOG_ERROR(str, ...) { dprintf(g_logFd, "<3>WSLGd: %s:%u: " str "\n",__FUNCTION__, __LINE__, ##__VA_ARGS__); }
-#define LOG_INFO(str, ...) { dprintf(g_logFd, "<4>WSLGd: " str "\n", ##__VA_ARGS__); }
+#define LOG_ERROR(str, ...) { fprintf(stderr, "<3>WSLGd: %s:%u: " str "\n",__FUNCTION__, __LINE__, ##__VA_ARGS__); }
+#define LOG_INFO(str, ...) { fprintf(stderr, "<4>WSLGd: " str "\n", ##__VA_ARGS__); }
 #define RDP_PORT "3391"
 #define SHARE_PATH "/mnt/wsl"
 #define USERNAME "wslg"
@@ -66,13 +66,7 @@ int LaunchProcess(passwd* passwordEntry, const std::vector<std::string>& Argv)
 
 void LogException(const char *message, const char *exceptionDescription) noexcept
 {
-    if (message) {
-        dprintf(g_logFd, "<3>WSLGd: %s %s", message , exceptionDescription);
-
-    } else {
-        dprintf(g_logFd, "<3>WSLGd: Exception: %s", exceptionDescription);
-    }
-
+    fprintf(stderr, "<3>WSLGd: %s %s", message ? message : "Exception:", exceptionDescription);
     return;
 }
 
@@ -80,11 +74,15 @@ int main(int Argc, char *Argv[])
 try {
     wil::g_LogExceptionCallback = LogException;
 
-    // Open kmsg for logging errors.
-    g_logFd = TEMP_FAILURE_RETRY(open(DEV_KMSG, (O_WRONLY | O_CLOEXEC)));
-    if (g_logFd < 0) {
-        g_logFd = STDERR_FILENO;
-        LOG_ERROR("open(%s) failed %d", DEV_KMSG, errno);
+    // Open kmsg for logging errors and set it to stderr.
+    //
+    // N.B. fprintf must be used instead of dprintf because glibc does not correctly
+    //      handle /dev/kmsg.
+    {
+        wil::unique_fd logFd(TEMP_FAILURE_RETRY(open(DEV_KMSG, (O_WRONLY | O_CLOEXEC))));
+        if ((logFd) && (logFd.get() != STDERR_FILENO)) {
+            THROW_LAST_ERROR_IF(dup3(logFd.get(), STDERR_FILENO, O_CLOEXEC) < 0);
+        }
     }
 
     // Ensure the daemon is launched as root.
@@ -93,7 +91,7 @@ try {
         return 1;
     }
 
-    // Get the WSLG user.
+    // Look up the wslg user account.
     auto passwordEntry = getpwnam(USERNAME);
     if (!passwordEntry) {
         LOG_ERROR("getpwnam(%s) failed, using root.", USERNAME);
@@ -137,7 +135,7 @@ try {
     std::string config("--config=");
     config += passwordEntry->pw_dir;
     config += "/.config/weston.ini";
-    std::vector<std::string> arguments{
+    std::vector<std::string> westonArgs{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
@@ -147,17 +145,19 @@ try {
         "--log=" SHARE_PATH "/weston.log"
     };
 
-    auto childPid = LaunchProcess(passwordEntry, arguments);
-    children[childPid] = std::move(arguments);
+    auto childPid = LaunchProcess(passwordEntry, westonArgs);
+    children[childPid] = std::move(westonArgs);
 
     // Launch PulseAudio.
-    arguments.clear();
-    arguments.push_back("/usr/local/bin/pulseaudio");
-    arguments.push_back("--load=\"module-rdp-sink sink_name=RDPSink\"");
-    arguments.push_back("--load=\"module-rdp-source source_name=RDPSource\"");
-    arguments.push_back("--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\"");
-    childPid = LaunchProcess(passwordEntry, arguments);
-    children[childPid] = std::move(arguments);
+    std::vector<std::string> pulseAudioArgs{
+        "/usr/local/bin/pulseaudio",
+        "--load=\"module-rdp-sink sink_name=RDPSink\"",
+        "--load=\"module-rdp-source source_name=RDPSource\"",
+        "--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\""
+    };
+
+    childPid = LaunchProcess(passwordEntry, pulseAudioArgs);
+    children[childPid] = std::move(pulseAudioArgs);
 
     // Launch mstsc.exe.
     const char* vmId;
@@ -165,13 +165,14 @@ try {
 
     std::string remote("/v:");
     remote += vmId;
+    std::vector<std::string> mstscArgs{
+        "/mnt/c/Windows/System32/mstsc.exe",
+        std::move(remote),
+        "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
+    };
 
-    arguments.clear();
-    arguments.push_back("/mnt/c/Windows/System32/mstsc.exe");
-    arguments.push_back(std::move(remote));
-    arguments.push_back("C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp");
-    childPid = LaunchProcess(passwordEntry, arguments);
-    children[childPid] = std::move(arguments);
+    childPid = LaunchProcess(passwordEntry, mstscArgs);
+    children[childPid] = std::move(mstscArgs);
 
     // Configure a signalfd to track when child processes exit.
     sigset_t SignalMask;
