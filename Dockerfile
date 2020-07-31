@@ -113,11 +113,6 @@ RUN echo "SystemDistro:" ${SYSTEMDISTRO_VERSION}  >> /work/versions.txt
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
 
-ARG  USERHOME=/home/wslg
-COPY config/weston.ini $USERHOME/.config/
-COPY config/wsl.conf /etc/wsl.conf
-COPY config/x86_64-system-distro.conf /etc/ld.so.conf.d/x86_64-system-distro.conf
-
 # Install the packages needed to run weston, freerdp, and xwayland.
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -156,6 +151,12 @@ ENV weston_path=/usr/local
 
 # Create wslg user
 RUN useradd -u 1000 --create-home wslg
+
+# Copy config files.
+ARG  USERHOME=/home/wslg
+COPY config/weston.ini $USERHOME/.config/
+COPY config/wsl.conf /etc/wsl.conf
+COPY config/x86_64-system-distro.conf /etc/ld.so.conf.d/x86_64-system-distro.conf
 
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
