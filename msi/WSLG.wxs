@@ -33,7 +33,7 @@
 							Directory="USERPROFILEFOLDER" 
 							Name=".wslconf" Section="wsl2" 
 							Key="systemDistro" 
-							Value="C:\\ProgramData\\WSL\\system.squashfs" />
+							Value="C:\\ProgramData\\Microsoft\\WSL\\system.squashfs" />
 				</Component>
 			</Directory>
 			<Directory Id="CommonAppDataFolder">
