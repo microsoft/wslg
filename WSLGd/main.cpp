@@ -26,7 +26,7 @@
 #define SHARE_PATH "/mnt/wsl"
 #define USERNAME "wslg"
 #define X11_RUNTIME_DIR SHARE_PATH "/.X11-unix"
-#define XDG_RUNTIME_DIR SHARE_PATH "/xdg-runtime-dir"
+#define XDG_RUNTIME_DIR SHARE_PATH "/runtime-dir"
 
 static int g_logFd = STDERR_FILENO;
 

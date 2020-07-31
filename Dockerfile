@@ -155,7 +155,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 ENV weston_path=/usr/local
 
 # Create wslg user
-RUN useradd -u 1000 wslg
+RUN useradd -u 1000 --create-home wslg
 
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
