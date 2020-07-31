@@ -169,7 +169,7 @@ try {
     arguments.clear();
     arguments.push_back("/mnt/c/Windows/System32/mstsc.exe");
     arguments.push_back(std::move(remote));
-    arguments.push_back("C:\\ProgramData\\Miscrosoft\\WSL\\wslg.rdp");
+    arguments.push_back("C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp");
     childPid = LaunchProcess(passwordEntry, arguments);
     children[childPid] = std::move(arguments);
 
