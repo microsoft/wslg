@@ -5,3 +5,5 @@ tmp
 
 *.squashfs
 *.tar
+msi/bin/
+msi/obj/

@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!--
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright Microsoft Corporation, 2020
+// Author: vinja
+// Abstract: lxss_system_distro
+//
+//////////////////////////////////////////////////////////////////////////////////////////
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI System Distro" Version="0.0.1" Manufacturer="Microsoft Corporation" Language="1033">
+		<Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" />
+		<Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+
+		<WixVariable Id="WixUIBannerBmp" Value="banner.png" />
+		<WixVariable Id="WixUIDialogBmp" Value="background.png" />
+
+		<Feature Id="DefaultFeature" Level="1">
+			<ComponentRef Id="WSLRDPFILE" />
+			<ComponentRef Id="SYSTEMSQUASHFS" />
+			<ComponentRef Id="WSLCONFFILE" />
+		</Feature>
+	</Product>
+	<Fragment>
+		<SetDirectory Id="USERPROFILEFOLDER" Value="[%USERPROFILE]" />
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="USERPROFILEFOLDER" Name="USERPROFILEFOLDER">
+				<Component Id="WSLCONFFILE" Guid="1CF4F780-BA69-4BC8-944C-C355588F132D">
+					<File Id="WSLCONFFILEID" Source=".wslconf" />
+					<IniFile Id="WSLCONFFILEID2" 
+							Action="addLine" 
+							Directory="USERPROFILEFOLDER" 
+							Name=".wslconf" Section="wsl2" 
+							Key="systemDistro" 
+							Value="C:\\ProgramData\\WSL\\system.squashfs" />
+				</Component>
+			</Directory>
+			<Directory Id="CommonAppDataFolder">
+				<Directory Id="MICROSOFTDIR" Name="Microsoft">
+					<Directory Id="INSTALLDIR" Name="WSL">
+						<Component Id="WSLRDPFILE" Guid="3E17D62C-3B77-4E06-B647-AC329E775BC7">
+							<File Id="WSLRDPFILEID" Source="wslg.rdp" />
+						</Component>
+						<Component Id="SYSTEMSQUASHFS" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
+							<File Id="SYSTEMSQUASHFSID" Source="system.squashfs" />
+						</Component>
+					</Directory>
+				</Directory>
+			</Directory>
+		</Directory>
+	</Fragment>
+</Wix>

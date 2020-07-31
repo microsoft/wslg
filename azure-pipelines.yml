@@ -17,44 +17,79 @@ resources:
 
 trigger:
   - working
+jobs:
+- job: 'Build_Ubuntu'
+  displayName: 'Build (Ubuntu)'
+
+  pool:
+    vmImage: 'ubuntu-latest'
+    
+  steps:
+    - checkout: FreeRDP
+    - checkout: weston
+    - checkout: pulseaudio
+    - checkout: self
+
+    - script: git clone --branch v1.0.0 https://github.com/AgentD/squashfs-tools-ng.git &&
+              cd squashfs-tools-ng &&
+              ./autogen.sh &&
+              ./configure &&
+              make && sudo make install &&
+              cd ..
+      displayName: 'Build squashfs-tools-ng since is not supported on 18.04 using apt'
+
+    - task: DockerInstaller@0
+      inputs:
+        dockerVersion: '17.09.0-ce'
+    
+    - script: mv FreeRDP/ SystemDistro/vendor/ &&
+              mv weston/ SystemDistro/vendor/ &&
+              mv pulseaudio/ SystemDistro/vendor/
+      displayName: 'Move sub projects (FreeRDP, Weston)'
+
+    - script: docker build -t wsl-system-distro ./SystemDistro --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=SystemDistro/.git rev-parse --verify HEAD`
+      displayName: 'Create docker image'
+
+    - script:   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&
+                docker export `docker create wsl-system-distro` > system.tar &&
+                tar2sqfs $(Agent.BuildDirectory)/system.squashfs < system.tar
+      displayName: 'Create SquashFS'
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish SquashFS artifact'
+      inputs:
+        targetPath: $(Agent.BuildDirectory)/system.squashfs
+        artifact: 'system.squashfs'
+        publishLocation: 'pipeline'
+
+- job: 'Build_Windows'
+  dependsOn: 'Build_Ubuntu'
+  displayName: 'Package (Windows)'
   
-pool:
-  vmImage: 'ubuntu-latest'
+  pool:
+    vmImage: 'windows-2019'
   
-steps:
-  - checkout: FreeRDP
-  - checkout: weston
-  - checkout: pulseaudio
+  steps:
   - checkout: self
 
-  - script: git clone --branch v1.0.0 https://github.com/AgentD/squashfs-tools-ng.git &&
-            cd squashfs-tools-ng &&
-            ./autogen.sh &&
-            ./configure &&
-            make && sudo make install &&
-            cd ..
-    displayName: 'Build squashfs-tools-ng since is not supported on 18.04 using apt'
-
-  - task: DockerInstaller@0
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download system.squashfs'
     inputs:
-      dockerVersion: '17.09.0-ce'
-  
-  - script: mv FreeRDP/ SystemDistro/vendor/ &&
-            mv weston/ SystemDistro/vendor/ &&
-            mv pulseaudio/ SystemDistro/vendor/
-    displayName: 'Move sub projects (FreeRDP, Weston)'
+      buildType: 'current'
+      artifactName: 'system.squashfs'
+      targetPath: 'msi/'
 
-  - script: docker build -t wsl-system-distro ./SystemDistro --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=SystemDistro/.git rev-parse --verify HEAD`
-    displayName: 'Create docker image'
+  - script: '"%WIX%bin\candle" *.wxs -o obj\'
+    workingDirectory: msi
+    displayName: 'WiX Candle'
 
-  - script:   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&
-              docker export `docker create wsl-system-distro` > system.tar &&
-              tar2sqfs $(Agent.BuildDirectory)/system.squashfs < system.tar
-    displayName: 'Create SquashFS'
+  - script: '"%WIX%bin\light" obj\*.wixobj -o bin\WSLG.msi'
+    workingDirectory: msi
+    displayName: 'WiX Light'
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish SquashFS artifact'
+    displayName: 'Publish WSLG installer'
     inputs:
-      targetPath: $(Agent.BuildDirectory)/system.squashfs
-      artifact: 'system.squashfs'
+      targetPath: msi/bin/WSLG.msi
+      artifact: 'wslg.msi'
       publishLocation: 'pipeline'
