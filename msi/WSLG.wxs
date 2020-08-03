@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI System Distro" Version="0.0.1" Manufacturer="Microsoft Corporation" Language="1033">
+	<Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI App Support" Version="0.0.1" Manufacturer="Microsoft Corporation" Language="1033">
 		<Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" />
 		<Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
 
