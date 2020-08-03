@@ -160,6 +160,12 @@ COPY config/x86_64-system-distro.conf /etc/ld.so.conf.d/x86_64-system-distro.con
 COPY --from=dev ${weston_path} ${weston_path}
 COPY --from=dev /work/versions.txt /etc/versions.txt
 
+# Delete the ldconfig cache.
+#
+# N.B. The WSL init daemon runs ldconfig to rebuild the cache. Having a cache
+#      file present adds a multi-second delay to system distro boot.
+RUN rm /etc/ld.so.cache
+
 # start weston with RDP.
 #
 # --backend=rdp-backend.so : this enables RDP server in weston.
