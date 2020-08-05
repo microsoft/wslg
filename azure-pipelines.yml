@@ -30,14 +30,6 @@ jobs:
     - checkout: pulseaudio
     - checkout: self
 
-    - script: git clone --branch v1.0.0 https://github.com/AgentD/squashfs-tools-ng.git &&
-              cd squashfs-tools-ng &&
-              ./autogen.sh &&
-              ./configure &&
-              make && sudo make install &&
-              cd ..
-      displayName: 'Build squashfs-tools-ng since is not supported on 18.04 using apt'
-
     - task: DockerInstaller@0
       inputs:
         dockerVersion: '19.03.12'
@@ -66,38 +58,50 @@ jobs:
               ./SystemDistro 
               --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=SystemDistro/.git rev-parse --verify HEAD`
               --build-arg SYSTEMDISTRO_ARCH=x86_64
-              
       displayName: 'Create docker image x64'
 
+    - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
+      displayName: 'Create system_x64.tar'
+
     - script: ~/.docker/cli-plugins/docker-buildx build 
-              --output type=tar,dest=system_arm64.tar 
+              --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
               --platform=linux/arm64 
               ./SystemDistro 
               --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=SystemDistro/.git rev-parse --verify HEAD` 
               --build-arg SYSTEMDISTRO_ARCH=aarch64
-      displayName: 'Create docker image arm64'
+      displayName: 'Create system_arm64.tar'
 
-    - script: export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&
-              docker export `docker create system-distro-x64` > system_x64.tar &&
-              tar2sqfs $(Agent.BuildDirectory)/system_x64.squashfs < system_x64.tar
-      displayName: 'Create SquashFS (x64)'
+    - script: git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git
+      displayName: 'Clone hcsshim repo for tar2ext4 tool'
 
-    - script:   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH &&
-                tar2sqfs $(Agent.BuildDirectory)/system_arm64.squashfs < system_arm64.tar
-      displayName: 'Create SquashFS (arm64)'
+    - task: Go@0
+      inputs:
+        command: 'custom'
+        customCommand: 'run'
+        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_x64.tar -o $(Agent.BuildDirectory)/system_x64.vhd'
+        workingDirectory: 'hcsshim/cmd/tar2ext4'
+      displayName: 'Create system_x64.vhd'
+
+    - task: Go@0
+      inputs:
+        command: 'custom'
+        customCommand: 'run'
+        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_arm64.tar -o $(Agent.BuildDirectory)/system_arm64.vhd'
+        workingDirectory: 'hcsshim/cmd/tar2ext4'
+      displayName: 'Create system_arm64.vhd'
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish SquashFS artifact'
+      displayName: 'Publish system_x64.vhd artifact'
       inputs:
-        targetPath: $(Agent.BuildDirectory)/system_x64.squashfs
-        artifact: 'system_x64.squashfs'
+        targetPath: $(Agent.BuildDirectory)/system_x64.vhd
+        artifact: 'system_x64.vhd'
         publishLocation: 'pipeline'
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish SquashFS artifact'
+      displayName: 'Publish system_arm64.vhd artifact'
       inputs:
-        targetPath: $(Agent.BuildDirectory)/system_arm64.squashfs
-        artifact: 'system_arm64.squashfs'
+        targetPath: $(Agent.BuildDirectory)/system_arm64.vhd
+        artifact: 'system_arm64.vhd'
         publishLocation: 'pipeline'
 
 - job: 'Build_Windows'
@@ -111,20 +115,20 @@ jobs:
   - checkout: self
 
   - task: DownloadPipelineArtifact@2
-    displayName: 'Download system_x64.squashfs'
+    displayName: 'Download system_x64.vhd'
     inputs:
       buildType: 'current'
-      artifactName: 'system_x64.squashfs'
+      artifactName: 'system_x64.vhd'
       targetPath: 'msi/'
 
   - task: DownloadPipelineArtifact@2
-    displayName: 'Download system_arm64.squashfs'
+    displayName: 'Download system_arm64.vhd'
     inputs:
       buildType: 'current'
-      artifactName: 'system_arm64.squashfs'
+      artifactName: 'system_arm64.vhd'
       targetPath: 'msi/'
 
-  - script: '"%WIX%bin\candle" wslg.wxs -dSquashFile=system_x64.squashfs -o obj_x64\'
+  - script: '"%WIX%bin\candle" wslg.wxs -dVhdFile=system_x64.vhd -o obj_x64\'
     workingDirectory: msi
     displayName: 'WiX Candle (x64)'
 
@@ -132,7 +136,7 @@ jobs:
     workingDirectory: msi
     displayName: 'WiX Light (x64)'
 
-  - script: '"%WIX%bin\candle" wslg.wxs -dSquashFile=system_arm64.squashfs -o obj_arm64\'
+  - script: '"%WIX%bin\candle" wslg.wxs -dVhdFile=system_arm64.vhd -o obj_arm64\'
     workingDirectory: msi
     displayName: 'WiX Candle (arm64)'
 
