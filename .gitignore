@@ -7,3 +7,4 @@ tmp
 *.tar
 msi/bin/
 msi/obj/
+msi/obj_x64/

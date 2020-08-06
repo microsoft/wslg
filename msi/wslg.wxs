@@ -43,7 +43,7 @@
 							<File Id="WSLRDPFILEID" Source="wslg.rdp" />
 						</Component>
 						<Component Id="SYSTEMSQUASHFS" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
-							<File Id="SYSTEMSQUASHFSID" Source="system.squashfs" />
+							<File Id="SYSTEMSQUASHFSID" Source="$(var.SquashFile)" Name="system.squashfs" />
 						</Component>
 					</Directory>
 				</Directory>

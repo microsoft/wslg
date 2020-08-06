@@ -75,8 +75,10 @@ CMD /bin/bash
 FROM build-env AS dev
 
 ARG SYSTEMDISTRO_VERSION="<current>"
+ARG SYSTEMDISTRO_ARCH="x86_64"
+
 ENV prefix=/usr/local
-ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/x86_64-linux-gnu/pkgconfig:${prefix}/share/pkgconfig
+ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/${SYSTEMDISTRO_ARCH}-linux-gnu/pkgconfig:${prefix}/share/pkgconfig
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -108,10 +110,12 @@ RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --v
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
 RUN make && make install
-RUN echo "SystemDistro:" ${SYSTEMDISTRO_VERSION}  >> /work/versions.txt
+RUN echo "SystemDistro(" ${SYSTEMDISTRO_ARCH} "):" ${SYSTEMDISTRO_VERSION}  >> /work/versions.txt
 
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
+
+ARG SYSTEMDISTRO_ARCH="x86_64"
 
 # Install the packages needed to run weston, freerdp, and xwayland.
 ENV DEBIAN_FRONTEND=noninteractive
@@ -154,7 +158,7 @@ RUN useradd -u 1000 --create-home wslg
 
 # Copy config files.
 COPY config/wsl.conf /etc/wsl.conf
-COPY config/x86_64-system-distro.conf /etc/ld.so.conf.d/x86_64-system-distro.conf
+COPY config/${SYSTEMDISTRO_ARCH}-system-distro.conf /etc/ld.so.conf.d/${SYSTEMDISTRO_ARCH}-system-distro.conf
 
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
