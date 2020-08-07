@@ -57,14 +57,14 @@ jobs:
               sudo service docker restart
       displayName: 'Enable Docker Engine experimental '
 
-    - script: mv FreeRDP/ SystemDistro/vendor/ &&
-              mv weston/ SystemDistro/vendor/ &&
-              mv pulseaudio/ SystemDistro/vendor/
+    - script: mv FreeRDP/ wslg/vendor/ &&
+              mv weston/ wslg/vendor/ &&
+              mv pulseaudio/ wslg/vendor/
       displayName: 'Move sub projects (FreeRDP, Weston)'
 
     - script: docker build -t system-distro-x64 
-              ./SystemDistro 
-              --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=SystemDistro/.git rev-parse --verify HEAD`
+              ./wslg 
+              --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD`
               --build-arg SYSTEMDISTRO_ARCH=x86_64
               
       displayName: 'Create docker image x64'
@@ -72,8 +72,8 @@ jobs:
     - script: ~/.docker/cli-plugins/docker-buildx build 
               --output type=tar,dest=system_arm64.tar 
               --platform=linux/arm64 
-              ./SystemDistro 
-              --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=SystemDistro/.git rev-parse --verify HEAD` 
+              ./wslg 
+              --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` 
               --build-arg SYSTEMDISTRO_ARCH=aarch64
       displayName: 'Create docker image arm64'
 
