@@ -82,41 +82,31 @@ meson --prefix=/usr/local/weston build -Dpipewire=false
 ninja -C build
 ```
 
-## Build SquashFS
+## Build system.vhd
 
-To build the system distro squashfs you need to use `docker export`
+To build the system distro vhd you need to use `docker export`
 Docker export only works when the image is running:
 
-You will need `tar2sqfs` in order to create the squashFS
-if you are running Ubuntu 20.04 you can install from the package `apt install squashfs-tools-ng`, 
-otherwise you will have to build from the source.
-
-```
-git clone --branch v1.0.0 https://github.com/AgentD/squashfs-tools-ng.git &&
-cd squashfs-tools-ng &&
-./autogen.sh &&
-./configure &&
-make && sudo make install
-```
 Use docker export to create the tar with the contents of the image, and 
-tar2sqfs to create the SquashFS file
+tar2ext4 to create the vhd file
 
 ```
-docker export `docker create wsl-system-distro` > system.tar &&
-tar2sqfs $(Agent.BuildDirectory)/system.squashfs < system.tar
+docker export `docker create wsl-system-distro` > system.tar
+git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git
+go run hcsshim/cmd/tar2ext4/tar2ext4.go -o system.vhd -i system.tar -vhd'
 ```
 
 # Distro Image
 
 * To get the SystemDistro image you can grab the latest from the [AzDO Pipeline](https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_build?definitionId=55011)
 
-* Go to the lastest build > Pipeline Artifacts > Download `system.squashfs`
+* Go to the lastest build > Pipeline Artifacts > Download `system.vhd`
 
 * Add an entry to your `%USERPROFILE%\.wslconfig`
 
 ```
 [wsl2]
-systemDistro=C:\\Users\\MyUser\\system.squashfs
+systemDistro=C:\\Users\\MyUser\\system.vhd
 ```
 
 

@@ -63,7 +63,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     ninja-build \
     pkg-config \
     software-properties-common \
-    squashfs-tools \
     uuid-dev \
     wayland-protocols \
     wget
@@ -163,12 +162,6 @@ COPY config/${SYSTEMDISTRO_ARCH}-system-distro.conf /etc/ld.so.conf.d/${SYSTEMDI
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
 COPY --from=dev /work/versions.txt /etc/versions.txt
-
-# Delete the ldconfig cache.
-#
-# N.B. The WSL init daemon runs ldconfig to rebuild the cache. Having a cache
-#      file present adds a multi-second delay to system distro boot.
-RUN rm /etc/ld.so.cache
 
 # start weston with RDP.
 #

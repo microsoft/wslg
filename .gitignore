@@ -3,8 +3,8 @@ vendor/*
 out
 tmp
 
-*.squashfs
 *.tar
+*.vhd
 msi/bin/
 msi/obj/
 msi/obj_x64/

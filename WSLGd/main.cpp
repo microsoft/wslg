@@ -1,3 +1,4 @@
+// Copyright (C) Microsoft Corporation. All rights reserved.
 #include <sys/signalfd.h>
 #include <sys/stat.h>
 #include <sys/types.h>

@@ -1,13 +1,5 @@
 <?xml version="1.0"?>
-<!--
-//////////////////////////////////////////////////////////////////////////////////////////
-//
-// Copyright Microsoft Corporation, 2020
-// Author: vinja
-// Abstract: lxss_system_distro
-//
-//////////////////////////////////////////////////////////////////////////////////////////
--->
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI App Support" Version="0.0.1" Manufacturer="Microsoft Corporation" Language="1033">
 		<Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" />
@@ -18,7 +10,7 @@
 
 		<Feature Id="DefaultFeature" Level="1">
 			<ComponentRef Id="WSLRDPFILE" />
-			<ComponentRef Id="SYSTEMSQUASHFS" />
+			<ComponentRef Id="SYSTEMVHD" />
 			<ComponentRef Id="WSLCONFFILE" />
 		</Feature>
 	</Product>
@@ -33,7 +25,7 @@
 							Directory="USERPROFILEFOLDER" 
 							Name=".wslconfig" Section="wsl2" 
 							Key="systemDistro" 
-							Value="C:\\ProgramData\\Microsoft\\WSL\\system.squashfs" />
+							Value="C:\\ProgramData\\Microsoft\\WSL\\system.vhd" />
 				</Component>
 			</Directory>
 			<Directory Id="CommonAppDataFolder">
@@ -42,8 +34,8 @@
 						<Component Id="WSLRDPFILE" Guid="3E17D62C-3B77-4E06-B647-AC329E775BC7">
 							<File Id="WSLRDPFILEID" Source="wslg.rdp" />
 						</Component>
-						<Component Id="SYSTEMSQUASHFS" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
-							<File Id="SYSTEMSQUASHFSID" Source="$(var.SquashFile)" Name="system.squashfs" />
+						<Component Id="SYSTEMVHD" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
+							<File Id="SYSTEMVHDID" Source="$(var.VhdFile)" Name="system.vhd" />
 						</Component>
 					</Directory>
 				</Directory>
