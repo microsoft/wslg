@@ -114,6 +114,12 @@ jobs:
   steps:
   - checkout: self
 
+  - powershell: 'Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString(''https://chocolatey.org/install.ps1''))'
+    displayName: 'Install Choco'
+
+  - script: 'choco install gitversion.portable --pre'
+    displayName: 'Install GitVersion'
+
   - task: DownloadPipelineArtifact@2
     displayName: 'Download system_x64.vhd'
     inputs:
@@ -127,6 +133,14 @@ jobs:
       buildType: 'current'
       artifactName: 'system_arm64.vhd'
       targetPath: 'msi/'
+
+  - task: PowerShell@2
+    displayName: 'Update wslg.wxs version'
+    inputs:
+      targetType: filePath
+      filePath: .\msi\updateversion.ps1
+      arguments: '.\msi\wslg.wxs'
+      pwsh: true
 
   - script: '"%WIX%bin\candle" wslg.wxs -dVhdFile=system_x64.vhd -o obj_x64\'
     workingDirectory: msi
