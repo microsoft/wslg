@@ -11,23 +11,11 @@
 		<Feature Id="DefaultFeature" Level="1">
 			<ComponentRef Id="WSLRDPFILE" />
 			<ComponentRef Id="SYSTEMVHD" />
-			<ComponentRef Id="WSLCONFFILE" />
 		</Feature>
 	</Product>
 	<Fragment>
 		<SetDirectory Id="USERPROFILEFOLDER" Value="[%USERPROFILE]" />
 		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="USERPROFILEFOLDER" Name="USERPROFILEFOLDER">
-				<Component Id="WSLCONFFILE" Guid="1CF4F780-BA69-4BC8-944C-C355588F132D">
-					<File Id="WSLCONFFILEID" Source=".wslconfig" />
-					<IniFile Id="WSLCONFFILEID2" 
-							Action="addLine" 
-							Directory="USERPROFILEFOLDER" 
-							Name=".wslconfig" Section="wsl2" 
-							Key="systemDistro" 
-							Value="C:\\ProgramData\\Microsoft\\WSL\\system.vhd" />
-				</Component>
-			</Directory>
 			<Directory Id="CommonAppDataFolder">
 				<Directory Id="MICROSOFTDIR" Name="Microsoft">
 					<Directory Id="INSTALLDIR" Name="WSL">
