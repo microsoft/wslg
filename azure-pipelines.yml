@@ -146,7 +146,7 @@ jobs:
     workingDirectory: msi
     displayName: 'WiX Candle (x64)'
 
-  - script: '"%WIX%bin\light" obj_x64\wslg.wixobj -o bin\wslg_x64.msi'
+  - script: '"%WIX%bin\light" obj_x64\wslg.wixobj -o bin\wslg_update_x64.msi'
     workingDirectory: msi
     displayName: 'WiX Light (x64)'
 
@@ -154,20 +154,20 @@ jobs:
     workingDirectory: msi
     displayName: 'WiX Candle (arm64)'
 
-  - script: '"%WIX%bin\light" obj_arm64\wslg.wixobj -o bin\wslg_arm64.msi'
+  - script: '"%WIX%bin\light" obj_arm64\wslg.wixobj -o bin\wslg_update_arm64.msi'
     workingDirectory: msi
     displayName: 'WiX Light (arm64)'
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLG installer'
     inputs:
-      targetPath: msi/bin/wslg_x64.msi
-      artifact: 'wslg_x64.msi'
+      targetPath: msi/bin/wslg_update_x64.msi
+      artifact: 'wslg_update_x64.msi'
       publishLocation: 'pipeline'
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLG installer'
     inputs:
-      targetPath: msi/bin/wslg_arm64.msi
-      artifact: 'wslg_arm64.msi'
+      targetPath: msi/bin/wslg_update_arm64.msi
+      artifact: 'wslg_update_arm64.msi'
       publishLocation: 'pipeline'
