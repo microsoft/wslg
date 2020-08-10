@@ -8,3 +8,6 @@ tmp
 msi/bin/
 msi/obj/
 msi/obj_x64/
+WSLGd/*.d
+WSLGd/*.o
+WSLGd/WSLGd
