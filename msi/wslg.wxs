@@ -14,7 +14,6 @@
 		</Feature>
 	</Product>
 	<Fragment>
-		<SetDirectory Id="USERPROFILEFOLDER" Value="[%USERPROFILE]" />
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="CommonAppDataFolder">
 				<Directory Id="MICROSOFTDIR" Name="Microsoft">
