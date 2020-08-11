@@ -1,4 +1,5 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
+#include <sys/socket.h>
 #include <sys/signalfd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -13,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <linux/vm_sockets.h>
 #include <filesystem>
 #include <map>
 #include <new>
