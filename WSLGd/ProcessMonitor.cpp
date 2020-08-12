@@ -52,7 +52,7 @@ int wslgd::ProcessMonitor::Run() try {
     sigaddset(&SignalMask, SIGCHLD);
     THROW_LAST_ERROR_IF(sigprocmask(SIG_BLOCK, &SignalMask, nullptr) < 0);
 
-    wil::unique_fd signalFd{signalfd(-1, &SignalMask, 0)};
+    wil::unique_fd signalFd{signalfd(-1, &SignalMask, SFD_CLOEXEC)};
     THROW_LAST_ERROR_IF(!signalFd);
 
     // Begin monitoring loop.

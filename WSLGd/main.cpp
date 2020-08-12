@@ -45,6 +45,25 @@ try {
     THROW_LAST_ERROR_IF(chmod(XDG_RUNTIME_DIR, 0777) < 0);
     THROW_LAST_ERROR_IF(chown(XDG_RUNTIME_DIR, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
 
+    // Create a listening vsock to be used for the RDP connection.
+    //
+    // N.B. VMADDR_PORT_ANY is used to allow the kernel to assign an unused port.
+    sockaddr_vm address{};
+    address.svm_family = AF_VSOCK;
+    address.svm_cid = VMADDR_CID_ANY;
+    address.svm_port = VMADDR_PORT_ANY;
+    socklen_t addressSize = sizeof(address);
+    wil::unique_fd socketFd{socket(AF_VSOCK, SOCK_STREAM, 0)};
+    THROW_LAST_ERROR_IF(!socketFd);
+    THROW_LAST_ERROR_IF(bind(socketFd.get(), reinterpret_cast<const sockaddr*>(&address), addressSize) < 0);
+    THROW_LAST_ERROR_IF(listen(socketFd.get(), 1) < 0);
+
+    // Query the socket name to get the assigned port.
+    //
+    // TODO: dynamic port selection requires mstsc.exe to accept hvsocketserviceid from the command line.
+    THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
+    auto hvsocketPort = std::to_string(address.svm_port);
+
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
     envVar variables[] = {
@@ -57,7 +76,7 @@ try {
         {"XCURSOR_SIZE", "16"},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
-        {"USE_VSOCK", "1"}
+        {"USE_VSOCK", ""} //hvsocketPort.c_str()}
     };
 
     for (auto &var : variables) {
@@ -65,11 +84,13 @@ try {
     }
 
     // Launch weston, pulseaudio, and mstsc.exe. They will be re-launched if they exit.
+    std::string port("--port=");
+    port += RDP_PORT; //hvsocketPort.c_str();
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
-        "--port=" RDP_PORT,
+        std::move(port),
         "--shell=rdprail-shell.so",
         "--log=" SHARE_PATH "/weston.log"
     });
