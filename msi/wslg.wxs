@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI App Support" Version="0.0.1" Manufacturer="Microsoft Corporation" Language="1033">
-		<Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" />
+	<Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI App Support" 
+	    Version="0.2.1" Manufacturer="Microsoft Corporation" Language="1033">
+		<Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" Platform="$(var.Platform)" />
 		<Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
 
 		<WixVariable Id="WixUIBannerBmp" Value="banner.png" />
@@ -11,6 +12,7 @@
 		<Feature Id="DefaultFeature" Level="1">
 			<ComponentRef Id="WSLRDPFILE" />
 			<ComponentRef Id="SYSTEMVHD" />
+			<ComponentRef Id="SYSTEMVHDREG" />
 		</Feature>
 	</Product>
 	<Fragment>
@@ -23,6 +25,11 @@
 						</Component>
 						<Component Id="SYSTEMVHD" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
 							<File Id="SYSTEMVHDID" Source="$(var.VhdFile)" Name="system.vhd" />
+						</Component>
+						<Component Id="SYSTEMVHDREG" Guid="F37A4E4A-3E56-46A3-98C5-9B5DED295EC1" Win64="yes">
+							<RegistryKey Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Lxss" >
+								<RegistryValue Id="SYSTEMVHD_REGKEYSID" Name="SystemDistro" Value="[INSTALLDIR]system.vhd" Type="string" />
+							</RegistryKey>
 						</Component>
 					</Directory>
 				</Directory>

@@ -1,5 +1,3 @@
-
-
 resources:
   repositories:
   - repository: FreeRDP
@@ -119,6 +117,10 @@ jobs:
 
   - script: 'choco install gitversion.portable --pre'
     displayName: 'Install GitVersion'
+    
+  - powershell: Invoke-WebRequest https://wixtoolset.org/downloads/v3.14.0.4118/wix314-binaries.zip -OutFile wix314-binaries.zip;
+                Expand-Archive wix314-binaries.zip -DestinationPath $(Agent.BuildDirectory)\wix314-binaries
+    displayName: 'Install Wix'
 
   - task: DownloadPipelineArtifact@2
     displayName: 'Download system_x64.vhd'
@@ -142,19 +144,19 @@ jobs:
       arguments: '.\msi\wslg.wxs'
       pwsh: true
 
-  - script: '"%WIX%bin\candle" wslg.wxs -dVhdFile=system_x64.vhd -o obj_x64\'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -dVhdFile=system_x64.vhd -dPlatform=x64 -o obj_x64\'
     workingDirectory: msi
     displayName: 'WiX Candle (x64)'
 
-  - script: '"%WIX%bin\light" obj_x64\wslg.wixobj -o bin\wslg_update_x64.msi'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_x64\wslg.wixobj -o bin\wslg_update_x64.msi'
     workingDirectory: msi
     displayName: 'WiX Light (x64)'
 
-  - script: '"%WIX%bin\candle" wslg.wxs -dVhdFile=system_arm64.vhd -o obj_arm64\'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -dVhdFile=system_arm64.vhd -dPlatform=arm64 -o obj_arm64\'
     workingDirectory: msi
     displayName: 'WiX Candle (arm64)'
 
-  - script: '"%WIX%bin\light" obj_arm64\wslg.wixobj -o bin\wslg_update_arm64.msi'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_arm64\wslg.wixobj -o bin\wslg_update_arm64.msi'
     workingDirectory: msi
     displayName: 'WiX Light (arm64)'
 
