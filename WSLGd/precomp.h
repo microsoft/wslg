@@ -21,4 +21,6 @@
 #include <vector>
 #include <map>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 #include "lxwil.h"

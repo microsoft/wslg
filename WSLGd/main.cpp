@@ -9,6 +9,13 @@ void LogException(const char *message, const char *exceptionDescription) noexcep
     return;
 }
 
+std::string ToServiceId(unsigned int port)
+{
+    std::ostringstream s;
+    s << std::hex << std::setfill('0') << std::setw(8) << port;
+    return s.str() + VSOCK_SUFIX;
+}
+
 int main(int Argc, char *Argv[])
 try {
     wil::g_LogExceptionCallback = LogException;
@@ -62,7 +69,11 @@ try {
     //
     // TODO: dynamic port selection requires mstsc.exe to accept hvsocketserviceid from the command line.
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
-    auto hvsocketPort = std::to_string(address.svm_port);
+
+    unsigned int socket_port = DEFAULT_RDP_PORT; // address.svm_port;
+
+    auto hvsocketPort = std::to_string(socket_port);
+    auto hvsocket_service_id = ToServiceId(socket_port);
 
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
@@ -76,7 +87,7 @@ try {
         {"XCURSOR_SIZE", "16"},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
-        {"USE_VSOCK", ""} //hvsocketPort.c_str()}
+        {"USE_VSOCK", ""} // std::to_string(socketFd.get()).c_str()
     };
 
     for (auto &var : variables) {
@@ -85,7 +96,7 @@ try {
 
     // Launch weston, pulseaudio, and mstsc.exe. They will be re-launched if they exit.
     std::string port("--port=");
-    port += RDP_PORT; //hvsocketPort.c_str();
+    port += hvsocketPort;
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
@@ -104,9 +115,14 @@ try {
 
     std::string remote("/v:");
     remote += vmId;
+
+    std::string hvsocketserviceid("/hvsocketserviceid:");
+    hvsocketserviceid += hvsocket_service_id;
+
     monitor.LaunchProcess(std::vector<std::string>{
         "/mnt/c/Windows/System32/mstsc.exe",
         std::move(remote),
+        std::move(hvsocketserviceid),
         "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
     });
 
