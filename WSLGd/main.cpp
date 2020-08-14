@@ -74,10 +74,7 @@ try {
     // TODO: dynamic port selection requires mstsc.exe to accept hvsocketserviceid from the command line.
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
 
-    unsigned int socket_port = address.svm_port;
-
-    auto hvsocketPort = std::to_string(socket_port);
-    auto hvsocket_service_id = ToServiceId(socket_port);
+    auto hvsocket_service_id = ToServiceId(address.svm_port);
     auto socket_fd_str = std::to_string(socketFd.get());
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
@@ -99,13 +96,10 @@ try {
     }
 
     // Launch weston, pulseaudio, and mstsc.exe. They will be re-launched if they exit.
-    std::string port("--port=");
-    port += hvsocketPort;
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
-        std::move(port),
         "--shell=rdprail-shell.so",
         "--log=" SHARE_PATH "/weston.log"
     });
