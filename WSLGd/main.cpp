@@ -11,9 +11,13 @@ void LogException(const char *message, const char *exceptionDescription) noexcep
 
 std::string ToServiceId(unsigned int port)
 {
-    std::ostringstream s;
-    s << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << port;
-    return s.str() + VSOCK_SUFIX;
+    int size;
+    THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, VSOCK_TEMPLATE, port)) < 0);
+ 
+    std::string serviceId(size, '\0');
+    THROW_LAST_ERROR_IF(snprintf((char *)serviceId.data(), serviceId.size(), VSOCK_TEMPLATE, port) < 0);
+ 
+    return serviceId;
 }
 
 int main(int Argc, char *Argv[])
@@ -70,11 +74,11 @@ try {
     // TODO: dynamic port selection requires mstsc.exe to accept hvsocketserviceid from the command line.
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
 
-    unsigned int socket_port = DEFAULT_RDP_PORT; // address.svm_port;
+    unsigned int socket_port = address.svm_port;
 
     auto hvsocketPort = std::to_string(socket_port);
     auto hvsocket_service_id = ToServiceId(socket_port);
-
+    auto socket_fd_str = std::to_string(socketFd.get());
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
     envVar variables[] = {
@@ -87,7 +91,7 @@ try {
         {"XCURSOR_SIZE", "16"},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
-        {"USE_VSOCK", ""} // std::to_string(socketFd.get()).c_str()
+        {"USE_VSOCK", socket_fd_str.c_str()} 
     };
 
     for (auto &var : variables) {
