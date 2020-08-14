@@ -74,7 +74,6 @@ try {
     // TODO: dynamic port selection requires mstsc.exe to accept hvsocketserviceid from the command line.
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
 
-    auto hvsocket_service_id = ToServiceId(address.svm_port);
     auto socket_fd_str = std::to_string(socketFd.get());
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
@@ -115,7 +114,7 @@ try {
     remote += vmId;
 
     std::string hvsocketserviceid("/hvsocketserviceid:");
-    hvsocketserviceid += hvsocket_service_id;
+    hvsocketserviceid += ToServiceId(address.svm_port);;
 
     monitor.LaunchProcess(std::vector<std::string>{
         "/mnt/c/Windows/System32/mstsc.exe",
