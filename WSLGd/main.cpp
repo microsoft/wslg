@@ -12,7 +12,7 @@ void LogException(const char *message, const char *exceptionDescription) noexcep
 std::string ToServiceId(unsigned int port)
 {
     std::ostringstream s;
-    s << std::hex << std::setfill('0') << std::setw(8) << port;
+    s << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << port;
     return s.str() + VSOCK_SUFIX;
 }
 
