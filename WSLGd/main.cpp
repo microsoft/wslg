@@ -13,10 +13,10 @@ std::string ToServiceId(unsigned int port)
 {
     int size;
     THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, VSOCK_TEMPLATE, port)) < 0);
- 
+
     std::string serviceId(size, '\0');
     THROW_LAST_ERROR_IF(snprintf(serviceId.data(), serviceId.size(), VSOCK_TEMPLATE, port) < 0);
- 
+
     return serviceId;
 }
 
@@ -58,7 +58,7 @@ try {
 
     // Create a listening vsock to be used for the RDP connection.
     //
-    // N.B. VMADDR_PORT_ANY is used to allow the kernel to assign an unused port.
+    // N.B. getsockname is used to get the port assigned by the kernel.
     sockaddr_vm address{};
     address.svm_family = AF_VSOCK;
     address.svm_cid = VMADDR_CID_ANY;
@@ -68,13 +68,9 @@ try {
     THROW_LAST_ERROR_IF(!socketFd);
     THROW_LAST_ERROR_IF(bind(socketFd.get(), reinterpret_cast<const sockaddr*>(&address), addressSize) < 0);
     THROW_LAST_ERROR_IF(listen(socketFd.get(), 1) < 0);
-
-    // Query the socket name to get the assigned port.
-    //
-    // TODO: dynamic port selection requires mstsc.exe to accept hvsocketserviceid from the command line.
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
 
-    auto socket_fd_str = std::to_string(socketFd.get());
+    auto socketFdString = std::to_string(socketFd.get());
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
     envVar variables[] = {
@@ -87,7 +83,7 @@ try {
         {"XCURSOR_SIZE", "16"},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
-        {"USE_VSOCK", socket_fd_str.c_str()} 
+        {"USE_VSOCK", socketFdString.c_str()} 
     };
 
     for (auto &var : variables) {
@@ -112,14 +108,13 @@ try {
 
     std::string remote("/v:");
     remote += vmId;
-
-    std::string hvsocketserviceid("/hvsocketserviceid:");
-    hvsocketserviceid += ToServiceId(address.svm_port);;
-
+    std::string serviceId("/hvsocketserviceid:");
+    serviceId += ToServiceId(address.svm_port);;
     monitor.LaunchProcess(std::vector<std::string>{
         "/mnt/c/Windows/System32/mstsc.exe",
         std::move(remote),
-        std::move(hvsocketserviceid),
+        std::move(serviceId),
+        "/silent",
         "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
     });
 
