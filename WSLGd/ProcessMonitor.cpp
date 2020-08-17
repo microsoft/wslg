@@ -4,8 +4,7 @@
 
 wslgd::ProcessMonitor::ProcessMonitor(const char* userName)
 {
-    m_user = getpwnam(userName);
-    THROW_ERRNO_IF(ENOENT, ((m_user = getpwuid(0)) == nullptr));
+    THROW_ERRNO_IF(ENOENT, !(m_user = getpwnam(userName)));
 }
 
 passwd* wslgd::ProcessMonitor::GetUserInfo() const
