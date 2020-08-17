@@ -67,6 +67,10 @@ try {
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
     envVar variables[] = {
+        {"HOME", passwordEntry->pw_dir},
+        {"USER", passwordEntry->pw_name},
+        {"LOGNAME", passwordEntry->pw_name},
+        {"SHELL", passwordEntry->pw_shell},
         {"PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"},
         {"XDG_RUNTIME_DIR", XDG_RUNTIME_DIR},
         {"WAYLAND_DISPLAY", "wayland-0"},
