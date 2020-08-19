@@ -159,6 +159,9 @@ RUN useradd -u 1000 --create-home wslg
 COPY config/wsl.conf /etc/wsl.conf
 COPY config/${SYSTEMDISTRO_ARCH}-system-distro.conf /etc/ld.so.conf.d/${SYSTEMDISTRO_ARCH}-system-distro.conf
 
+# Copy default icon file.
+COPY resources/linux.png /usr/share/icons/wsl/linux.png
+
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
 COPY --from=dev /work/versions.txt /etc/versions.txt
