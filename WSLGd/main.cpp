@@ -9,6 +9,17 @@ void LogException(const char *message, const char *exceptionDescription) noexcep
     return;
 }
 
+std::string ToServiceId(unsigned int port)
+{
+    int size;
+    THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, VSOCK_TEMPLATE, port)) < 0);
+
+    std::string serviceId(size, '\0');
+    THROW_LAST_ERROR_IF(snprintf(serviceId.data(), serviceId.size(), VSOCK_TEMPLATE, port) < 0);
+
+    return serviceId;
+}
+
 int main(int Argc, char *Argv[])
 try {
     wil::g_LogExceptionCallback = LogException;
@@ -47,7 +58,7 @@ try {
 
     // Create a listening vsock to be used for the RDP connection.
     //
-    // N.B. VMADDR_PORT_ANY is used to allow the kernel to assign an unused port.
+    // N.B. getsockname is used to get the port assigned by the kernel.
     sockaddr_vm address{};
     address.svm_family = AF_VSOCK;
     address.svm_cid = VMADDR_CID_ANY;
@@ -57,13 +68,9 @@ try {
     THROW_LAST_ERROR_IF(!socketFd);
     THROW_LAST_ERROR_IF(bind(socketFd.get(), reinterpret_cast<const sockaddr*>(&address), addressSize) < 0);
     THROW_LAST_ERROR_IF(listen(socketFd.get(), 1) < 0);
-
-    // Query the socket name to get the assigned port.
-    //
-    // TODO: dynamic port selection requires mstsc.exe to accept hvsocketserviceid from the command line.
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
-    auto hvsocketPort = std::to_string(address.svm_port);
 
+    auto socketFdString = std::to_string(socketFd.get());
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
     envVar variables[] = {
@@ -80,7 +87,7 @@ try {
         {"XCURSOR_SIZE", "16"},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
-        {"USE_VSOCK", ""} //hvsocketPort.c_str()}
+        {"USE_VSOCK", socketFdString.c_str()} 
     };
 
     for (auto &var : variables) {
@@ -88,13 +95,10 @@ try {
     }
 
     // Launch weston, pulseaudio, and mstsc.exe. They will be re-launched if they exit.
-    std::string port("--port=");
-    port += RDP_PORT; //hvsocketPort.c_str();
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
-        std::move(port),
         "--shell=rdprail-shell.so",
         "--log=" SHARE_PATH "/weston.log"
     });
@@ -108,9 +112,13 @@ try {
 
     std::string remote("/v:");
     remote += vmId;
+    std::string serviceId("/hvsocketserviceid:");
+    serviceId += ToServiceId(address.svm_port);;
     monitor.LaunchProcess(std::vector<std::string>{
         "/mnt/c/Windows/System32/mstsc.exe",
         std::move(remote),
+        std::move(serviceId),
+        "/silent",
         "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
     });
 
