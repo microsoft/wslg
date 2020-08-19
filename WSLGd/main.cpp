@@ -87,7 +87,8 @@ try {
         {"XCURSOR_SIZE", "16"},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
-        {"USE_VSOCK", socketFdString.c_str()} 
+        {"USE_VSOCK", socketFdString.c_str()},
+        {"WSL2_DEFAULT_APP_ICON", "/usr/share/icons/wsl/linux.png"}
     };
 
     for (auto &var : variables) {
