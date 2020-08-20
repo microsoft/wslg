@@ -14,8 +14,8 @@ std::string ToServiceId(unsigned int port)
     int size;
     THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, VSOCK_TEMPLATE, port)) < 0);
 
-    std::string serviceId(size, '\0');
-    THROW_LAST_ERROR_IF(snprintf(serviceId.data(), serviceId.size(), VSOCK_TEMPLATE, port) < 0);
+    std::string serviceId(size + 1, '\0');
+    THROW_LAST_ERROR_IF(snprintf(&serviceId[0], serviceId.size(), VSOCK_TEMPLATE, port) < 0);
 
     return serviceId;
 }
