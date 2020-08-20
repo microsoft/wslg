@@ -18,6 +18,10 @@
         <Property Id="ARPURLINFOABOUT">https://aka.ms/wsl2</Property>
         <Property Id="ARPNOMODIFY">1</Property>
 
+        <Property Id="CHECKLXSS">
+            <RegistrySearch Id="LxssServiceKey" Root="HKLM" Key="SYSTEM\CurrentControlSet\services\LxssManager\parameters" Name="ServiceDllUnloadOnStop" Type="raw" />
+        </Property>
+
         <Property Id="WSL_INSTALLING">
             <RegistrySearch Id="WslInstallingKey" Root="HKLM" Key="$(var.LxssRegKey)" Name="WslInstalling" Type="raw" />
         </Property>
@@ -47,7 +51,7 @@
                 <RemoveRegistryValue Id="RID_WSL_INSTALLING" Root="HKLM" Key="$(var.LxssRegKey)" Name="WslInstalling" />
             </Component>
             <Component Id="SYSTEMVHDREG" Guid="F37A4E4A-3E56-46A3-98C5-9B5DED295EC1" Win64="yes">
-                <RegistryKey Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Lxss" >
+                <RegistryKey Root="HKLM" Key="$(var.LxssRegKey)" >
                     <RegistryValue Id="SYSTEMVHD_REGKEYSID" Name="SystemDistro" Value="[INSTALLDIR]system.vhd" Type="string" />
                 </RegistryKey>
             </Component>
