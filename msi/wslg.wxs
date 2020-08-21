@@ -1,39 +1,61 @@
 <?xml version="1.0"?>
 <!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+
+<?define LxssRegKey = "Software\Microsoft\Windows\CurrentVersion\Lxss"?>
+
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI App Support" 
-	    Version="Please run PS updateversion.ps1 wslg.wxs to update the version before build the MSI" Manufacturer="Microsoft Corporation" Language="1033">
-		<Package Compressed="yes" Comments="Windows Installer Package" Platform="$(var.Platform)" />
-		<Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+    <Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI App Support"
+        Version="Please run PS updateversion.ps1 wslg.wxs to update the version before build the MSI" Manufacturer="Microsoft Corporation" Language="1033">
+        <Package Compressed="yes" Comments="Windows Installer Package" Platform="$(var.Platform)" />
+        <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
 
-		<WixVariable Id="WixUIBannerBmp" Value="banner.png" />
-		<WixVariable Id="WixUIDialogBmp" Value="background.png" />
+        <WixVariable Id="WixUIBannerBmp" Value="banner.png" />
+        <WixVariable Id="WixUIDialogBmp" Value="background.png" />
 
-		<Feature Id="DefaultFeature" Level="1">
-			<ComponentRef Id="WSLRDPFILE" />
-			<ComponentRef Id="SYSTEMVHD" />
-			<ComponentRef Id="SYSTEMVHDREG" />
-		</Feature>
-	</Product>
-	<Fragment>
-		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="CommonAppDataFolder">
-				<Directory Id="MICROSOFTDIR" Name="Microsoft">
-					<Directory Id="INSTALLDIR" Name="WSL">
-						<Component Id="WSLRDPFILE" Guid="3E17D62C-3B77-4E06-B647-AC329E775BC7">
-							<File Id="WSLRDPFILEID" Source="wslg.rdp" />
-						</Component>
-						<Component Id="SYSTEMVHD" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
-							<File Id="SYSTEMVHDID" Source="$(var.VhdFile)" Name="system.vhd" />
-						</Component>
-						<Component Id="SYSTEMVHDREG" Guid="F37A4E4A-3E56-46A3-98C5-9B5DED295EC1" Win64="yes">
-							<RegistryKey Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Lxss" >
-								<RegistryValue Id="SYSTEMVHD_REGKEYSID" Name="SystemDistro" Value="[INSTALLDIR]system.vhd" Type="string" />
-							</RegistryKey>
-						</Component>
-					</Directory>
-				</Directory>
-			</Directory>
-		</Directory>
-	</Fragment>
+        <MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="A later version of the [ProductName] is already installed. Setup will now exit." Schedule="afterInstallExecute" />
+
+        <Property Id="ARPHELPLINK">https://aka.ms/wsl2kernel</Property>
+        <Property Id="ARPURLINFOABOUT">https://aka.ms/wsl2</Property>
+        <Property Id="ARPNOMODIFY">1</Property>
+
+        <Property Id="CHECKLXSS">
+            <RegistrySearch Id="LxssServiceKey" Root="HKLM" Key="SYSTEM\CurrentControlSet\services\LxssManager\parameters" Name="ServiceDllUnloadOnStop" Type="raw" />
+        </Property>
+
+        <Property Id="WSL_INSTALLING">
+            <RegistrySearch Id="WslInstallingKey" Root="HKLM" Key="$(var.LxssRegKey)" Name="WslInstalling" Type="raw" />
+        </Property>
+
+        <Condition Message="This update only applies to machines with the Windows Subsytem for Linux"><![CDATA[Installed OR CHECKLXSS="#1" OR WSL_INSTALLING]]></Condition>
+
+        <Feature Id="DefaultFeature" Level="1">
+            <ComponentRef Id="WSLRDPFILE" />
+            <ComponentRef Id="SYSTEMVHD" />
+            <ComponentRef Id="SYSTEMVHDREG" />
+        </Feature>
+
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="CommonAppDataFolder">
+                <Directory Id="MICROSOFTDIR" Name="Microsoft">
+                    <Directory Id="INSTALLDIR" Name="WSL" />
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <DirectoryRef Id="INSTALLDIR">
+            <Component Id="WSLRDPFILE" Guid="3E17D62C-3B77-4E06-B647-AC329E775BC7">
+                <File Id="WSLRDPFILEID" Source="wslg.rdp" />
+            </Component>
+            <Component Id="SYSTEMVHD" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
+                <File Id="SYSTEMVHDID" Source="$(var.VhdFile)" Name="system.vhd" />
+                <RemoveRegistryValue Id="RID_WSL_INSTALLING" Root="HKLM" Key="$(var.LxssRegKey)" Name="WslInstalling" />
+            </Component>
+            <Component Id="SYSTEMVHDREG" Guid="F37A4E4A-3E56-46A3-98C5-9B5DED295EC1" Win64="yes">
+                <RegistryKey Root="HKLM" Key="$(var.LxssRegKey)" >
+                    <RegistryValue Id="SYSTEMVHD_REGKEYSID" Name="SystemDistro" Value="[INSTALLDIR]system.vhd" Type="string" />
+                </RegistryKey>
+            </Component>
+        </DirectoryRef>
+        <InstallExecuteSequence />
+    </Product>
 </Wix>

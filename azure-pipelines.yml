@@ -144,7 +144,7 @@ jobs:
       arguments: '.\msi\wslg.wxs'
       pwsh: true
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -dVhdFile=system_x64.vhd -dPlatform=x64 -o obj_x64\'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch x64 -dVhdFile=system_x64.vhd -dPlatform=x64 -o obj_x64\'
     workingDirectory: msi
     displayName: 'WiX Candle (x64)'
 
@@ -152,7 +152,7 @@ jobs:
     workingDirectory: msi
     displayName: 'WiX Light (x64)'
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -dVhdFile=system_arm64.vhd -dPlatform=arm64 -o obj_arm64\'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_arm64.vhd -dPlatform=arm64 -o obj_arm64\'
     workingDirectory: msi
     displayName: 'WiX Candle (arm64)'
 
