@@ -5,6 +5,7 @@
 
 #define SHARE_PATH "/mnt/wslg"
 
+constexpr auto c_dbusDir = "/var/run/dbus";
 constexpr auto c_userName = "wslg";
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
 constexpr auto c_vmIdEnv = "WSL2_VM_ID";
@@ -66,6 +67,8 @@ try {
     std::filesystem::create_directories(c_xdgRuntimeDir);
     THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0777) < 0);
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
+    std::filesystem::create_directories(c_dbusDir);
+    THROW_LAST_ERROR_IF(chmod(c_dbusDir, 0777) < 0);
 
     // Create a listening vsock to be used for the RDP connection.
     //
@@ -77,11 +80,11 @@ try {
     socklen_t addressSize = sizeof(address);
     wil::unique_fd socketFd{socket(AF_VSOCK, SOCK_STREAM, 0)};
     THROW_LAST_ERROR_IF(!socketFd);
+    auto socketFdString = std::to_string(socketFd.get());
     THROW_LAST_ERROR_IF(bind(socketFd.get(), reinterpret_cast<const sockaddr*>(&address), addressSize) < 0);
     THROW_LAST_ERROR_IF(listen(socketFd.get(), 1) < 0);
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
 
-    auto socketFdString = std::to_string(socketFd.get());
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; };
     envVar variables[] = {
@@ -106,20 +109,27 @@ try {
         THROW_LAST_ERROR_IF(setenv(var.name, var.value, true) < 0);
     }
 
-    // Launch weston, pulseaudio, and mstsc.exe. They will be re-launched if they exit.
+    // Launch dbus-daemon, weston, mstsc.exe, and pulseaudio.
+    monitor.LaunchProcess(std::vector<std::string>{
+        "/usr/bin/dbus-daemon",
+        "--syslog",
+        "--nofork",
+        "--system"
+    });
+
+    monitor.LaunchProcess(std::vector<std::string>{
+        "/usr/bin/dbus-daemon",
+        "--syslog",
+        "--nofork",
+        "--session"
+    });
+
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
         "--shell=rdprail-shell.so",
         "--log=" SHARE_PATH "/weston.log"
-    });
-
-    monitor.LaunchProcess(std::vector<std::string>{
-        "/usr/local/bin/pulseaudio",
-        "--load=\"module-rdp-sink sink_name=RDPSink\"",
-        "--load=\"module-rdp-source source_name=RDPSource\"",
-        "--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\""
     });
 
     std::string remote("/v:");
@@ -132,6 +142,14 @@ try {
         std::move(serviceId),
         "/silent",
         "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
+    });
+
+    monitor.LaunchProcess(std::vector<std::string>{
+        "/usr/local/bin/pulseaudio",
+        "--log-target=file:" SHARE_PATH "/pulseaudio.log",
+        "--load=\"module-rdp-sink sink_name=RDPSink\"",
+        "--load=\"module-rdp-source source_name=RDPSource\"",
+        "--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\""
     });
 
     return monitor.Run();
