@@ -125,6 +125,9 @@ ARG SYSTEMDISTRO_ARCH="x86_64"
 # Install the packages needed to run weston, freerdp, and xwayland.
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    check \
+    dbus \
+    dbus-x11 \
     libcairo2 \
     libcap-dev \
     libdbus-1-3 \
@@ -135,7 +138,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libpango-1.0.0 \
     libpangocairo-1.0.0 \
     libsndfile1 \
+    libsndfile-dev \
     libssl1.1 \
+    libtdb-dev \
     libwayland-client0 \
     libwayland-cursor0 \
     libwayland-server0 \
