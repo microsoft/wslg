@@ -12,6 +12,10 @@ resources:
     type: git
     name: DxgkLinux/pulseaudio
     ref: working
+  - repository: sharedguestalloc
+    type: git
+    name: DxgkLinux/sharedguestalloc
+    ref: master
 
 trigger:
   - working
@@ -26,6 +30,7 @@ jobs:
     - checkout: FreeRDP
     - checkout: weston
     - checkout: pulseaudio
+    - checkout: sharedguestalloc
     - checkout: self
 
     - task: DockerInstaller@0
@@ -49,6 +54,7 @@ jobs:
 
     - script: mv FreeRDP/ wslg/vendor/ &&
               mv weston/ wslg/vendor/ &&
+              mv sharedguestalloc/ wslg/vendor/ &&
               mv pulseaudio/ wslg/vendor/
       displayName: 'Move sub projects (FreeRDP, Weston)'
 

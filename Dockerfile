@@ -106,6 +106,12 @@ RUN meson --prefix=${prefix} build -Ddatabase=simple -Dbluez5=false -Dtests=fals
 RUN ninja -C build -j8 install
 RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
+# Build sharedguestalloc
+COPY vendor/sharedguestalloc /work/vendor/sharedguestalloc
+WORKDIR /work/vendor/sharedguestalloc
+RUN make -j8
+RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git rev-parse --verify HEAD` >> /work/versions.txt
+
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
 RUN make && make install
@@ -165,6 +171,7 @@ COPY resources/linux.png /usr/share/icons/wsl/linux.png
 # Copy the built artifacts from the build stage.
 COPY --from=dev ${weston_path} ${weston_path}
 COPY --from=dev /work/versions.txt /etc/versions.txt
+COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
 
 # start weston with RDP.
 #
