@@ -3,6 +3,14 @@
 #include "common.h"
 #include "ProcessMonitor.h"
 
+#define SHARE_PATH "/mnt/wslg"
+
+constexpr auto c_userName = "wslg";
+constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
+constexpr auto c_vmIdEnv = "WSL2_VM_ID";
+constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
+constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
+
 void LogException(const char *message, const char *exceptionDescription) noexcept
 {
     fprintf(stderr, "<3>WSLGd: %s %s", message ? message : "Exception:", exceptionDescription);
@@ -12,10 +20,10 @@ void LogException(const char *message, const char *exceptionDescription) noexcep
 std::string ToServiceId(unsigned int port)
 {
     int size;
-    THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, VSOCK_TEMPLATE, port)) < 0);
+    THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, c_serviceIdTemplate, port)) < 0);
 
     std::string serviceId(size + 1, '\0');
-    THROW_LAST_ERROR_IF(snprintf(&serviceId[0], serviceId.size(), VSOCK_TEMPLATE, port) < 0);
+    THROW_LAST_ERROR_IF(snprintf(&serviceId[0], serviceId.size(), c_serviceIdTemplate, port) < 0);
 
     return serviceId;
 }
@@ -29,7 +37,7 @@ try {
     // N.B. fprintf must be used instead of dprintf because glibc does not correctly
     //      handle /dev/kmsg.
     {
-        wil::unique_fd logFd(TEMP_FAILURE_RETRY(open(DEV_KMSG, (O_WRONLY | O_CLOEXEC))));
+        wil::unique_fd logFd(TEMP_FAILURE_RETRY(open("/dev/kmsg", (O_WRONLY | O_CLOEXEC))));
         if ((logFd) && (logFd.get() != STDERR_FILENO)) {
             THROW_LAST_ERROR_IF(dup3(logFd.get(), STDERR_FILENO, O_CLOEXEC) < 0);
         }
@@ -37,24 +45,27 @@ try {
 
     // Ensure the daemon is launched as root.
     if (geteuid() != 0) {
-        LOG_ERROR("WSLGd must be run as root.");
+        LOG_ERROR("must be run as root.");
         return 1;
     }
 
     // Query the VM ID.
-    const char* vmId;
-    THROW_ERRNO_IF(EINVAL, ((vmId = getenv("WSL2_VM_ID")) == nullptr));
+    auto vmId = getenv(c_vmIdEnv);
+    if (!vmId) {
+        LOG_ERROR("%s must be set.", c_vmIdEnv);
+        return 1;
+    }
 
     // Create a process monitor to track child processes
-    wslgd::ProcessMonitor monitor(USERNAME);
+    wslgd::ProcessMonitor monitor(c_userName);
     auto passwordEntry = monitor.GetUserInfo();
 
     // Make directories and ensure the correct permissions.
-    std::filesystem::create_directories(X11_RUNTIME_DIR);
-    THROW_LAST_ERROR_IF(chmod(X11_RUNTIME_DIR, 0777) < 0);
-    std::filesystem::create_directories(XDG_RUNTIME_DIR);
-    THROW_LAST_ERROR_IF(chmod(XDG_RUNTIME_DIR, 0777) < 0);
-    THROW_LAST_ERROR_IF(chown(XDG_RUNTIME_DIR, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
+    std::filesystem::create_directories(c_x11RuntimeDir);
+    THROW_LAST_ERROR_IF(chmod(c_x11RuntimeDir, 0777) < 0);
+    std::filesystem::create_directories(c_xdgRuntimeDir);
+    THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0777) < 0);
+    THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
 
     // Create a listening vsock to be used for the RDP connection.
     //
@@ -79,7 +90,7 @@ try {
         {"LOGNAME", passwordEntry->pw_name},
         {"SHELL", passwordEntry->pw_shell},
         {"PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"},
-        {"XDG_RUNTIME_DIR", XDG_RUNTIME_DIR},
+        {"XDG_RUNTIME_DIR", c_xdgRuntimeDir},
         {"WAYLAND_DISPLAY", "wayland-0"},
         {"DISPLAY", ":0"},
         {"XCURSOR_PATH", "/usr/share/icons"},
@@ -114,7 +125,7 @@ try {
     std::string remote("/v:");
     remote += vmId;
     std::string serviceId("/hvsocketserviceid:");
-    serviceId += ToServiceId(address.svm_port);;
+    serviceId += ToServiceId(address.svm_port);
     monitor.LaunchProcess(std::vector<std::string>{
         "/mnt/c/Windows/System32/mstsc.exe",
         std::move(remote),
