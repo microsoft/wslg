@@ -5,10 +5,12 @@
 
 #define SHARE_PATH "/mnt/wslg"
 
-constexpr auto c_dbusDir = "/var/run/dbus";
-constexpr auto c_userName = "wslg";
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
+constexpr auto c_userName = "wslg";
 constexpr auto c_vmIdEnv = "WSL2_VM_ID";
+
+constexpr auto c_dbusDir = "/var/run/dbus";
+constexpr auto c_launchPulse = "/home/wslg/launch_pulse.sh";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 
@@ -65,10 +67,8 @@ try {
     std::filesystem::create_directories(c_x11RuntimeDir);
     THROW_LAST_ERROR_IF(chmod(c_x11RuntimeDir, 0777) < 0);
     std::filesystem::create_directories(c_xdgRuntimeDir);
-    THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0777) < 0);
+    THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0700) < 0);
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
-    std::filesystem::create_directories(c_dbusDir);
-    THROW_LAST_ERROR_IF(chmod(c_dbusDir, 0777) < 0);
 
     // Create a listening vsock to be used for the RDP connection.
     //
@@ -109,21 +109,6 @@ try {
         THROW_LAST_ERROR_IF(setenv(var.name, var.value, true) < 0);
     }
 
-    // Launch dbus-daemon, weston, mstsc.exe, and pulseaudio.
-    monitor.LaunchProcess(std::vector<std::string>{
-        "/usr/bin/dbus-daemon",
-        "--syslog",
-        "--nofork",
-        "--system"
-    });
-
-    monitor.LaunchProcess(std::vector<std::string>{
-        "/usr/bin/dbus-daemon",
-        "--syslog",
-        "--nofork",
-        "--session"
-    });
-
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
@@ -145,10 +130,20 @@ try {
     });
 
     monitor.LaunchProcess(std::vector<std::string>{
-        "/usr/local/bin/pulseaudio",
-        "--log-target=file:" SHARE_PATH "/pulseaudio.log",
-        "--load=\"module-rdp-sink sink_name=RDPSink\"",
-        "--load=\"module-rdp-source source_name=RDPSource\"",
+        "/usr/bin/dbus-daemon",
+        "--syslog",
+        "--nofork",
+        "--nopidfile"
+    });
+
+    monitor.LaunchProcess(std::vector<std::string>{
+        "/usr/bin/sh",
+        "-c",
+        "/usr/bin/dbus-launch",
+        "/usr/local/bin/pulseaudio"
+        "--log-target=file:" SHARE_PATH "/pulseaudio.log"
+        "--load=\"module-rdp-sink sink_name=RDPSink\""
+        "--load=\"module-rdp-source source_name=RDPSource\""
         "--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\""
     });
 
