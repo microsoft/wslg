@@ -139,11 +139,11 @@ try {
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/bin/sh",
         "-c",
-        "/usr/bin/dbus-launch",
-        "/usr/local/bin/pulseaudio"
-        "--log-target=file:" SHARE_PATH "/pulseaudio.log"
-        "--load=\"module-rdp-sink sink_name=RDPSink\""
-        "--load=\"module-rdp-source source_name=RDPSource\""
+        "/usr/bin/dbus-launch "
+        "/usr/local/bin/pulseaudio "
+        "--log-target=file:" SHARE_PATH "/pulseaudio.log "
+        "--load=\"module-rdp-sink sink_name=RDPSink\" "
+        "--load=\"module-rdp-source source_name=RDPSource\" "
         "--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\""
     });
 
