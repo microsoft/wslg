@@ -133,7 +133,8 @@ try {
         "/usr/bin/dbus-daemon",
         "--syslog",
         "--nofork",
-        "--nopidfile"
+        "--nopidfile",
+        "--system"
     });
 
     monitor.LaunchProcess(std::vector<std::string>{
