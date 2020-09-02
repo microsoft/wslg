@@ -170,10 +170,6 @@ RUN useradd -u 1000 --create-home wslg
 COPY config/wsl.conf /etc/wsl.conf
 COPY config/${SYSTEMDISTRO_ARCH}-system-distro.conf /etc/ld.so.conf.d/${SYSTEMDISTRO_ARCH}-system-distro.conf
 
-RUN mkdir /var/run/dbus
-RUN chown wslg:wslg /var/run/dbus
-RUN chmod 777 /var/run/dbus
-
 # Copy default icon file.
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
 

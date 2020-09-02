@@ -64,8 +64,13 @@ try {
     auto passwordEntry = monitor.GetUserInfo();
 
     // Make directories and ensure the correct permissions.
+    std::filesystem::create_directories(c_dbusDir);
+    THROW_LAST_ERROR_IF(chown(c_dbusDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
+    THROW_LAST_ERROR_IF(chmod(c_dbusDir, 0777) < 0);
+
     std::filesystem::create_directories(c_x11RuntimeDir);
     THROW_LAST_ERROR_IF(chmod(c_x11RuntimeDir, 0777) < 0);
+
     std::filesystem::create_directories(c_xdgRuntimeDir);
     THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0700) < 0);
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
