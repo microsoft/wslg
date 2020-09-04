@@ -11,6 +11,8 @@ constexpr auto c_vmIdEnv = "WSL2_VM_ID";
 
 constexpr auto c_dbusDir = "/var/run/dbus";
 constexpr auto c_launchPulse = "/home/wslg/launch_pulse.sh";
+constexpr auto c_versionFile = "/etc/versions.txt";
+constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 
@@ -58,6 +60,13 @@ try {
         LOG_ERROR("%s must be set.", c_vmIdEnv);
         return 1;
     }
+
+    {
+        wil::unique_fd fd(open(c_versionMount, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH));
+        THROW_LAST_ERROR_IF(!fd);
+    }
+    
+    THROW_LAST_ERROR_IF(mount(c_versionFile, c_versionMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
 
     // Create a process monitor to track child processes
     wslgd::ProcessMonitor monitor(c_userName);

@@ -58,10 +58,15 @@ jobs:
               mv pulseaudio/ wslg/vendor/
       displayName: 'Move sub projects (FreeRDP, Weston)'
 
+    - script: wget https://github.com/GitTools/GitVersion/releases/download/5.3.7/gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
+              tar -xvf gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
+              sudo mv gitversion /usr/local/bin
+      displayName: 'Install GitVersion'
+
     - script: docker build -t system-distro-x64 
               ./wslg 
-              --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD`
-              --build-arg SYSTEMDISTRO_ARCH=x86_64
+              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion`
+              --build-arg WSLG_ARCH=x86_64
       displayName: 'Create docker image x64'
 
     - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
@@ -71,8 +76,8 @@ jobs:
               --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
               --platform=linux/arm64 
               ./wslg 
-              --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` 
-              --build-arg SYSTEMDISTRO_ARCH=aarch64
+              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
+              --build-arg WSLG_ARCH=aarch64
       displayName: 'Create system_arm64.tar'
 
     - script: git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git

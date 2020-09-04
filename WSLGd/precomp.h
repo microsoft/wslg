@@ -1,4 +1,5 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
+#include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/signalfd.h>
 #include <sys/stat.h>

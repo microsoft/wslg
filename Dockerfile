@@ -73,11 +73,13 @@ CMD /bin/bash
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
 
-ARG SYSTEMDISTRO_VERSION="<current>"
-ARG SYSTEMDISTRO_ARCH="x86_64"
+ARG WSLG_VERSION="<current>"
+ARG WSLG_ARCH="x86_64"
 
 ENV prefix=/usr/local
-ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/${SYSTEMDISTRO_ARCH}-linux-gnu/pkgconfig:${prefix}/share/pkgconfig
+ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${prefix}/share/pkgconfig
+
+RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -90,7 +92,7 @@ RUN cmake -G Ninja \
         -DWITH_SERVER=ON \
         -DWITH_SAMPLE=OFF && \
     ninja -C build -j8 install
-RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` > /work/versions.txt
+RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
@@ -115,12 +117,11 @@ RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git r
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
 RUN make && make install
-RUN echo "SystemDistro(" ${SYSTEMDISTRO_ARCH} "):" ${SYSTEMDISTRO_VERSION}  >> /work/versions.txt
 
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
 
-ARG SYSTEMDISTRO_ARCH="x86_64"
+ARG WSLG_ARCH="x86_64"
 
 # Install the packages needed to run weston, freerdp, and xwayland.
 ENV DEBIAN_FRONTEND=noninteractive
@@ -168,7 +169,7 @@ RUN useradd -u 1000 --create-home wslg
 
 # Copy config files.
 COPY config/wsl.conf /etc/wsl.conf
-COPY config/${SYSTEMDISTRO_ARCH}-system-distro.conf /etc/ld.so.conf.d/${SYSTEMDISTRO_ARCH}-system-distro.conf
+COPY config/${WSLG_ARCH}-system-distro.conf /etc/ld.so.conf.d/${WSLG_ARCH}-system-distro.conf
 
 # Copy default icon file.
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
