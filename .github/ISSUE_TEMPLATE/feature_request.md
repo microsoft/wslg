@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a feature for Windows Subsystem for Linux
+about: Suggest a feature for WSLG
 title: ''
 labels: 'enhancement'
 assignees: ''
