@@ -1,3 +1,4 @@
+.vscode/*
 vendor/*
 !vendor/.preserve
 out

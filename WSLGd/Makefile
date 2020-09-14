@@ -1,4 +1,5 @@
 CXX := clang++
+LDFLAGS := -lcap
 TARGET := WSLGd
 SRC_DIRS := .
 INSTALL := install -p
