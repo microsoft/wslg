@@ -1,4 +1,6 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
+#include <sys/capability.h>
+#include <sys/prctl.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/signalfd.h>

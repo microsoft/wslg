@@ -62,10 +62,10 @@ try {
     }
 
     {
-        wil::unique_fd fd(open(c_versionMount, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH));
+        wil::unique_fd fd(open(c_versionMount, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
         THROW_LAST_ERROR_IF(!fd);
     }
-    
+
     THROW_LAST_ERROR_IF(mount(c_versionFile, c_versionMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
 
     // Create a process monitor to track child processes
@@ -123,14 +123,19 @@ try {
         THROW_LAST_ERROR_IF(setenv(var.name, var.value, true) < 0);
     }
 
+    // Launch weston.
+    // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/local/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
         "--shell=rdprail-shell.so",
         "--log=" SHARE_PATH "/weston.log"
-    });
+        },
+        std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
+    );
 
+    // Launch the mstsc client.
     std::string remote("/v:");
     remote += vmId;
     std::string serviceId("/hvsocketserviceid:");
@@ -143,6 +148,7 @@ try {
         "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
     });
 
+    // Launch the system dbus daemon.
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/bin/dbus-daemon",
         "--syslog",
@@ -151,6 +157,7 @@ try {
         "--system"
     });
 
+    // Launch pulseaudio and the associated dbus daemon.
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/bin/sh",
         "-c",
