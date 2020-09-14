@@ -12,3 +12,8 @@ msi/obj_x64/
 WSLGd/*.d
 WSLGd/*.o
 WSLGd/WSLGd
+WSLDVCPlugin/.vs
+WSLDVCPlugin/x64
+WSLDVCPlugin/ARM64/Debug/
+WSLDVCPlugin/ARM64/Release/
+WSLDVCPlugin/WSLDVCPlugin.aps
