@@ -1,0 +1,4 @@
+LIBRARY "WSLDVCPlugin.dll"
+
+EXPORTS
+    VirtualChannelGetInstance PRIVATE

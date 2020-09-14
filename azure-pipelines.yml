@@ -119,7 +119,10 @@ jobs:
   
   pool:
     vmImage: 'windows-2019'
-  
+    demands:
+    - msbuild
+    - visualstudio
+
   steps:
   - checkout: self
 
@@ -146,6 +149,26 @@ jobs:
       buildType: 'current'
       artifactName: 'system_arm64.vhd'
       targetPath: 'msi/'
+
+  - task: MSBuild@1
+    displayName: 'Build RDP Plugin (x64)'
+    inputs:
+      solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
+      platform: 'x64'
+      configuration: 'Release'
+
+  - task: MSBuild@1
+    displayName: 'Build RDP Plugin (ARM64)'
+    inputs:
+      solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
+      platform: 'ARM64'
+      configuration: 'Release'
+
+  - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_x64.dll'
+    displayName: 'Move plugin to msi (x64)'
+
+  - script: 'MOVE WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_ARM64.dll'
+    displayName: 'Move plugin to msi (ARM64)'
 
   - task: PowerShell@2
     displayName: 'Update wslg.wxs version'
