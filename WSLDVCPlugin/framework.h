@@ -9,3 +9,4 @@
 #include <wrl.h>
 #include <objidl.h>   /* For IPersistFile */
 #include <shlobj.h>   /* For IShellLink */
+#include <shlwapi.h>  /* For PathIsDirectoryEmpty */

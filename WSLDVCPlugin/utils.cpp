@@ -32,7 +32,14 @@ CreateShellLink(LPCWSTR lpszPathLink,
     DebugPrint(L"\tExe args: %s\n", lpszArgs);
     DebugPrint(L"\tWorkingDir: %s\n", lpszWorkingDir);
     DebugPrint(L"\tDesc: %s\n", lpszDesc);
-    DebugPrint(L"\tIcon Path: %s\n", lpszPathIcon);
+    if (lpszPathIcon && lstrlenW(lpszPathIcon))
+    {
+        DebugPrint(L"\tIcon Path: %s\n", lpszPathIcon);
+    }
+    else
+    {
+        lpszPathIcon = nullptr;
+    }
 
     // Get a pointer to the IShellLink interface. It is assumed that CoInitialize
     // has already been called.

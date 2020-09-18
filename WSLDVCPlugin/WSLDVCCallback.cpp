@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "rdpapplist.h"
 #include "WSLDVCCallback.h"
+#include "WSLDVCFileDB.h"
 
 LPCWSTR c_WSL_exe = L"%windir%\\system32\\wsl.exe";
 LPCWSTR c_Working_dir = L"%windir%\\system32";
@@ -21,8 +22,12 @@ public:
             IWTSVirtualChannel* pChannel
         )
     {
-        m_spChannel = pChannel;
-        return S_OK;
+        HRESULT hr = WSLDVCFileDB_CreateInstance(NULL, &m_spFileDB);
+        if (SUCCEEDED(hr))
+        {
+            m_spChannel = pChannel;
+        }
+        return hr;
     }
 
     HRESULT
@@ -131,7 +136,7 @@ public:
         )
     {
         BYTE* cur;
-        UINT64 len, fileSize;
+        UINT64 len;
         ICON_HEADER* pIconHeader;
         BITMAPINFOHEADER* pIconBitmapInfo;
         void* pIconBits;
@@ -244,9 +249,406 @@ public:
         *buffer = cur;
         *size = len;
 
+        return S_OK;
+
     Error_Read:
 
         return E_FAIL;
+    }
+
+    HRESULT
+        OnSyncStart()
+    {
+        DebugPrint(L"OnSyncStart():\n");
+        if (m_spFileDBSync.Get())
+        {
+            DebugPrint(L"Server asks start sync, but already in sync mode.\n");
+            return E_FAIL;
+        }
+
+        HRESULT hr = WSLDVCFileDB_CreateInstance(NULL, &m_spFileDBSync);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        // Add all files under menu and icon path at sync start.
+        // Any files not reported during sync, will be removed at end.
+        m_spFileDBSync->addAllFilesAsFileIdAt(m_appMenuPath);
+        m_spFileDBSync->addAllFilesAsFileIdAt(m_iconPath);
+
+        return S_OK;
+    }
+
+    HRESULT
+        OnSyncEnd(bool cleanupFiles = true)
+    {
+        DebugPrint(L"OnSyncEnd():\n");
+        if (m_spFileDBSync.Get())
+        {
+            if (cleanupFiles)
+            {
+                m_spFileDBSync->deleteAllFileIdFiles();
+            }
+            m_spFileDBSync->OnClose();
+            m_spFileDBSync = nullptr;
+        }
+        return S_OK;
+    }
+
+    HRESULT
+        OnCaps(
+            UINT64* size,
+            BYTE** buffer
+        )
+    {
+        HRESULT hr;
+
+        // Buffer read scope
+        {
+            BYTE* cur;
+            UINT64 len;
+
+            assert(size);
+            assert(buffer);
+
+            cur = *buffer;
+            len = *size;
+
+            hr = ReadAppListServerCaps(&len, &cur, &m_serverCaps);
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+
+            *buffer = cur;
+            *size = len;
+        }
+
+        memcpy(m_appProvider, m_serverCaps.appListProviderName, m_serverCaps.appListProviderNameLength);
+        if (wcsstr(m_appProvider, L".."))
+        {
+            DebugPrint(L"group name can't contain \"..\" %s\n", m_appProvider);
+            return E_FAIL;
+        }
+
+        {
+            PWSTR appMenuPath = NULL; // free by CoTaskMemFree. 
+            SHGetKnownFolderPath(FOLDERID_StartMenu, 0, NULL, &appMenuPath);
+            if (!appMenuPath)
+            {
+                DebugPrint(L"SHGetKnownFolderPath(FOLDERID_StartMenu) failed\n");
+                return E_FAIL;
+            }
+            wsprintfW(m_appMenuPath, L"%s\\Programs\\%s", appMenuPath, m_appProvider);
+            CoTaskMemFree(appMenuPath);
+        }
+
+        if (!CreateDirectoryW(m_appMenuPath, NULL))
+        {
+            if (ERROR_ALREADY_EXISTS != GetLastError())
+            {
+                DebugPrint(L"Failed to create %s\n", m_appMenuPath);
+                return E_FAIL;
+            }
+        }
+        DebugPrint(L"AppMenuPath: %s\n", m_appMenuPath);
+
+        UINT64 lenTempPath;
+        lenTempPath = GetTempPathW(MAX_PATH, m_iconPath);
+        if (!lenTempPath)
+        {
+            DebugPrint(L"GetTempPathW failed\n");
+            return E_FAIL;
+        }
+
+        if (lenTempPath + 10 +
+            (m_serverCaps.appListProviderNameLength / sizeof(WCHAR)) > ARRAYSIZE(m_iconPath))
+        {
+            DebugPrint(L"provider name length check failed, length %d\n", m_serverCaps.appListProviderNameLength);
+            return E_FAIL;
+        }
+
+        lstrcatW(m_iconPath, L"WSLDVCPlugin\\");
+        if (!CreateDirectoryW(m_iconPath, NULL))
+        {
+            if (ERROR_ALREADY_EXISTS != GetLastError())
+            {
+                DebugPrint(L"Failed to create %s\n", m_iconPath);
+                return E_FAIL;
+            }
+        }
+        lstrcatW(m_iconPath, m_appProvider);
+        if (!CreateDirectoryW(m_iconPath, NULL))
+        {
+            if (ERROR_ALREADY_EXISTS != GetLastError())
+            {
+                DebugPrint(L"Failed to create %s\n", m_iconPath);
+                return E_FAIL;
+            }
+        }
+        DebugPrint(L"IconPath: %s\n", m_iconPath);
+
+        if (ExpandEnvironmentStringsW(c_WSL_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
+        {
+            DebugPrint(L"Failed to expand WSL exe: %s : %d\n", c_WSL_exe, GetLastError());
+            return E_FAIL;
+        }
+        DebugPrint(L"WSL.exe: %s\n", m_expandedPathObj);
+
+        if (ExpandEnvironmentStringsW(c_Working_dir, m_expandedWorkingDir, ARRAYSIZE(m_expandedWorkingDir)) == 0)
+        {
+            DebugPrint(L"Failed to expand working dir: %s : %d\n", c_Working_dir, GetLastError());
+            return E_FAIL;
+        }
+        DebugPrint(L"WSL.exe working dir: %s\n", m_expandedWorkingDir);
+
+        // Reply back header (8 bytes) + version (2 bytes) to server.
+        #pragma pack(1)
+        struct {
+            RDPAPPLIST_HEADER Header;
+            RDPAPPLIST_CLIENT_CAPS_PDU caps;
+        } replyBuf;
+        #pragma pack(0)
+        C_ASSERT(sizeof replyBuf == 10);
+
+        replyBuf.Header.cmdId = RDPAPPLIST_CMDID_CAPS;
+        replyBuf.Header.length = sizeof replyBuf;
+        replyBuf.caps.version = RDPAPPLIST_CHANNEL_VERSION;
+        hr = m_spChannel->Write(10, (BYTE *)&replyBuf, nullptr);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"m_spChannel->Write failed, hr = %x\n", hr);
+        }
+
+        return hr;
+    }
+
+    HRESULT
+        OnUpdateAppList(
+            UINT64* size,
+            BYTE** buffer
+        )
+    {
+        HRESULT hr;
+        RDPAPPLIST_UPDATE_APPLIST_PDU updateAppList = {};
+        RDPAPPLIST_ICON_DATA iconData = {};
+        WCHAR linkPath[MAX_PATH] = {};
+        WCHAR iconPath[MAX_PATH] = {};
+        WCHAR exeArgs[MAX_PATH] = {};
+        WCHAR key[MAX_PATH] = {};
+        bool hasIcon = false;
+
+        // Buffer read scope
+        {
+            BYTE* cur;
+            UINT64 len;
+
+            assert(size);
+            assert(buffer);
+
+            cur = *buffer;
+            len = *size;
+
+            hr = ReadAppListUpdate(&len, &cur, &updateAppList);
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+
+            if (updateAppList.flags & RDPAPPLIST_FIELD_ICON)
+            {
+                hr = ReadAppListIconData(&len, &cur, &iconData);
+                if (FAILED(hr))
+                {
+                    return hr;
+                }
+            }
+
+            *buffer = cur;
+            *size = len;
+        }
+
+        if (updateAppList.flags & RDPAPPLIST_HINT_SYNC_START)
+        {
+            hr = OnSyncStart();
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+            assert(m_spFileDBSync->Get());
+        }
+
+        if (updateAppList.flags & (RDPAPPLIST_HINT_SYNC | RDPAPPLIST_HINT_SYNC_END))
+        {
+            if (!m_spFileDBSync.Get())
+            {
+                DebugPrint(L"Server sends sync or sync end flag without starting sync mode. flags %x\n", updateAppList.flags);
+                return E_FAIL;
+            }
+        }
+
+        if (updateAppList.appGroupLength && wcsstr(updateAppList.appGroup, L".."))
+        {
+            DebugPrint(L"group name can't contain \"..\" %s\n", updateAppList.appGroup);
+            return E_FAIL;
+        }
+
+        if (updateAppList.flags & RDPAPPLIST_FIELD_ICON)
+        {
+            lstrcpyW(iconPath, m_iconPath);
+            if (updateAppList.appGroupLength)
+            {
+                lstrcatW(iconPath, L"\\");
+                lstrcatW(iconPath, updateAppList.appGroup);
+                if (!CreateDirectoryW(iconPath, NULL))
+                {
+                    if (ERROR_ALREADY_EXISTS != GetLastError())
+                    {
+                        DebugPrint(L"Failed to create %s\n", iconPath);
+                        return E_FAIL;
+                    }
+                }
+            }
+            lstrcatW(iconPath, L"\\");
+            lstrcatW(iconPath, updateAppList.appId);
+            lstrcatW(iconPath, L".ico");
+            if (SUCCEEDED(CreateIconFile(iconData.iconFileData, iconData.iconFileSize, iconPath)))
+            {
+                hasIcon = true;
+            }
+            else
+            {
+                DebugPrint(L"Failed to create icon file %s\n", iconPath);
+                // Icon is optional, so keep going.
+            }
+        }
+
+        lstrcpyW(linkPath, m_appMenuPath);
+        if (updateAppList.appGroupLength)
+        {
+            lstrcatW(linkPath, L"\\");
+            lstrcatW(linkPath, updateAppList.appGroup);
+            if (!CreateDirectoryW(linkPath, NULL))
+            {
+                if (ERROR_ALREADY_EXISTS != GetLastError())
+                {
+                    DebugPrint(L"Failed to create %s\n", linkPath);
+                    return E_FAIL;
+                }
+            }
+        }
+        lstrcatW(linkPath, L"\\");
+        // Use description to name link file since this is name shows up
+        // at StartMenu UI. SHSetLocalizedName can't be uses since this 
+        // is not in resource.
+        lstrcatW(linkPath, updateAppList.appDesc); 
+        lstrcatW(linkPath, L".lnk");
+
+        wsprintfW(exeArgs,
+            L"~ -d %s %s",
+            m_appProvider, updateAppList.appExecPath);
+
+        hr = CreateShellLink((LPCWSTR)linkPath,
+            (LPCWSTR)m_expandedPathObj,
+            (LPCWSTR)exeArgs,
+            (LPCWSTR)m_expandedWorkingDir,
+            (LPCWSTR)updateAppList.appDesc,
+            hasIcon ? (LPCWSTR)iconPath : NULL);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        if (updateAppList.appGroupLength)
+        {
+            lstrcpyW(key, updateAppList.appGroup);
+            lstrcatW(key, L"\\");
+        }
+        lstrcatW(key, updateAppList.appId);
+        m_spFileDB->OnFileAdded(key, linkPath, iconPath);
+
+        if (updateAppList.flags & RDPAPPLIST_HINT_SYNC)
+        {
+            // During sync mode, remove added file to sync DB, so these won't be cleaned up at end.
+            assert(m_spFileDBSync.Get());
+            m_spFileDBSync->OnFileRemoved(linkPath);
+            if (lstrlenW(iconPath))
+            {
+                m_spFileDBSync->OnFileRemoved(iconPath);
+            }
+        }
+
+        if (updateAppList.flags & RDPAPPLIST_HINT_SYNC_END)
+        {
+            OnSyncEnd();
+        }
+
+        return S_OK;
+    }
+
+    HRESULT
+        OnDeleteAppList(
+            UINT64* size,
+            BYTE** buffer
+        )
+    {
+        HRESULT hr;
+        RDPAPPLIST_DELETE_APPLIST_PDU deleteAppList = {};
+        WCHAR linkPath[MAX_PATH] = {};
+        WCHAR iconPath[MAX_PATH] = {};
+        WCHAR key[MAX_PATH] = {};
+
+        // Buffer read scope
+        {
+            BYTE* cur;
+            UINT64 len;
+
+            assert(size);
+            assert(buffer);
+
+            cur = *buffer;
+            len = *size;
+
+            hr = ReadAppListDelete(&len, &cur, &deleteAppList);
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+
+            *buffer = cur;
+            *size = len;
+        }
+
+        if (deleteAppList.appGroupLength)
+        {
+            lstrcpyW(key, deleteAppList.appGroup);
+            lstrcatW(key, L"\\");
+        }
+        lstrcatW(key, deleteAppList.appId);
+
+        hr = m_spFileDB->FindFiles(key, linkPath, ARRAYSIZE(linkPath), iconPath, ARRAYSIZE(iconPath));
+        if (FAILED(hr))
+        {
+            DebugPrint(L"OnDeleteAppList(): key %s not found\n", key);
+            return E_FAIL;
+        }
+
+        if (lstrlenW(linkPath) && !DeleteFileW(linkPath))
+        {
+            DebugPrint(L"DeleteFile(%s) failed, error %x\n", linkPath, GetLastError());
+        }
+        DebugPrint(L"Delete Path Link: %s\n", linkPath);
+
+        if (lstrlenW(iconPath) && !DeleteFileW(iconPath))
+        {
+            DebugPrint(L"DeleteFile(%s) failed, error %x\n", iconPath, GetLastError());
+        }
+        DebugPrint(L"Delete Icon Path: %s\n", iconPath);
+
+        m_spFileDB->OnFileRemoved(key);
+
+        return S_OK;
     }
 
     //
@@ -279,185 +681,15 @@ public:
 
             if (appListHeader.cmdId == RDPAPPLIST_CMDID_CAPS)
             {
-                hr = ReadAppListServerCaps(&len, &cur, &m_serverCaps);
+                hr = OnCaps(&len, &cur);
                 if (FAILED(hr))
                 {
-                    break;
-                }
-
-                PWSTR appMenuPath = NULL; // free by CoTaskMemFree. 
-                SHGetKnownFolderPath(FOLDERID_StartMenu, 0, NULL, &appMenuPath);
-                if (!appMenuPath)
-                {
-                    DebugPrint(L"SHGetKnownFolderPath(FOLDERID_StartMenu) failed\n");
-                    hr = E_FAIL;
-                    break;
-                }
-
-                memcpy(m_appGroup, m_serverCaps.appListProviderName, m_serverCaps.appListProviderNameLength);
-                wsprintfW(m_appMenuPath, L"%s\\Programs\\%s", appMenuPath, m_appGroup);
-                if (!CreateDirectoryW(m_appMenuPath, NULL))
-                {
-                    if (ERROR_ALREADY_EXISTS != GetLastError())
-                    {
-                        DebugPrint(L"Failed to create %s\n", m_appMenuPath);
-                        hr = E_FAIL;
-                        break;
-                    }
-                }
-                CoTaskMemFree(appMenuPath);
-                DebugPrint(L"AppMenuPath: %s\n", m_appMenuPath);
-
-                UINT64 lenTempPath;
-                lenTempPath = GetTempPathW(MAX_PATH, m_iconPath);
-                if (!lenTempPath)
-                {
-                    DebugPrint(L"GetTempPathW failed\n");
-                    hr = E_FAIL;
-                    break;
-                }
-
-                if (lenTempPath + 5 +
-                    (m_serverCaps.appListProviderNameLength / sizeof(WCHAR)) > ARRAYSIZE(m_iconPath))
-                {
-                    DebugPrint(L"provider name length check failed, length %d\n", m_serverCaps.appListProviderNameLength);
-                     hr = E_FAIL;
-                     break;
-                }
- 
-                lstrcatW(m_iconPath, L"WSLDVCPlugin\\");
-                if (!CreateDirectoryW(m_iconPath, NULL))
-                {
-                    if (ERROR_ALREADY_EXISTS != GetLastError())
-                    {
-                        DebugPrint(L"Failed to create %s\n", m_iconPath);
-                        hr = E_FAIL;
-                        break;
-                    }
-                }
-                lstrcatW(m_iconPath, m_appGroup);
-                if (!CreateDirectoryW(m_iconPath, NULL))
-                {
-                    if (ERROR_ALREADY_EXISTS != GetLastError())
-                    {
-                        DebugPrint(L"Failed to create %s\n", m_iconPath);
-                        hr = E_FAIL;
-                        break;
-                    }
-                }
-                DebugPrint(L"IconPath: %s\n", m_iconPath);
-
-                if (ExpandEnvironmentStringsW(c_WSL_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
-                {
-                    DebugPrint(L"Failed to expand WSL exe: %s : %d\n", c_WSL_exe, GetLastError());
-                    hr = E_FAIL;
-                    break;
-                }
-                DebugPrint(L"WSL.exe: %s\n", m_expandedPathObj);
-
-                if (ExpandEnvironmentStringsW(c_Working_dir, m_expandedWorkingDir, ARRAYSIZE(m_expandedWorkingDir)) == 0)
-                {
-                    DebugPrint(L"Failed to expand working dir: %s : %d\n", c_Working_dir, GetLastError());
-                    hr = E_FAIL;
-                    break;
-                }
-                DebugPrint(L"WSL.exe working dir: %s\n", m_expandedWorkingDir);
-
-                // Eacho back header (8 bytes) + version (2 bytes) to server with length trimmed.
-                union {
-                    RDPAPPLIST_HEADER replyHeader;
-                    BYTE replyBuf[10];
-                };
-                memcpy(replyBuf, header, 10);
-                replyHeader.length = 10;
-                hr = m_spChannel->Write(10, replyBuf, nullptr);
-                if (FAILED(hr))
-                {
-                    DebugPrint(L"m_spChannel->Write failed, hr = %x\n", hr);
                     break;
                 }
             }
             else if (appListHeader.cmdId == RDPAPPLIST_CMDID_UPDATE_APPLIST)
             {
-                RDPAPPLIST_UPDATE_APPLIST_PDU updateAppList = {};
-                RDPAPPLIST_ICON_DATA iconData = {};
-                WCHAR linkPath[MAX_PATH] = {};
-                WCHAR iconPath[MAX_PATH] = {};
-                WCHAR exeArgs[MAX_PATH] = {};
-                bool hasIcon = false;
-
-                hr = ReadAppListUpdate(&len, &cur, &updateAppList);
-                if (FAILED(hr))
-                {
-                    break;
-                }
-
-                if (updateAppList.flags & RDPAPPLIST_FIELD_ICON)
-                {
-                    hr = ReadAppListIconData(&len, &cur, &iconData);
-                    if (FAILED(hr))
-                    {
-                        break;
-                    }
-
-                    lstrcpyW(iconPath, m_iconPath);
-                    if (updateAppList.appGroupLength)
-                    {
-                        lstrcatW(iconPath, L"\\");
-                        lstrcatW(iconPath, updateAppList.appGroup);
-                        if (!CreateDirectoryW(iconPath, NULL))
-                        {
-                            if (ERROR_ALREADY_EXISTS != GetLastError())
-                            {
-                                DebugPrint(L"Failed to create %s\n", iconPath);
-                                hr = E_FAIL;
-                                break;
-                            }
-                        }
-                    }
-                    lstrcatW(iconPath, L"\\");
-                    lstrcatW(iconPath, updateAppList.appId);
-                    lstrcatW(iconPath, L".ico");
-                    if (SUCCEEDED(CreateIconFile(iconData.iconFileData, iconData.iconFileSize, iconPath)))
-                    {
-                        hasIcon = true;
-                    }
-                    else
-                    {
-                        DebugPrint(L"Failed to create icon file %s\n", iconPath);
-                        // Icon is optional, so keep going.
-                    }
-                }
-
-                lstrcpyW(linkPath, m_appMenuPath);
-                if (updateAppList.appGroupLength)
-                {
-                    lstrcatW(linkPath, L"\\");
-                    lstrcatW(linkPath, updateAppList.appGroup);
-                    if (!CreateDirectoryW(linkPath, NULL))
-                    {
-                        if (ERROR_ALREADY_EXISTS != GetLastError())
-                        {
-                            DebugPrint(L"Failed to create %s\n", linkPath);
-                            hr = E_FAIL;
-                            break;
-                        }
-                    }
-                }
-                lstrcatW(linkPath, L"\\");
-                lstrcatW(linkPath, updateAppList.appId);
-                lstrcatW(linkPath, L".lnk");
-
-                wsprintfW(exeArgs,
-                    L"~ -d %s %s",
-                    m_appGroup, updateAppList.appExecPath);
-
-                hr = CreateShellLink((LPCWSTR)linkPath,
-                    (LPCWSTR)m_expandedPathObj,
-                    (LPCWSTR)exeArgs,
-                    (LPCWSTR)m_expandedWorkingDir,
-                    (LPCWSTR)updateAppList.appDesc,
-                    hasIcon ? (LPCWSTR)iconPath : NULL);
+                hr = OnUpdateAppList(&len, &cur);
                 if (FAILED(hr))
                 {
                     break;
@@ -465,47 +697,11 @@ public:
             }
             else if (appListHeader.cmdId == RDPAPPLIST_CMDID_DELETE_APPLIST)
             {
-                RDPAPPLIST_DELETE_APPLIST_PDU deleteAppList = {};
-                WCHAR linkPath[MAX_PATH] = {};
-                WCHAR iconPath[MAX_PATH] = {};
-
-                hr = ReadAppListDelete(&len, &cur, &deleteAppList);
+                hr = OnDeleteAppList(&len, &cur);
                 if (FAILED(hr))
                 {
                     break;
                 }
-
-                lstrcpyW(linkPath, m_appMenuPath);
-                if (deleteAppList.appGroupLength)
-                {
-                    lstrcatW(linkPath, L"\\");
-                    lstrcatW(linkPath, deleteAppList.appGroup);
-                }
-                lstrcatW(linkPath, L"\\");
-                lstrcatW(linkPath, deleteAppList.appId);
-                lstrcatW(linkPath, L".lnk");
-
-                if (!DeleteFileW(linkPath))
-                {
-                    DebugPrint(L"DeleteFile(%s) failed, error %x\n", linkPath, GetLastError());
-                }
-                DebugPrint(L"Delete Path Link: %s\n", linkPath);
-
-                lstrcpyW(iconPath, m_iconPath);
-                if (deleteAppList.appGroupLength)
-                {
-                    lstrcatW(iconPath, L"\\");
-                    lstrcatW(iconPath, deleteAppList.appGroup);
-                }
-                lstrcatW(iconPath, L"\\");
-                lstrcatW(iconPath, deleteAppList.appId);
-                lstrcatW(iconPath, L".ico");
-
-                if (!DeleteFileW(iconPath))
-                {
-                    DebugPrint(L"DeleteFile(%s) failed, error %x\n", iconPath, GetLastError());
-                }
-                DebugPrint(L"Delete Icon Path: %s\n", iconPath);
             }
             else if (appListHeader.cmdId == RDPAPPLIST_CMDID_DELETE_APPLIST_PROVIDER)
             {
@@ -528,6 +724,11 @@ public:
     STDMETHODIMP 
         OnClose()
     {
+        // Make sure sync mode is cancelled.
+        OnSyncEnd(false);
+
+        m_spFileDB->OnClose();
+        m_spFileDB = nullptr;
         return S_OK;
     }
 
@@ -541,8 +742,12 @@ protected:
 private:
         
     ComPtr<IWTSVirtualChannel> m_spChannel;
+
+    ComPtr<IWSLDVCFileDB> m_spFileDB;
+    ComPtr<IWSLDVCFileDB> m_spFileDBSync; // valid only during sync.
+
     RDPAPPLIST_SERVER_CAPS_PDU m_serverCaps = {};
-    WCHAR m_appGroup[MAX_PATH] = {};
+    WCHAR m_appProvider[MAX_PATH] = {};
     WCHAR m_appMenuPath[MAX_PATH] = {};
     WCHAR m_iconPath[MAX_PATH] = {};
     WCHAR m_expandedPathObj[MAX_PATH] = {};

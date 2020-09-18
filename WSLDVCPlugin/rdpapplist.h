@@ -31,6 +31,11 @@ typedef struct _RDPAPPLIST_HEADER
     UINT32 length;
 } RDPAPPLIST_HEADER;
 
+typedef struct _RDPAPPLIST_CLIENT_CAPS_PDU
+{
+    UINT16 version;
+} RDPAPPLIST_CLIENT_CAPS_PDU;
+
 typedef struct _RDPAPPLIST_SERVER_CAPS_PDU
 {
     UINT16 version;

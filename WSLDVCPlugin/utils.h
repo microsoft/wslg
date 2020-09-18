@@ -1,11 +1,15 @@
 #pragma once
 
+//#ifdef _DEBUG
 #define DBG_MESSAGE
+//#endif // _DEBUG
 
 #ifdef DBG_MESSAGE
 void DebugPrint(const wchar_t* format, ...);
+#define DebugAssert(exp) assert(exp)
 #else
 #define DebugPrint
+#define DebugAssert
 #endif // DBG_MESSAGE
 
 HRESULT

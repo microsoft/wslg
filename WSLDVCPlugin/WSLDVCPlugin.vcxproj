@@ -134,6 +134,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -153,6 +154,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -171,6 +173,7 @@
       <EnableUAC>false</EnableUAC>
       <StripPrivateSymbols>
       </StripPrivateSymbols>
+      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -189,6 +192,7 @@
       <EnableUAC>false</EnableUAC>
       <StripPrivateSymbols>
       </StripPrivateSymbols>
+      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -209,6 +213,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -229,6 +234,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -242,6 +248,7 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="WSLDVCCallback.h" />
+    <ClInclude Include="WSLDVCFileDB.h" />
     <ClInclude Include="WSLDVCListenerCallback.h" />
     <ClInclude Include="WSLDVCPlugin.h" />
   </ItemGroup>
@@ -257,6 +264,7 @@
     </ClCompile>
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="WSLDVCCallback.cpp" />
+    <ClCompile Include="WSLDVCFileDB.cpp" />
     <ClCompile Include="WSLDVCListenerCallback.cpp" />
     <ClCompile Include="WSLDVCPlugin.cpp" />
   </ItemGroup>
