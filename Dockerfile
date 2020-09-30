@@ -81,6 +81,12 @@ ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/${WSLG_ARCH}-linux-gnu
 
 RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 
+# Build wayland
+COPY vendor/wayland /work/vendor/wayland
+WORKDIR /work/vendor/wayland
+RUN ./autogen.sh --prefix=/usr/local --disable-documentation && \
+    make -j8 && make install
+
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
 WORKDIR /work/vendor/FreeRDP
