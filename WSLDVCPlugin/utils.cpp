@@ -102,3 +102,54 @@ CreateIconFile(BYTE* pBuffer,
     DebugPrint(L"\tresult: %x\n", hr);
     return hr;
 }
+
+#define MAX_LOCALE_CODE 9
+
+BOOL GetLocaleName(char *localeName, int localeNameSize)
+{
+    char langCode[MAX_LOCALE_CODE] = {};
+    char countryName[MAX_LOCALE_CODE] = {};
+    int result = 0;
+
+    LCID lcid = MAKELCID(GetUserDefaultUILanguage(), SORT_DEFAULT);
+    result = GetLocaleInfoA(lcid,
+        LOCALE_SISO639LANGNAME,
+        langCode,
+        MAX_LOCALE_CODE) != 0;
+    if (localeNameSize > result)
+    {
+        strcpy_s(localeName, localeNameSize, langCode);
+        localeNameSize -= result;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    if (localeNameSize > 1)
+    {
+        strcat_s(localeName, localeNameSize, "_");
+        localeNameSize -= 1;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    result = GetLocaleInfoA(lcid,
+        LOCALE_SISO3166CTRYNAME,
+        countryName,
+        MAX_LOCALE_CODE) != 0;
+    if (localeNameSize > result)
+    {
+        strcat_s(localeName, localeNameSize, countryName);
+        localeNameSize -= result;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+

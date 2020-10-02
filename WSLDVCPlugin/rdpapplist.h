@@ -21,9 +21,12 @@
 #define RDPAPPLIST_HINT_SYNC_START 0x00200000 /* Sync appId start (use with _SYNC). */
 #define RDPAPPLIST_HINT_SYNC_END   0x00400000 /* Sync appId end (use with _SYNC). */
 
-#define RDPAPPLIST_CHANNEL_VERSION 1
+#define RDPAPPLIST_CHANNEL_VERSION   1
+#define RDPAPPLIST_CHANNEL_VERSION_2 2
 
 #define RDPAPPLIST_HEADER_SIZE 8
+
+#define RDPAPPLIST_LANG_SIZE 32
 
 typedef struct _RDPAPPLIST_HEADER
 {
@@ -31,10 +34,17 @@ typedef struct _RDPAPPLIST_HEADER
     UINT32 length;
 } RDPAPPLIST_HEADER;
 
-typedef struct _RDPAPPLIST_CLIENT_CAPS_PDU
+typedef struct _RDPAPPLIST_CLIENT_CAPS_PDU_V1
 {
     UINT16 version;
-} RDPAPPLIST_CLIENT_CAPS_PDU;
+} RDPAPPLIST_CLIENT_CAPS_PDU_V1;
+
+typedef struct _RDPAPPLIST_CLIENT_CAPS_PDU_V2
+{
+    UINT16 version;
+    /* ISO 639 (Language name) and ISO 3166 (Country name) connected with '_', such as en_US, ja_JP */
+    char clientLanguageId[RDPAPPLIST_LANG_SIZE];
+} RDPAPPLIST_CLIENT_CAPS_PDU_V2;
 
 typedef struct _RDPAPPLIST_SERVER_CAPS_PDU
 {

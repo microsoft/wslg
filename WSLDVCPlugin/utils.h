@@ -25,6 +25,10 @@ CreateIconFile(BYTE* pBuffer,
     UINT32 cbSize,
     WCHAR* lpszIconFile);
 
+BOOL
+GetLocaleName(char* localeName,
+    int localeNameSize);
+
 #pragma pack(1)
 //
 // .ICO file format header

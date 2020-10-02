@@ -78,11 +78,6 @@ public:
         len = *size;
 
         ReadUINT16(serverCaps->version, cur, len);
-        if (m_serverCaps.version != RDPAPPLIST_CHANNEL_VERSION)
-        {
-            DebugPrint(L"Invalid applist version: %d", m_serverCaps.version);
-            goto Error_Read;
-        }
         ReadSTRING(serverCaps->appListProviderName, cur, len, true);
     
         *buffer = cur;
@@ -403,22 +398,47 @@ public:
         }
         DebugPrint(L"WSL.exe working dir: %s\n", m_expandedWorkingDir);
 
+        if (!GetLocaleName(m_clientLanguageId, sizeof m_clientLanguageId))
+        {
+            strcpy_s(m_clientLanguageId, sizeof m_clientLanguageId, "en_US");
+        }
+
         // Reply back header (8 bytes) + version (2 bytes) to server.
         #pragma pack(1)
         struct {
-            RDPAPPLIST_HEADER Header;
-            RDPAPPLIST_CLIENT_CAPS_PDU caps;
-        } replyBuf;
+            RDPAPPLIST_HEADER capsHeader;
+            union
+            {
+                RDPAPPLIST_CLIENT_CAPS_PDU_V1 caps;
+                RDPAPPLIST_CLIENT_CAPS_PDU_V2 capsV2;
+            };
+        } replyBuf = {};
         #pragma pack(0)
-        C_ASSERT(sizeof replyBuf == 10);
 
-        replyBuf.Header.cmdId = RDPAPPLIST_CMDID_CAPS;
-        replyBuf.Header.length = sizeof replyBuf;
-        replyBuf.caps.version = RDPAPPLIST_CHANNEL_VERSION;
-        hr = m_spChannel->Write(10, (BYTE *)&replyBuf, nullptr);
-        if (FAILED(hr))
+        replyBuf.capsHeader.cmdId = RDPAPPLIST_CMDID_CAPS;
+        if (m_serverCaps.version >= RDPAPPLIST_CHANNEL_VERSION_2)
         {
-            DebugPrint(L"m_spChannel->Write failed, hr = %x\n", hr);
+            replyBuf.capsHeader.length = sizeof RDPAPPLIST_HEADER + sizeof RDPAPPLIST_CLIENT_CAPS_PDU_V2;
+            replyBuf.capsV2.version = RDPAPPLIST_CHANNEL_VERSION_2;
+            strncpy_s(replyBuf.capsV2.clientLanguageId, m_clientLanguageId, sizeof replyBuf.capsV2.clientLanguageId);
+        }
+        else if (m_serverCaps.version == RDPAPPLIST_CHANNEL_VERSION)
+        {
+            replyBuf.capsHeader.length = sizeof RDPAPPLIST_HEADER + sizeof RDPAPPLIST_CLIENT_CAPS_PDU_V1;
+            replyBuf.caps.version = RDPAPPLIST_CHANNEL_VERSION;
+        }
+        else
+        {
+            DebugPrint(L"Invalid server version : %d\n", m_serverCaps.version);
+            hr = E_FAIL;
+        }
+        if (SUCCEEDED(hr))
+        {
+            hr = m_spChannel->Write(replyBuf.capsHeader.length, (BYTE*)&replyBuf, nullptr);
+            if (FAILED(hr))
+            {
+                DebugPrint(L"m_spChannel->Write failed, hr = %x\n", hr);
+            }
         }
 
         return hr;
@@ -752,6 +772,7 @@ private:
     WCHAR m_iconPath[MAX_PATH] = {};
     WCHAR m_expandedPathObj[MAX_PATH] = {};
     WCHAR m_expandedWorkingDir[MAX_PATH] = {};
+    CHAR m_clientLanguageId[RDPAPPLIST_LANG_SIZE] = {};
 };
 
 HRESULT
