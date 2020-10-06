@@ -86,6 +86,7 @@ COPY vendor/wayland /work/vendor/wayland
 WORKDIR /work/vendor/wayland
 RUN ./autogen.sh --prefix=/usr/local --disable-documentation && \
     make -j8 && make install
+RUN echo 'wayland:' `git --git-dir=/work/vendor/wayland/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
