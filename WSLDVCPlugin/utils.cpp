@@ -15,6 +15,7 @@ void DebugPrint(const wchar_t* format, ...)
 }
 #endif // DBG_MESSAGE
 
+_Use_decl_annotations_
 HRESULT
 CreateShellLink(LPCWSTR lpszPathLink,
     LPCWSTR lpszPathObj,
@@ -72,10 +73,11 @@ CreateShellLink(LPCWSTR lpszPathLink,
     return hr;
 }
 
+_Use_decl_annotations_
 HRESULT
 CreateIconFile(BYTE* pBuffer,
     UINT32 cbSize,
-    WCHAR* lpszIconFile)
+    LPCWSTR lpszIconFile)
 {
     HRESULT hr = S_OK;
     HANDLE hFile;
@@ -105,6 +107,7 @@ CreateIconFile(BYTE* pBuffer,
 
 #define MAX_LOCALE_CODE 9
 
+_Use_decl_annotations_
 BOOL GetLocaleName(char *localeName, int localeNameSize)
 {
     char langCode[MAX_LOCALE_CODE] = {};

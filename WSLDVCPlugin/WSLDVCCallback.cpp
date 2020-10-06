@@ -181,7 +181,7 @@ public:
         pIconBitmapInfo->biWidth = iconData->iconWidth;
         pIconBitmapInfo->biHeight = iconData->iconHeight * 2;
         pIconBitmapInfo->biPlanes = 1;
-        pIconBitmapInfo->biBitCount = iconData->iconBpp;
+        pIconBitmapInfo->biBitCount = (WORD)iconData->iconBpp;
         pIconBitmapInfo->biCompression = BI_RGB;
         pIconBitmapInfo->biSizeImage = iconData->iconBitsLength;
         pIconBitmapInfo->biXPelsPerMeter = 0;
@@ -404,7 +404,7 @@ public:
         }
 
         // Reply back header (8 bytes) + version (2 bytes) to server.
-        #pragma pack(1)
+        #pragma pack(push,1)
         struct {
             RDPAPPLIST_HEADER capsHeader;
             union
@@ -413,7 +413,7 @@ public:
                 RDPAPPLIST_CLIENT_CAPS_PDU_V2 capsV2;
             };
         } replyBuf = {};
-        #pragma pack(0)
+        #pragma pack(pop)
 
         replyBuf.capsHeader.cmdId = RDPAPPLIST_CMDID_CAPS;
         if (m_serverCaps.version >= RDPAPPLIST_CHANNEL_VERSION_2)
@@ -690,7 +690,6 @@ public:
         while (len)
         {
             RDPAPPLIST_HEADER appListHeader = {};
-            BYTE* header = cur;
 
             hr = ReadAppListHeader(&len, &cur, &appListHeader);
             if (FAILED(hr))

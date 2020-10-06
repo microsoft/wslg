@@ -54,6 +54,7 @@ public:
     }
 
 private:
+
     wstring m_fileId;
     wstring m_linkFilePath;
     wstring m_iconFilePath;
@@ -71,10 +72,12 @@ public:
             void* pContext
         )
     {
+        UNREFERENCED_PARAMETER(pContext);
         DebugPrint(L"RuntimeClassInitialize(): WSLDVCFileDB iniitalized: %p\n", this);
         return S_OK;
     }
 
+    _Use_decl_annotations_
     STDMETHODIMP
         OnFileAdded(LPCWSTR key, LPCWSTR linkFilePath, LPCWSTR iconFilePath)
     {
@@ -120,6 +123,7 @@ public:
         return hr;
     }
 
+    _Use_decl_annotations_
     STDMETHODIMP
         OnFileRemoved(LPCWSTR key)
     {
@@ -152,12 +156,21 @@ public:
         return hr;
     }
 
+    _Use_decl_annotations_
     STDMETHODIMP FindFiles(
         LPCWSTR key, 
-        _Out_ LPWSTR linkFilePath, UINT32 linkFilePathSize,
-        _Out_ LPWSTR iconFilePath, UINT32 iconFilePathSize)
+        LPWSTR linkFilePath, UINT32 linkFilePathSize,
+        LPWSTR iconFilePath, UINT32 iconFilePathSize)
     {
         set<fileEntry>::iterator it;
+
+        assert(linkFilePath);
+        assert(linkFilePathSize);
+        assert(iconFilePath);
+        assert(iconFilePathSize);
+
+        *linkFilePath = NULL;
+        *iconFilePath = NULL;
 
         DebugPrint(L"FindFiles()\n");
         DebugPrint(L"\tkey: %s\n", key);
@@ -166,15 +179,15 @@ public:
         if (it != m_fileEntries.end())
         {
             DebugPrint(L"\tKey found:\n");
-            if (it->getLinkFilePath().length() < linkFilePathSize)
+            DebugPrint(L"\tlinkPath: %s\n", it->getLinkFilePath().c_str());
+            DebugPrint(L"\ticonPath: %s\n", it->getIconFilePath().c_str());
+            if (wcscpy_s(linkFilePath, linkFilePathSize, it->getLinkFilePath().c_str()) != 0)
             {
-                DebugPrint(L"\tlinkPath: %s\n", it->getLinkFilePath().c_str());
-                lstrcpyW(linkFilePath, it->getLinkFilePath().c_str());
+                return E_FAIL;
             }
-            if (it->getIconFilePath().length() < iconFilePathSize)
+            if (wcscpy_s(iconFilePath, iconFilePathSize, it->getIconFilePath().c_str()) != 0)
             {
-                DebugPrint(L"\ticonPath: %s\n", it->getIconFilePath().c_str());
-                lstrcpyW(iconFilePath, it->getIconFilePath().c_str());
+                return E_FAIL;
             }
             return S_OK;
         }
@@ -185,13 +198,15 @@ public:
         }
     }
 
+    _Use_decl_annotations_
     STDMETHODIMP 
-        addAllFilesAsFileIdAt(wchar_t* path)
+        addAllFilesAsFileIdAt(LPCWSTR path)
     {
         //DebugPrint(L"Dump directory: %s\n", path);
         return addAllSubFolderFiles(path);
     }
 
+    _Use_decl_annotations_
     STDMETHODIMP
         deleteAllFileIdFiles()
     {
@@ -223,8 +238,11 @@ public:
             }
             it = m_fileEntries.erase(it);
         }
+
+        return S_OK;
     }
 
+    _Use_decl_annotations_
     STDMETHODIMP
         OnClose()
     {
@@ -236,8 +254,9 @@ public:
     }
 
 protected:
+
     HRESULT
-        addAllSubFolderFiles(const wchar_t* path)
+        addAllSubFolderFiles(_In_z_ const wchar_t* path)
     {
         WIN32_FIND_DATA data = {};
         wstring s = path;
@@ -278,6 +297,8 @@ protected:
             }
         } while (FindNextFile(hFind, &data));
         FindClose(hFind);
+
+        return S_OK;
     }
 
     virtual

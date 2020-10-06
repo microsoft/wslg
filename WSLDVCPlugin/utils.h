@@ -13,20 +13,20 @@ void DebugPrint(const wchar_t* format, ...);
 #endif // DBG_MESSAGE
 
 HRESULT
-CreateShellLink(LPCWSTR lpszPathLink,
-    LPCWSTR lpszPathObj, 
-    LPCWSTR lpszArgs,
-    LPCWSTR lpszWorkingDir,
-    LPCWSTR lpszDesc, 
-	LPCWSTR lpszPathIcon);
+CreateShellLink(_In_z_ LPCWSTR lpszPathLink,
+    _In_z_ LPCWSTR lpszPathObj, 
+    _In_z_ LPCWSTR lpszArgs,
+    _In_z_ LPCWSTR lpszWorkingDir,
+    _In_z_ LPCWSTR lpszDesc, 
+	_In_z_ LPCWSTR lpszPathIcon);
 
 HRESULT
 CreateIconFile(BYTE* pBuffer,
     UINT32 cbSize,
-    WCHAR* lpszIconFile);
+    _In_z_ LPCWSTR lpszIconFile);
 
 BOOL
-GetLocaleName(char* localeName,
+GetLocaleName(_Out_writes_z_(localeNameSize) char* localeName,
     int localeNameSize);
 
 #pragma pack(1)
