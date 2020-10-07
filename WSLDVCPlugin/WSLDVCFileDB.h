@@ -10,8 +10,8 @@ public:
 
     virtual HRESULT STDMETHODCALLTYPE OnFileAdded(
         _In_z_ LPCWSTR key, 
-        _In_z_ LPCWSTR linkFilePath, 
-        _In_z_ LPCWSTR iconFilePath) = 0;
+        _In_opt_z_ LPCWSTR linkFilePath, 
+        _In_opt_z_ LPCWSTR iconFilePath) = 0;
     virtual HRESULT STDMETHODCALLTYPE OnFileRemoved(
         _In_z_ LPCWSTR key) = 0;
 

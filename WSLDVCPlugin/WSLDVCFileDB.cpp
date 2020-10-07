@@ -77,9 +77,8 @@ public:
         return S_OK;
     }
 
-    _Use_decl_annotations_
     STDMETHODIMP
-        OnFileAdded(LPCWSTR key, LPCWSTR linkFilePath, LPCWSTR iconFilePath)
+        OnFileAdded(_In_z_ LPCWSTR key, _In_opt_z_ LPCWSTR linkFilePath, _In_opt_z_ LPCWSTR iconFilePath)
     {
         HRESULT hr = S_OK;
         set<fileEntry>::iterator it;
@@ -123,9 +122,8 @@ public:
         return hr;
     }
 
-    _Use_decl_annotations_
     STDMETHODIMP
-        OnFileRemoved(LPCWSTR key)
+        OnFileRemoved(_In_z_ LPCWSTR key)
     {
         HRESULT hr = S_OK;
         set<fileEntry>::iterator it;
@@ -156,11 +154,10 @@ public:
         return hr;
     }
 
-    _Use_decl_annotations_
     STDMETHODIMP FindFiles(
-        LPCWSTR key, 
-        LPWSTR linkFilePath, UINT32 linkFilePathSize,
-        LPWSTR iconFilePath, UINT32 iconFilePathSize)
+        _In_z_ LPCWSTR key, 
+        _Out_writes_z_(linkFilePathSize) LPWSTR linkFilePath, UINT32 linkFilePathSize,
+        _Out_writes_z_(iconFilePathSize) LPWSTR iconFilePath, UINT32 iconFilePathSize)
     {
         set<fileEntry>::iterator it;
 
@@ -198,15 +195,13 @@ public:
         }
     }
 
-    _Use_decl_annotations_
     STDMETHODIMP 
-        addAllFilesAsFileIdAt(LPCWSTR path)
+        addAllFilesAsFileIdAt(_In_z_ LPCWSTR path)
     {
         //DebugPrint(L"Dump directory: %s\n", path);
         return addAllSubFolderFiles(path);
     }
 
-    _Use_decl_annotations_
     STDMETHODIMP
         deleteAllFileIdFiles()
     {
@@ -242,7 +237,6 @@ public:
         return S_OK;
     }
 
-    _Use_decl_annotations_
     STDMETHODIMP
         OnClose()
     {

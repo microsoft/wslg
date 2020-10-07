@@ -52,7 +52,10 @@ CreateShellLink(LPCWSTR lpszPathLink,
         // Set the path to the shortcut target and add the description. 
         psl->SetPath(lpszPathObj);
         psl->SetArguments(lpszArgs);
-        psl->SetIconLocation(lpszPathIcon, 0);
+        if (lpszPathIcon)
+        {
+            psl->SetIconLocation(lpszPathIcon, 0);
+        }
         psl->SetDescription(lpszDesc);
         psl->SetWorkingDirectory(lpszWorkingDir);
         psl->SetShowCmd(SW_SHOWMINNOACTIVE);
@@ -108,33 +111,23 @@ CreateIconFile(BYTE* pBuffer,
 #define MAX_LOCALE_CODE 9
 
 _Use_decl_annotations_
-BOOL GetLocaleName(char *localeName, int localeNameSize)
+BOOL GetLocaleName(char* localeName, int localeNameSize)
 {
     char langCode[MAX_LOCALE_CODE] = {};
     char countryName[MAX_LOCALE_CODE] = {};
     int result = 0;
+
+    assert(localeName);
+    localeName[0] = '\0';
 
     LCID lcid = MAKELCID(GetUserDefaultUILanguage(), SORT_DEFAULT);
     result = GetLocaleInfoA(lcid,
         LOCALE_SISO639LANGNAME,
         langCode,
         MAX_LOCALE_CODE) != 0;
-    if (localeNameSize > result)
-    {
-        strcpy_s(localeName, localeNameSize, langCode);
-        localeNameSize -= result;
-    }
-    else
-    {
-        return FALSE;
-    }
-
-    if (localeNameSize > 1)
-    {
-        strcat_s(localeName, localeNameSize, "_");
-        localeNameSize -= 1;
-    }
-    else
+    if ((result == 0) ||
+        (strcpy_s(localeName, localeNameSize, langCode) != 0) ||
+        (strcat_s(localeName, localeNameSize, "_") != 0))
     {
         return FALSE;
     }
@@ -143,12 +136,8 @@ BOOL GetLocaleName(char *localeName, int localeNameSize)
         LOCALE_SISO3166CTRYNAME,
         countryName,
         MAX_LOCALE_CODE) != 0;
-    if (localeNameSize > result)
-    {
-        strcat_s(localeName, localeNameSize, countryName);
-        localeNameSize -= result;
-    }
-    else
+    if ((result == 0) ||
+        (strcat_s(localeName, localeNameSize, countryName) != 0))
     {
         return FALSE;
     }

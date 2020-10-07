@@ -18,10 +18,10 @@ CreateShellLink(_In_z_ LPCWSTR lpszPathLink,
     _In_z_ LPCWSTR lpszArgs,
     _In_z_ LPCWSTR lpszWorkingDir,
     _In_z_ LPCWSTR lpszDesc, 
-	_In_z_ LPCWSTR lpszPathIcon);
+    _In_opt_z_ LPCWSTR lpszPathIcon);
 
 HRESULT
-CreateIconFile(BYTE* pBuffer,
+CreateIconFile(_In_reads_bytes_(cbSize) BYTE* pBuffer,
     UINT32 cbSize,
     _In_z_ LPCWSTR lpszIconFile);
 

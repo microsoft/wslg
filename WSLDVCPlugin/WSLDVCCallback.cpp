@@ -32,12 +32,12 @@ public:
 
     HRESULT
         ReadAppListHeader(
-            UINT64 *size,
-            BYTE** buffer,
-            RDPAPPLIST_HEADER *appListHeader
+            _Inout_ UINT64 *size,
+            _Inout_ const BYTE** buffer,
+            _Out_ RDPAPPLIST_HEADER *appListHeader
         )
     {
-        BYTE* cur;
+        const BYTE* cur;
         UINT64 len;
 
         assert(size);
@@ -62,12 +62,12 @@ public:
 
     HRESULT
         ReadAppListServerCaps(
-            UINT64 *size,
-            BYTE** buffer,
-            RDPAPPLIST_SERVER_CAPS_PDU *serverCaps
+            _Inout_ UINT64 *size,
+            _Inout_ const BYTE** buffer,
+            _Out_ RDPAPPLIST_SERVER_CAPS_PDU *serverCaps
         )
     {
-        BYTE* cur;
+        const BYTE* cur;
         UINT64 len;
 
         assert(size);
@@ -92,12 +92,12 @@ public:
 
     HRESULT
         ReadAppListUpdate(
-            UINT64* size,
-            BYTE** buffer,
-            RDPAPPLIST_UPDATE_APPLIST_PDU* updateAppList
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer,
+            _Out_ RDPAPPLIST_UPDATE_APPLIST_PDU* updateAppList
         )
     {
-        BYTE* cur;
+        const BYTE* cur;
         UINT64 len;
 
         assert(size);
@@ -125,12 +125,12 @@ public:
 
     HRESULT
         ReadAppListIconData(
-            UINT64* size,
-            BYTE** buffer,
-            RDPAPPLIST_ICON_DATA* iconData
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer,
+            _Out_ RDPAPPLIST_ICON_DATA* iconData
         )
     {
-        BYTE* cur;
+        const BYTE* cur;
         UINT64 len;
         ICON_HEADER* pIconHeader;
         BITMAPINFOHEADER* pIconBitmapInfo;
@@ -222,12 +222,12 @@ public:
     
     HRESULT
         ReadAppListDelete(
-            UINT64* size,
-            BYTE** buffer,
-            RDPAPPLIST_DELETE_APPLIST_PDU* deleteAppList
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer,
+            _Out_ RDPAPPLIST_DELETE_APPLIST_PDU* deleteAppList
         )
     {
-        BYTE* cur;
+        const BYTE* cur;
         UINT64 len;
         
         assert(size);
@@ -293,15 +293,15 @@ public:
 
     HRESULT
         OnCaps(
-            UINT64* size,
-            BYTE** buffer
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer
         )
     {
         HRESULT hr;
 
         // Buffer read scope
         {
-            BYTE* cur;
+            const BYTE* cur;
             UINT64 len;
 
             assert(size);
@@ -321,7 +321,7 @@ public:
         }
 
         memcpy(m_appProvider, m_serverCaps.appListProviderName, m_serverCaps.appListProviderNameLength);
-        if (wcsstr(m_appProvider, L".."))
+        if (wcsstr(m_appProvider, L"..") != NULL)
         {
             DebugPrint(L"group name can't contain \"..\" %s\n", m_appProvider);
             return E_FAIL;
@@ -335,8 +335,13 @@ public:
                 DebugPrint(L"SHGetKnownFolderPath(FOLDERID_StartMenu) failed\n");
                 return E_FAIL;
             }
-            wsprintfW(m_appMenuPath, L"%s\\Programs\\%s", appMenuPath, m_appProvider);
+            int ret = swprintf_s(m_appMenuPath, ARRAYSIZE(m_appMenuPath), L"%s\\Programs\\%s", appMenuPath, m_appProvider);
             CoTaskMemFree(appMenuPath);
+            if (ret < 0)
+            {
+                DebugPrint(L"swprintf_s for appMenuPath failed");
+                return E_FAIL;
+            }
         }
 
         if (!CreateDirectoryW(m_appMenuPath, NULL))
@@ -364,7 +369,10 @@ public:
             return E_FAIL;
         }
 
-        lstrcatW(m_iconPath, L"WSLDVCPlugin\\");
+        if (wcscat_s(m_iconPath, ARRAYSIZE(m_iconPath), L"WSLDVCPlugin\\") != 0)
+        {
+            return E_FAIL;
+        }
         if (!CreateDirectoryW(m_iconPath, NULL))
         {
             if (ERROR_ALREADY_EXISTS != GetLastError())
@@ -373,7 +381,10 @@ public:
                 return E_FAIL;
             }
         }
-        lstrcatW(m_iconPath, m_appProvider);
+        if (wcscat_s(m_iconPath, ARRAYSIZE(m_iconPath), m_appProvider) != 0)
+        {
+            return E_FAIL;
+        }
         if (!CreateDirectoryW(m_iconPath, NULL))
         {
             if (ERROR_ALREADY_EXISTS != GetLastError())
@@ -420,7 +431,10 @@ public:
         {
             replyBuf.capsHeader.length = sizeof RDPAPPLIST_HEADER + sizeof RDPAPPLIST_CLIENT_CAPS_PDU_V2;
             replyBuf.capsV2.version = RDPAPPLIST_CHANNEL_VERSION_2;
-            strncpy_s(replyBuf.capsV2.clientLanguageId, m_clientLanguageId, sizeof replyBuf.capsV2.clientLanguageId);
+            if (strncpy_s(replyBuf.capsV2.clientLanguageId, m_clientLanguageId, sizeof replyBuf.capsV2.clientLanguageId) != 0)
+            {
+                return E_FAIL;
+            }
         }
         else if (m_serverCaps.version == RDPAPPLIST_CHANNEL_VERSION)
         {
@@ -446,8 +460,8 @@ public:
 
     HRESULT
         OnUpdateAppList(
-            UINT64* size,
-            BYTE** buffer
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer
         )
     {
         HRESULT hr;
@@ -461,7 +475,7 @@ public:
 
         // Buffer read scope
         {
-            BYTE* cur;
+            const BYTE* cur;
             UINT64 len;
 
             assert(size);
@@ -508,7 +522,7 @@ public:
             }
         }
 
-        if (updateAppList.appGroupLength && wcsstr(updateAppList.appGroup, L".."))
+        if (updateAppList.appGroupLength && (wcsstr(updateAppList.appGroup, L"..") != NULL))
         {
             DebugPrint(L"group name can't contain \"..\" %s\n", updateAppList.appGroup);
             return E_FAIL;
@@ -516,11 +530,17 @@ public:
 
         if (updateAppList.flags & RDPAPPLIST_FIELD_ICON)
         {
-            lstrcpyW(iconPath, m_iconPath);
+            if (wcscpy_s(iconPath, ARRAYSIZE(iconPath), m_iconPath) != 0)
+            {
+                return E_FAIL;
+            }
             if (updateAppList.appGroupLength)
             {
-                lstrcatW(iconPath, L"\\");
-                lstrcatW(iconPath, updateAppList.appGroup);
+                if ((wcscat_s(iconPath, ARRAYSIZE(iconPath), L"\\") != 0) ||
+                    (wcscat_s(iconPath, ARRAYSIZE(iconPath), updateAppList.appGroup) != 0))
+                {
+                    return E_FAIL;
+                }
                 if (!CreateDirectoryW(iconPath, NULL))
                 {
                     if (ERROR_ALREADY_EXISTS != GetLastError())
@@ -530,9 +550,71 @@ public:
                     }
                 }
             }
-            lstrcatW(iconPath, L"\\");
-            lstrcatW(iconPath, updateAppList.appId);
-            lstrcatW(iconPath, L".ico");
+            if ((wcscat_s(iconPath, ARRAYSIZE(iconPath), L"\\") != 0) ||
+                (wcscat_s(iconPath, ARRAYSIZE(iconPath), updateAppList.appId) != 0) ||
+                (wcscat_s(iconPath, ARRAYSIZE(iconPath), L".ico") != 0))
+            {
+                return E_FAIL;
+            }
+        }
+
+        if (wcscpy_s(linkPath, ARRAYSIZE(linkPath), m_appMenuPath) != 0)
+        {
+            return E_FAIL;
+        }
+        if (updateAppList.appGroupLength)
+        {
+            if ((wcscat_s(linkPath, ARRAYSIZE(linkPath), L"\\") != 0) ||
+                (wcscat_s(linkPath, ARRAYSIZE(linkPath), updateAppList.appGroup) != 0))
+            {
+                return E_FAIL;
+            }
+            if (!CreateDirectoryW(linkPath, NULL))
+            {
+                if (ERROR_ALREADY_EXISTS != GetLastError())
+                {
+                    DebugPrint(L"Failed to create %s\n", linkPath);
+                    return E_FAIL;
+                }
+            }
+        }
+        // Use description to name link file since this is name shows up
+        // at StartMenu UI. SHSetLocalizedName can't be uses since this 
+        // is not in resource.
+        if ((wcscat_s(linkPath, ARRAYSIZE(linkPath), L"\\") != 0) ||
+            (wcscat_s(linkPath, ARRAYSIZE(linkPath), updateAppList.appDesc) != 0) ||
+            (wcscat_s(linkPath, ARRAYSIZE(linkPath), L".lnk") != 0))
+        {
+            return E_FAIL;
+        }
+
+        if (swprintf_s(exeArgs, ARRAYSIZE(exeArgs), L"~ -d %s %s",
+                       m_appProvider, updateAppList.appExecPath) < 0)
+        {
+            return E_FAIL;
+        }
+
+        key[0] = L'\0';
+        if (updateAppList.appGroupLength)
+        {
+            if ((wcscat_s(key, ARRAYSIZE(key), updateAppList.appGroup) != 0) ||
+                (wcscat_s(key, ARRAYSIZE(key), L"\\") != 0))
+            {
+                return E_FAIL;
+            }
+        }
+        if (wcscat_s(key, ARRAYSIZE(key), updateAppList.appId) != 0)
+        {
+            return E_FAIL;
+        }
+        hr = m_spFileDB->OnFileAdded(key, linkPath, iconPath);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        if (updateAppList.flags & RDPAPPLIST_FIELD_ICON)
+        {
             if (SUCCEEDED(CreateIconFile(iconData.iconFileData, iconData.iconFileSize, iconPath)))
             {
                 hasIcon = true;
@@ -544,56 +626,19 @@ public:
             }
         }
 
-        lstrcpyW(linkPath, m_appMenuPath);
-        if (updateAppList.appGroupLength)
-        {
-            lstrcatW(linkPath, L"\\");
-            lstrcatW(linkPath, updateAppList.appGroup);
-            if (!CreateDirectoryW(linkPath, NULL))
-            {
-                if (ERROR_ALREADY_EXISTS != GetLastError())
-                {
-                    DebugPrint(L"Failed to create %s\n", linkPath);
-                    return E_FAIL;
-                }
-            }
-        }
-        lstrcatW(linkPath, L"\\");
-        // Use description to name link file since this is name shows up
-        // at StartMenu UI. SHSetLocalizedName can't be uses since this 
-        // is not in resource.
-        lstrcatW(linkPath, updateAppList.appDesc); 
-        lstrcatW(linkPath, L".lnk");
-
-        wsprintfW(exeArgs,
-            L"~ -d %s %s",
-            m_appProvider, updateAppList.appExecPath);
-
         hr = CreateShellLink((LPCWSTR)linkPath,
             (LPCWSTR)m_expandedPathObj,
             (LPCWSTR)exeArgs,
             (LPCWSTR)m_expandedWorkingDir,
             (LPCWSTR)updateAppList.appDesc,
             hasIcon ? (LPCWSTR)iconPath : NULL);
-        if (FAILED(hr))
-        {
-            return hr;
-        }
-
-        if (updateAppList.appGroupLength)
-        {
-            lstrcpyW(key, updateAppList.appGroup);
-            lstrcatW(key, L"\\");
-        }
-        lstrcatW(key, updateAppList.appId);
-        m_spFileDB->OnFileAdded(key, linkPath, iconPath);
 
         if (updateAppList.flags & RDPAPPLIST_HINT_SYNC)
         {
             // During sync mode, remove added file to sync DB, so these won't be cleaned up at end.
             assert(m_spFileDBSync.Get());
             m_spFileDBSync->OnFileRemoved(linkPath);
-            if (lstrlenW(iconPath))
+            if (hasIcon)
             {
                 m_spFileDBSync->OnFileRemoved(iconPath);
             }
@@ -604,13 +649,13 @@ public:
             OnSyncEnd();
         }
 
-        return S_OK;
+        return hr;
     }
 
     HRESULT
         OnDeleteAppList(
-            UINT64* size,
-            BYTE** buffer
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer
         )
     {
         HRESULT hr;
@@ -621,7 +666,7 @@ public:
 
         // Buffer read scope
         {
-            BYTE* cur;
+            const BYTE* cur;
             UINT64 len;
 
             assert(size);
@@ -640,12 +685,19 @@ public:
             *size = len;
         }
 
+        key[0] = L'\0';
         if (deleteAppList.appGroupLength)
         {
-            lstrcpyW(key, deleteAppList.appGroup);
-            lstrcatW(key, L"\\");
+            if ((wcscpy_s(key, ARRAYSIZE(key), deleteAppList.appGroup) != 0) ||
+                (wcscat_s(key, ARRAYSIZE(key), L"\\") != 0))
+            {
+                return E_FAIL;
+            }
         }
-        lstrcatW(key, deleteAppList.appId);
+        if (wcscat_s(key, ARRAYSIZE(key), deleteAppList.appId) != 0)
+        {
+            return E_FAIL;
+        }
 
         hr = m_spFileDB->FindFiles(key, linkPath, ARRAYSIZE(linkPath), iconPath, ARRAYSIZE(iconPath));
         if (FAILED(hr))
@@ -654,13 +706,13 @@ public:
             return E_FAIL;
         }
 
-        if (lstrlenW(linkPath) && !DeleteFileW(linkPath))
+        if ((linkPath[0] != L'\0') && !DeleteFileW(linkPath))
         {
             DebugPrint(L"DeleteFile(%s) failed, error %x\n", linkPath, GetLastError());
         }
         DebugPrint(L"Delete Path Link: %s\n", linkPath);
 
-        if (lstrlenW(iconPath) && !DeleteFileW(iconPath))
+        if ((iconPath[0] != L'\0') && !DeleteFileW(iconPath))
         {
             DebugPrint(L"DeleteFile(%s) failed, error %x\n", iconPath, GetLastError());
         }
@@ -682,7 +734,7 @@ public:
         )
     {
         HRESULT hr = S_OK;
-        BYTE* cur = pBuffer;
+        const BYTE* cur = pBuffer;
         UINT64 len = cbSize;
 
         DebugPrint(L"OnDataReceived enter, size = %d\n", len);
