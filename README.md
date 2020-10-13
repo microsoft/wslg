@@ -3,82 +3,41 @@
 | :------ | :------: | 
 | Build (Ubuntu) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?branchName=master&jobName=Build%20(Ubuntu))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&branchName=master) |
 | Package MSI (Windows) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?branchName=master&jobName=Package%20(Windows))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&branchName=master) |
+# WSLg
 
+## Install WSLg
 
-# Introduction
+### Pre-requisites
 
-This repository contains a Dockerfile and supporting tools to build the WSL GUI system distro image.
+- Windows 10 Build 20236 or higher on the `rs_onecore_base2_hyp` branch
+- The Windows Subsystem for Linux enabled and installed (Install instructions [here](http://aka.ms/install-wsl))
+- A WSL 2 distro (Instructions [here](https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---update-to-wsl-2))
 
-## Quick start
+### Install instructions
 
-For self-hosting WSLG check use this instructions https://github.com/microsoft/wslg/wiki#installing-self-hosting
+* Download and install the latest MSI from the [Releases page](https://github.com/microsoft/wslg/releases). 
 
-## Setup and build WSLG and System Distro
+* Restart your WSL instances by running this command in PowerShell or CMD:
 
-0. Install and start Docker in a Linux or WSL2 environment.
-
-1. Clone the FreeRDP ,Weston and PulseAudio side by side this repo repositories and checkout the "working" branch from each:
-
-    ```bash
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/FreeRDP vendor/FreeRDP -b working
-
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/weston vendor/weston -b working
-
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/pulseaudio vendor/pulseaudio -b working
-    ```
-
-2. Create the VHD:
-
-    2.1 From the parent directory where you cloned `wslg` clone `hcsshim` which contains `tar2ext4` and will be used to create the system distro vhd
-    ```
-    git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git
-    ```
-    
-    2.1 From the parent directory build and export the docker image:
-    ```
-    sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64
-    sudo docker export `sudo docker create system-distro-x64` > system_x64.tar
-    ```
-    
-    2.3 Create the system distro vhd using `tar2ext4`
-    
-    ```bash
-    cd hcsshim/cmd/tar2ext4
-    go run tar2ext4.go -vhd -i ../../../system_x64.tar -o ../../../system.vhd
-    ```
-    
-    This will create system distro image `system.vhd`
-
-3. Change the system distro:
-
-    3.1 Before replace the system distro you will need to shutdown WSL
-    
-    ```
+```powershell
     wsl --shutdown
-    ```
-    
-    3.2 By default the system distro is located at `C:\ProgramDataMiscrosoft\WSL\system.vhd`
-    
-    If you want to use the system distro from a different path you can change the RegKey
-    
-    ```
-    HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss\SystemDistro
-    ```
-    
-    3.3 After update the system distro you should be able to launch any user distro and WSL will automatically launch the system distro along with the user distro.
-    
+```
 
-4. Inspecting the system distro:
+* When you first launch WSL, you will be prompted to connect to `weston-terminal`. Click `Connect` to finalize this. (We are working to remove this dialogue box from mstsc)
 
-    If the sistem distro isn't working correctly or you need to inspect what is running inside the system distro you can do:
+* Congrats you are done and ready to use GUI apps! 
 
-    ```
-    wsl --system [DistroName]
-    ```
+### Install and run GUI apps
 
-    For instance you chould check if weston and pulse audio are running inside the system distro using `ps -ax | grep weston` or `ps -ax | grep pulse`
-    You should see something like this:
-    ```bash
-    root@DESKTOP-7LJ03SK:/mnt/d# ps -ax | grep weston
-   11 ?        Sl     6:51 /usr/local/bin/weston --backend=rdp-backend.so --xwayland --shell=rdprail-shell.so --log=/mnt/wslg/weston.log
-    ```
+If you want to get started with some GUI apps, please download our [sample setup script](./docs/install-sample-gui-apps.sh) and run `sudo ./install-sample-gui-apps.sh` to run it. This script is targeted to Ubuntu 18.04 and higher.
+
+Once you have run that script try some of these commands: 
+* `xcalc` 
+* `gimp`
+* `gedit ~/.bashrc` 
+* `nautilus`
+* `google-chrome`
+
+## Contribute
+
+For instructions on how to build WSLg please check [BUILD.md](./config/BUILD.md)
