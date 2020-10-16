@@ -418,28 +418,19 @@ public:
         #pragma pack(push,1)
         struct {
             RDPAPPLIST_HEADER capsHeader;
-            union
-            {
-                RDPAPPLIST_CLIENT_CAPS_PDU_V1 caps;
-                RDPAPPLIST_CLIENT_CAPS_PDU_V2 capsV2;
-            };
+            RDPAPPLIST_CLIENT_CAPS_PDU caps;
         } replyBuf = {};
         #pragma pack(pop)
 
         replyBuf.capsHeader.cmdId = RDPAPPLIST_CMDID_CAPS;
-        if (m_serverCaps.version >= RDPAPPLIST_CHANNEL_VERSION_2)
+        if (m_serverCaps.version >= RDPAPPLIST_CHANNEL_VERSION)
         {
-            replyBuf.capsHeader.length = sizeof RDPAPPLIST_HEADER + sizeof RDPAPPLIST_CLIENT_CAPS_PDU_V2;
-            replyBuf.capsV2.version = RDPAPPLIST_CHANNEL_VERSION_2;
-            if (strncpy_s(replyBuf.capsV2.clientLanguageId, m_clientLanguageId, sizeof replyBuf.capsV2.clientLanguageId) != 0)
+            replyBuf.capsHeader.length = sizeof replyBuf;
+            replyBuf.caps.version = RDPAPPLIST_CHANNEL_VERSION;
+            if (strncpy_s(replyBuf.caps.clientLanguageId, m_clientLanguageId, sizeof replyBuf.caps.clientLanguageId) != 0)
             {
                 return E_FAIL;
             }
-        }
-        else if (m_serverCaps.version == RDPAPPLIST_CHANNEL_VERSION)
-        {
-            replyBuf.capsHeader.length = sizeof RDPAPPLIST_HEADER + sizeof RDPAPPLIST_CLIENT_CAPS_PDU_V1;
-            replyBuf.caps.version = RDPAPPLIST_CHANNEL_VERSION;
         }
         else
         {
