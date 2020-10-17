@@ -130,6 +130,7 @@ try {
         "--backend=rdp-backend.so",
         "--xwayland",
         "--shell=rdprail-shell.so",
+        "--logger-scopes=rdp-backend,rdprail-shell,log",
         "--log=" SHARE_PATH "/weston.log"
         },
         std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
