@@ -9,23 +9,25 @@
 
 ### Pre-requisites
 
-- Windows 10 Build 20236 or higher on the `rs_onecore_base2_hyp` branch
-- The Windows Subsystem for Linux enabled and installed (Install instructions [here](http://aka.ms/install-wsl))
-- A WSL 2 distro (Instructions [here](https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---update-to-wsl-2))
+- Windows 10 Build 20240 or higher
+   - Please note that this is not yet released, and you will need to be on an internal Microsoft branch like rsmaster, this will not work on rs_prerelease
+- You will need to have a WSL 2 distro installed on your machine. You can install this easily by running `wsl --install` from a command prompt with administrator privileges.
 
 ### Install instructions
 
-* Download and install the latest MSI from the [Releases page](https://github.com/microsoft/wslg/releases). 
-
-* Restart your WSL instances by running this command in PowerShell or CMD:
+* Shutdown your WSL instances and the WSL 2 VM by running this command in PowerShell or CMD:
 
 ```powershell
     wsl --shutdown
 ```
 
+* Download and install the latest MSI from the [Releases page](https://github.com/microsoft/wslg/releases). 
+
 * When you first launch WSL, you will be prompted to connect to `weston-terminal`. Click `Connect` to finalize this. (We are working to remove this dialogue box from mstsc)
 
 * Congrats you are done and ready to use GUI apps! 
+
+* Please note that this install process is temporary and will soon be part of `wsl --install` and `wsl --update`
 
 ### Install and run GUI apps
 
@@ -37,6 +39,10 @@ Once you have run that script try some of these commands:
 * `gedit ~/.bashrc` 
 * `nautilus`
 * `google-chrome`
+* `teams`
+* `microsoft-edge`
+
+You can also find these apps inside of your Windows Start menu under a folder that has your distro name. For example you could open GIMP through 'Ubuntu -> GIMP'. 
 
 ## Contribute
 
