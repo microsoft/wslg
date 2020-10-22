@@ -185,9 +185,7 @@ COPY resources/linux.png /usr/share/icons/wsl/linux.png
 COPY --from=dev ${weston_path} ${weston_path}
 COPY --from=dev /work/versions.txt /etc/versions.txt
 
-## Uncomment this line when we have the sharedmem support from mstsc side
-
-# COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
+COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
 
 # start weston with RDP.
 #
