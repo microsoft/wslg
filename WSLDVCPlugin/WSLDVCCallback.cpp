@@ -617,13 +617,14 @@ public:
             }
         }
 
-        hr = CreateShellLink((LPCWSTR)linkPath,
-            (LPCWSTR)m_expandedPathObj,
-            (LPCWSTR)exeArgs,
-            (LPCWSTR)m_expandedWorkingDir,
-            (LPCWSTR)updateAppList.appDesc,
-            hasIcon ? (LPCWSTR)iconPath : NULL);
-
+        /* ignore error from create link */
+        CreateShellLink((LPCWSTR)linkPath,
+                (LPCWSTR)m_expandedPathObj,
+                (LPCWSTR)exeArgs,
+                (LPCWSTR)m_expandedWorkingDir,
+                (LPCWSTR)updateAppList.appDesc,
+                hasIcon ? (LPCWSTR)iconPath : NULL);
+        
         if (updateAppList.flags & RDPAPPLIST_HINT_SYNC)
         {
             // During sync mode, remove added file to sync DB, so these won't be cleaned up at end.
@@ -640,7 +641,7 @@ public:
             OnSyncEnd();
         }
 
-        return hr;
+        return S_OK;
     }
 
     HRESULT
