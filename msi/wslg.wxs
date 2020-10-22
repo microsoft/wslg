@@ -28,7 +28,9 @@
         </Property>
 
         <Condition Message="This update only applies to machines with the Windows Subsytem for Linux"><![CDATA[Installed OR CHECKLXSS="#1" OR WSL_INSTALLING]]></Condition>
-
+        <Condition Message="This application requires build 20240 or later.">
+            <![CDATA[WindowsBuild >= 20240]]>
+        </Condition>
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="WSLRDPFILE" />
             <ComponentRef Id="SYSTEMVHD" />
