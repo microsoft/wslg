@@ -35,6 +35,7 @@
             <ComponentRef Id="SYSTEMVHDREG" />
             <ComponentRef Id="WSLDVCPLUGIN" />
             <ComponentRef Id="WSLDVCPLUGINREG" />
+            <ComponentRef Id="WSLGREG" />
         </Feature>
 
         <Directory Id="TARGETDIR" Name="SourceDir">
@@ -66,6 +67,11 @@
             <Component Id="SYSTEMVHDREG" Guid="F37A4E4A-3E56-46A3-98C5-9B5DED295EC1" Win64="yes">
                 <RegistryKey Root="HKLM" Key="$(var.LxssRegKey)" >
                     <RegistryValue Id="SYSTEMVHD_REGKEYSID" Name="SystemDistro" Value="[INSTALLDIR]system.vhd" Type="string" />
+                </RegistryKey>
+            </Component>
+            <Component Id="WSLGREG" Guid="271343D4-36FD-4156-B728-90A614A2534D">
+                <RegistryKey Root="HKLM" Key="$(var.LxssRegKey)\Capabilities" >
+                    <RegistryValue Id="RID_WSLGREGKEY" Name="GraphicsSupport" Value="1" Type="integer" />
                 </RegistryKey>
             </Component>
         </DirectoryRef>
