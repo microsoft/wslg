@@ -49,7 +49,7 @@ If running in version 1 mode, switch to version 2. This can take a while.
 * If you have a previous version of WSLg installed, uninstall it. Go to `Add or removed programs` and remove the application called `Windows Subsystem for Linux GUI App Support`.
 
 
-* Download and install the latest WSLg MSI from the [Releases page](https://github.com/microsoft/wslg/releases). 
+* Download and install the latest WSLg MSI from the [Releases page](https://github.com/microsoft/wslg/releases). If you don't have access, make sure you are logged in with your github account and that you've [linked your github account to your Microsoft corpnet account](https://docs.opensource.microsoft.com/tools/github/accounts/linking.html). 
 
 ## First Launch
 
