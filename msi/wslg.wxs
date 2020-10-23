@@ -23,13 +23,17 @@
             <RegistrySearch Id="LxssServiceKey" Root="HKLM" Key="SYSTEM\CurrentControlSet\services\LxssManager\parameters" Name="ServiceDllUnloadOnStop" Type="raw" />
         </Property>
 
+        <Property Id="WINDOWSCURRENTBUILDNUMBER">
+            <RegistrySearch Id="WindowsCurrentBuildNumber" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw"/>
+        </Property>
+
         <Property Id="WSL_INSTALLING">
             <RegistrySearch Id="WslInstallingKey" Root="HKLM" Key="$(var.LxssRegKey)" Name="WslInstalling" Type="raw" />
         </Property>
 
         <Condition Message="This update only applies to machines with the Windows Subsytem for Linux"><![CDATA[Installed OR CHECKLXSS="#1" OR WSL_INSTALLING]]></Condition>
-        <Condition Message="This application requires build 20240 or later.">
-            <![CDATA[WindowsBuild >= 20240]]>
+        <Condition Message="This application requires build 20240 or later">
+            <![CDATA[WINDOWSCURRENTBUILDNUMBER >= "20240"]]>
         </Condition>
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="WSLRDPFILE" />
