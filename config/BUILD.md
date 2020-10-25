@@ -54,7 +54,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     wsl --shutdown
     ```
     
-    3.2 By default the system distro is located at `C:\ProgramDataMiscrosoft\WSL\system.vhd`
+    3.2 By default the system distro is located at `C:\ProgramData\Miscrosoft\WSL\system.vhd`
     
     If you want to use the system distro from a different path you can change the .wslconf
 
