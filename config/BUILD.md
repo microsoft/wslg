@@ -18,6 +18,10 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/weston vendor/weston -b working
 
     git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/pulseaudio vendor/pulseaudio -b working
+    
+    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/wayland vendor/wayland -b working
+
+    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/sharedguestalloc vendor/sharedguestalloc
     ```
 
 2. Create the VHD:
