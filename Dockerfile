@@ -104,7 +104,26 @@ RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
-RUN meson --prefix=${prefix} build -Dpipewire=false -Ddemo-clients=false && \
+RUN meson --prefix=${prefix} build \
+         -Dbackend-default=rdp \
+         -Dbackend-drm=false \
+         -Dbackend-drm-screencast-vaapi=false \
+         -Dbackend-headless=false \
+         -Dbackend-wayland=false \
+         -Dbackend-x11=false \
+         -Dbackend-fbdev=false \
+         -Dscreenshare=false \
+         -Dremoting=false \
+         -Dpipewire=false \
+         -Dshell-desktop=false \
+         -Dshell-fullscreen=false \
+         -Dshell-ivi=false \
+         -Ddemo-clients=false \
+         -Dsimple-clients=[] \
+         -Dtools=[] \
+         -Dresize-pool=false \
+         -Dwcap-decode=false \
+         -Dtest-junit-xml=false && \
     ninja -C build -j8 install
 RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD` >> /work/versions.txt
 
