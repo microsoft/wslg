@@ -116,7 +116,8 @@ try {
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
         {"USE_VSOCK", socketFdString.c_str()},
-        {"WSL2_DEFAULT_APP_ICON", "/usr/share/icons/wsl/linux.png"}
+        {"WSL2_DEFAULT_APP_ICON", "/usr/share/icons/wsl/linux.png"},
+        {"WESTON_DISABLE_ABSTRACT_FD", "1"}
     };
 
     for (auto &var : variables) {
