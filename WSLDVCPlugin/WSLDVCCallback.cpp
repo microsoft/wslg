@@ -108,10 +108,28 @@ public:
         len = *size;
 
         ReadUINT32(updateAppList->flags, cur, len);
-        ReadSTRING(updateAppList->appId, cur, len, true);
-        ReadSTRING(updateAppList->appGroup, cur, len, false);
-        ReadSTRING(updateAppList->appExecPath, cur, len, true);
-        ReadSTRING(updateAppList->appDesc, cur, len, true);
+        CheckRequiredFlags(updateAppList->flags,
+            (RDPAPPLIST_FIELD_ID | RDPAPPLIST_FIELD_EXECPATH | RDPAPPLIST_FIELD_DESC));
+        if (updateAppList->flags & RDPAPPLIST_FIELD_ID)
+        {
+            ReadSTRING(updateAppList->appId, cur, len, true);
+        }
+        if (updateAppList->flags & RDPAPPLIST_FIELD_GROUP)
+        {
+            ReadSTRING(updateAppList->appGroup, cur, len, false);
+        }
+        if (updateAppList->flags & RDPAPPLIST_FIELD_EXECPATH)
+        {
+            ReadSTRING(updateAppList->appExecPath, cur, len, true);
+        }
+        if (updateAppList->flags & RDPAPPLIST_FIELD_WORKINGDIR)
+        {
+            ReadSTRING(updateAppList->appWorkingDir, cur, len, false);
+        }
+        if (updateAppList->flags & RDPAPPLIST_FIELD_DESC)
+        {
+            ReadSTRING(updateAppList->appDesc, cur, len, true);
+        }
 
         *buffer = cur;
         *size = len;
@@ -238,8 +256,16 @@ public:
         len = *size;
 
         ReadUINT32(deleteAppList->flags, cur, len);
-        ReadSTRING(deleteAppList->appId, cur, len, true);
-        ReadSTRING(deleteAppList->appGroup, cur, len, false);
+        CheckRequiredFlags(deleteAppList->flags,
+            RDPAPPLIST_FIELD_ID);
+        if (deleteAppList->flags & RDPAPPLIST_FIELD_ID)
+        {
+            ReadSTRING(deleteAppList->appId, cur, len, true);
+        }
+        if (deleteAppList->flags & RDPAPPLIST_FIELD_GROUP)
+        {
+            ReadSTRING(deleteAppList->appGroup, cur, len, false);
+        }
 
         *buffer = cur;
         *size = len;
@@ -579,8 +605,10 @@ public:
             return E_FAIL;
         }
 
-        if (swprintf_s(exeArgs, ARRAYSIZE(exeArgs), L"~ -d %s %s",
-                       m_appProvider, updateAppList.appExecPath) < 0)
+        if (swprintf_s(exeArgs, ARRAYSIZE(exeArgs), L"%s -d %s %s",
+                       updateAppList.appWorkingDirLength ? updateAppList.appWorkingDir : L"~", 
+                       m_appProvider, 
+                       updateAppList.appExecPath) < 0)
         {
             return E_FAIL;
         }
