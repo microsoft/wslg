@@ -97,6 +97,12 @@ RUN cmake -G Ninja \
         -DCMAKE_INSTALL_LIBDIR=${prefix}/lib \
         -DCMAKE_BUILD_TYPE=Release \
         -DWITH_SERVER=ON \
+        -DWITH_CLIENT=OFF \
+        -DWITH_CLIENT_COMMON=OFF \
+        -DWITH_CLIENT_CHANNELS=OFF \
+        -DWITH_CLIENT_INTERFACE=OFF \
+        -DWITH_PROXY=OFF \
+        -DWITH_SHADOW=OFF \
         -DWITH_SAMPLE=OFF && \
     ninja -C build -j8 install
 RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
