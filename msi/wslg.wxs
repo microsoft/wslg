@@ -13,6 +13,8 @@
         <WixVariable Id="WixUIBannerBmp" Value="banner.png" />
         <WixVariable Id="WixUIDialogBmp" Value="background.png" />
 
+        <Property Id="ALLUSERS">1</Property>
+        
         <MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="A later version of the [ProductName] is already installed. Setup will now exit." Schedule="afterInstallExecute" />
 
         <Property Id="ARPHELPLINK">https://aka.ms/wsl2kernel</Property>
