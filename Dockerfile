@@ -95,7 +95,7 @@ RUN cmake -G Ninja \
         -B build \
         -DCMAKE_INSTALL_PREFIX=${prefix} \
         -DCMAKE_INSTALL_LIBDIR=${prefix}/lib \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DWITH_SERVER=ON \
         -DWITH_CLIENT=OFF \
         -DWITH_CLIENT_COMMON=OFF \
