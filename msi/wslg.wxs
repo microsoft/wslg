@@ -13,6 +13,8 @@
         <WixVariable Id="WixUIBannerBmp" Value="banner.png" />
         <WixVariable Id="WixUIDialogBmp" Value="background.png" />
 
+        <Property Id="ALLUSERS">1</Property>
+
         <MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="A later version of the [ProductName] is already installed. Setup will now exit." Schedule="afterInstallExecute" />
 
         <Property Id="ARPHELPLINK">https://aka.ms/wsl2kernel</Property>
@@ -61,7 +63,7 @@
             </Component>
             <!-- **** TODO: REMOVE THE GLOBAL REGISTRATION WHEN WE HAVE THE OPTION TO PASS THE PLUGIN PATH TO MSTSC ***** -->
             <Component Id="WSLDVCPLUGINREG" Guid="91D94F40-BB48-4F28-881D-5D7C5C0BAB37" Win64="yes">
-                <RegistryKey Root="HKCU" Key="$(var.TSCRegKey)" >
+                <RegistryKey Root="HKLM" Key="$(var.TSCRegKey)" >
                     <RegistryValue Id="WSLDVCPLUGINREGID" Name="Name" Value="[INSTALLDIR]WSLDVCPlugin.dll" Type="string" />
                 </RegistryKey>
             </Component>
