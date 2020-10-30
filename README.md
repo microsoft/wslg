@@ -9,11 +9,10 @@
 ## Pre-requisites
 
 - Windows 10 Build 20240 or higher
-   - Please note that this is not yet released to Windows Insiders, and you will need to be on an internal Microsoft branch like rs_onecore_sigma, this will not work on rs_prerelease
+   - Please note that this is not yet released to Windows Insiders, and you will need to be on an internal Microsoft branch like rs_onecore_sigma, this will not work on rs_prerelease.
 
 - It is strongly recommended to run WSLg on a system with vGPU enabled and to enable the use of shared memory.
-   -  Although WSLg will not currently leverage vGPU for accelerated graphics rendering, it can leverage
-   vGPU for shared memory based graphics remoting between the Linux guest and Windows host while the Hyper-V team is working on a more official, works everywhere, no dependencies on vGPU, equivalent. Once this official support is available, shared memory will be enabled ubiquitously on all systems, irrespective of the availability of vGPU. Please note that, at this time, setting up shared memory involves a few additional manual steps, but is well worth it. This is especially true if you are running on a High DPI Laptop such as a Surface Book or Surface Pro. Note that vGPU is only supported on recent GPU from each of our partners. If your GPU is too old, shared memory optimization will unfortunately not be available to you at this time. See the `Enabling Shared Memory Optimization` section below for more details on enabling shared memory optimization.
+   -  Although WSLg will not currently leverage vGPU for accelerated graphics rendering, it can leverage vGPU for shared memory based graphics remoting between the Linux guest and Windows host while the Hyper-V team is working on a more official, works everywhere, no dependencies on vGPU, equivalent. Once this official support is available, shared memory will be enabled ubiquitously on all systems, irrespective of the availability of vGPU. Enabling sharing memory is especially important if you are running on a High DPI Laptop such as a Surface Book or Surface Pro. Note that vGPU is only supported on recent GPU from each of our partners. If your GPU is too old, shared memory optimization will unfortunately not be available to you at this time. See the `Enabling Shared Memory Optimization` section below for more details on enabling shared memory optimization by installing the appropriate driver.
 
 ## Install instructions (WSL is not already installed)
 
@@ -141,38 +140,7 @@ ls /dev/dxg
 ```
 If the device is listed, you are running with vGPU enabled! 
 
-### Install private Linux Kernel
-
-There are currently two bugs blocking the enablement of shared memory automatically based on the presence of vGPU in WSL. While theses fixes are making their way through the system, you'll need to follow these steps to manually apply the workaround.
-
-Download the following private Linux Kernel and copy it somewhere on your system (for example c:\kernel).
-
-```
-mdir \kernel
-copy \\grfxshare\Sigma-GRFX\WSLG\Selfhost\S1\KernelWithCreatesharedGuestAllocFix c:\kernel
-```
-Create a WSL configuration file and point WSL2 to the private Linux kernel you just downloaded. Create a simple text file named `.wslconfig` in c:\users\your_user_name. For example c:\users\spronovo\\.wlsconfig. Please note that the period in `.wslconfig` is important. Using your favorite text editor, write the following to `.wslconfig` 
-
-```
-[wsl2]
-kernel=c:\\kernel\\KernelWithCreatesharedGuestAllocFix
-```
-
-From an elevated command prompt, run the following command on the host to create a new registry key.
-
-```
-cmd /c reg ADD "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\GraphicsDrivers" /v DRTTestEnable /t REG_DWORD  /d 0x58747244 /f
-```
-
-Reboot. The next time you run in WSL you'll be running with shared memory!
-
-You can verify you are running with the private kernel using the following command in a Linux terminal:
-
-```
-cat /proc/version
-```
-
-You should see version 4.19.129 (not 128). You can further verify that shared memory was properly enabled by running the following command in a Linux terminal.
+You can further verify that shared memory was properly enabled by running the following command in a Linux terminal.
 
 ```
 cat /mnt/wslg/weston.log | grep GuestAllocInitialize
