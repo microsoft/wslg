@@ -14,7 +14,7 @@
 - It is strongly recommended to run WSLg on a system with vGPU enabled by installing the recommend GPU driver
    -  Although WSLg will not currently leverage vGPU for accelerated graphics rendering, it leverages vGPU for shared memory based graphics remoting between the Linux guest and Windows host while the Hyper-V team is working on a more official, works everywhere, no dependencies on vGPU, equivalent solution. Once this official support is available, remoting based on shared memory will be enabled ubiquitously on all systems, irrespective of the availability of vGPU. Enabling shared memory is especially important if you are running on a High DPI Laptop such as a Surface Book or Surface Pro as otherwise performance will not be acceptable for a good experience. Note that vGPU is only supported on recent GPU from each of our partners. If your GPU is too old, shared memory optimization will unfortunately not be available to you at this time. See the `Enabling Shared Memory Remoting Optimization` section below for more details on enabling shared memory optimization by installing the appropriate driver.
 
-## Install instructions (WSL is not already installed)
+## Install instructions (Fresh Install - no prior WSL installation)
 
 From a command prompt with administrator privileges, run the command `wsl --install`, then reboot when prompted.
 
@@ -22,13 +22,11 @@ After reboot the installation will continue. You'll be asked to enter a username
 
 Voila! WSL and WSLg are installed and ready to be used!
 
-## Install instructions (WSL is currently installed or to upgrade to a newer version of WSLg)
+## Install instructions (Existing WSL install or pre-selfhost WSLg install)
 
-Soon you'll be able to simply run `wsl --update` from an elevated command prompt and get the latest released version of WSL and WSLg installed.
+If you have an existing WSL installation without WSLg or have installed a pre-selfhost WSLg package (pre 0.2.9) you will need to do these one time manual steps in order to get onto the correct WSL + WSLg update train. After these steps, you'll be able to continue updating both WSL + WSLg through the simple `wsl --update` mechanism and will not have to repeat these.
 
-For the time being, you'll need to manually install the WSLg MSI package on top of your existing WSL installation, but don't worry it's easy.
-
-* Verify that you are running in WSL 2 mode. If not switch to WSL 2
+* Verify that your Linux distro are configured for running in WSL 2 mode, if not switch to WSL 2. While you can continue to run Linux distro in WSL 1 mode after installing WSLg if you so desired, distro configured to run in WSL 1 mode will not be able to communicate with WSLg and will not be able to run GUI applications.
 
 ```powershell
    wsl --list -v
@@ -47,8 +45,15 @@ If running in version 1 mode, switch to version 2. This can take a while.
 
 * If you have a previous version of WSLg installed, uninstall it. Go to `Add or removed programs` and remove the application called `Windows Subsystem for Linux GUI App Support`.
 
+* Update your base WSL install by using the `wsl --update` from an elevated command prompt. This is important to pick up the latest WSL 2 Linux Kernel version.
 
-* Download and install the latest WSLg MSI from the [Releases page](https://github.com/microsoft/wslg/releases). If you don't have access, make sure you are logged in with your github account and that you've [linked your github account to your Microsoft corpnet account](https://docs.opensource.microsoft.com/tools/github/accounts/linking.html). 
+* Manually download and install the WSLg package [x64](https://wslstorestorage.blob.core.windows.net/wslblob/wsl_graphics_update_x64.msi) or [arm64](https://wslstorestorage.blob.core.windows.net/wslblob/wsl_graphics_update_arm64.msi)
+
+## Updating WSL + WSLg
+
+To update to the latest version of WSL and WSLg released for selfhost, simply run `wsl --update` from an elevated command prompt or powershell. 
+
+You'll need to restart WSL for the changes to take effect. You can restart WSL type running `wsl --shutdown`. If WSL was currently running, it will shutdown, make sure to first save any in progress work! WSL will be automatically restarted the next time you launch a WSL application or terminal.
 
 ## First Launch
 
