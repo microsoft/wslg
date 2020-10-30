@@ -8,11 +8,11 @@
 
 ## Pre-requisites
 
-- Windows 10 Build 20240 or higher
-   - Please note that this is not yet released to Windows Insiders, and you will need to be on an internal Microsoft branch like rs_onecore_sigma, this will not work on rs_prerelease.
+- Windows 10 *Cobalt* build 21256 or higher
+   - Please note that this is not yet released to Windows Insiders, and you will need to be on an internal Microsoft branch like rs_onecore_sigma, this will not work on *release* branch such as rs_prerelease, fe_release, fe_release_sigma, etc...
 
-- It is strongly recommended to run WSLg on a system with vGPU enabled and to enable the use of shared memory.
-   -  Although WSLg will not currently leverage vGPU for accelerated graphics rendering, it can leverage vGPU for shared memory based graphics remoting between the Linux guest and Windows host while the Hyper-V team is working on a more official, works everywhere, no dependencies on vGPU, equivalent. Once this official support is available, shared memory will be enabled ubiquitously on all systems, irrespective of the availability of vGPU. Enabling sharing memory is especially important if you are running on a High DPI Laptop such as a Surface Book or Surface Pro. Note that vGPU is only supported on recent GPU from each of our partners. If your GPU is too old, shared memory optimization will unfortunately not be available to you at this time. See the `Enabling Shared Memory Optimization` section below for more details on enabling shared memory optimization by installing the appropriate driver.
+- It is strongly recommended to run WSLg on a system with vGPU enabled by installing the recommend GPU driver
+   -  Although WSLg will not currently leverage vGPU for accelerated graphics rendering, it leverages vGPU for shared memory based graphics remoting between the Linux guest and Windows host while the Hyper-V team is working on a more official, works everywhere, no dependencies on vGPU, equivalent solution. Once this official support is available, remoting based on shared memory will be enabled ubiquitously on all systems, irrespective of the availability of vGPU. Enabling shared memory is especially important if you are running on a High DPI Laptop such as a Surface Book or Surface Pro as otherwise performance will not be acceptable for a good experience. Note that vGPU is only supported on recent GPU from each of our partners. If your GPU is too old, shared memory optimization will unfortunately not be available to you at this time. See the `Enabling Shared Memory Remoting Optimization` section below for more details on enabling shared memory optimization by installing the appropriate driver.
 
 ## Install instructions (WSL is not already installed)
 
@@ -119,7 +119,7 @@ Once these applications are installed, you'll find them in your start menu under
 * Touch support is not yet completed. Better to stick with mouse and keyboard, your mileage with touch will vary.
 * When uninstalling WSL, start menu isn't cleaned up.
 
-## Enabling Shared Memory Optimization
+## Enabling Shared Memory Remoting Optimization
 
 To improve the current performance of WSLg it is strongly recommended to follow these steps to enable shared memory on your WSLg installation.
 
