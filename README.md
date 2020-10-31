@@ -13,6 +13,7 @@
 
 - It is strongly recommended to run WSLg on a system with vGPU enabled by installing the recommend GPU driver
    -  Although WSLg will not currently leverage vGPU for accelerated graphics rendering, it leverages vGPU for shared memory based graphics remoting between the Linux guest and Windows host while the Hyper-V team is working on a more official, works everywhere, no dependencies on vGPU, equivalent solution. Once this official support is available, remoting based on shared memory will be enabled ubiquitously on all systems, irrespective of the availability of vGPU. Enabling shared memory is especially important if you are running on a High DPI Laptop such as a Surface Book or Surface Pro as otherwise performance will not be acceptable for a good experience. Note that vGPU is only supported on recent GPU from each of our partners. If your GPU is too old, shared memory optimization will unfortunately not be available to you at this time. See the `Enabling Shared Memory Remoting Optimization` section below for more details on enabling shared memory optimization by installing the appropriate driver.
+   - Note that Qualcomm does not currently offer support for vGPU in WSL, thus shared memory optimization will not be available at this time on arm64 devices such as Surface Pro X.
 
 ## Install instructions (Fresh Install - no prior WSL installation)
 
