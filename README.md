@@ -8,7 +8,7 @@
 
 ## Pre-requisites
 
-- Windows 10 *Cobalt* build 21256 or higher
+- Windows 10 *Cobalt* build 21254 or higher
    - Please note that this is not yet released to Windows Insiders, and you will need to be on an internal Microsoft branch like rs_onecore_sigma, this will not work on *release* branch such as rs_prerelease, fe_release, fe_release_sigma, etc...
 
 - It is strongly recommended to run WSLg on a system with vGPU enabled by installing the recommend GPU driver
