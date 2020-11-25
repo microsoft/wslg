@@ -14,6 +14,7 @@ constexpr auto c_launchPulse = "/home/wslg/launch_pulse.sh";
 constexpr auto c_versionFile = "/etc/versions.txt";
 constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
+constexpr auto c_Xauthority = SHARE_PATH "/.Xauthority";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 
 void LogException(const char *message, const char *exceptionDescription) noexcept
@@ -32,6 +33,47 @@ std::string ToServiceId(unsigned int port)
 
     return serviceId;
 }
+
+int GenerateXauthority(passwd* passwordEntry)
+try {
+
+    // If .Xauthority already exist, delete it as we'll need to re-generate it and use
+    // the presence of the file to determine once we have successfully connected to a new
+    // instance of the X-Server.
+    if (!access(c_Xauthority, F_OK)) {
+        remove(c_Xauthority);
+    }
+
+    // Ask the X-Server to write the secret connection cookie to .Xauthority to enable all WSL users
+    // accounts and root to connect to it.
+    while (1) {
+        int xAuthPid = fork();
+        if (xAuthPid == 0) {
+            // Need to run as wslg user.
+            THROW_LAST_ERROR_IF(setgid(passwordEntry->pw_gid) < 0);
+            THROW_LAST_ERROR_IF(initgroups(passwordEntry->pw_name, passwordEntry->pw_gid) < 0);
+            THROW_LAST_ERROR_IF(setuid(passwordEntry->pw_uid) < 0);
+
+            std::vector<const char*> args = { "/usr/bin/xauth", "-f", "/mnt/wslg/.Xauthority", "generate", ":0", ".", "trusted", "timeout", "0", NULL };
+            THROW_LAST_ERROR_IF(execv(args[0], const_cast<char *const *>(args.data())) < 0);
+        }
+
+        waitpid(xAuthPid, NULL, 0);
+        if (!access(c_Xauthority, F_OK)) {
+            // The file exist, we can move on.
+            break;
+        }
+
+        LOG_INFO("Authority file (%s) doesn't exist yet, sleeping 100ms.", c_Xauthority);
+        usleep(100*1000);
+    };
+
+    // Make .Xauthority readable by all users.
+    THROW_LAST_ERROR_IF(chmod(c_Xauthority, 0644) < 0);
+
+    return 0;
+}
+CATCH_RETURN_ERRNO();
 
 int main(int Argc, char *Argv[])
 try {
@@ -134,7 +176,8 @@ try {
         "--logger-scopes=rdp-backend,rdprail-shell,log",
         "--log=" SHARE_PATH "/weston.log"
         },
-        std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
+        std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE},
+        GenerateXauthority
     );
 
     // Launch the mstsc client.
