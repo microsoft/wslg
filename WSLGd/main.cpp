@@ -46,7 +46,8 @@ try {
 
     // Ask the X-Server to write the secret connection cookie to .Xauthority to enable all WSL users
     // accounts and root to connect to it.
-    while (1) {
+    int retryCount = 50;
+    while (retryCount > 0) {
         int xAuthPid = fork();
         if (xAuthPid == 0) {
             // Need to run as wslg user.
@@ -64,12 +65,17 @@ try {
             break;
         }
 
+        retryCount--;
         LOG_INFO("Authority file (%s) doesn't exist yet, sleeping 100ms.", c_Xauthority);
         usleep(100*1000);
     };
 
-    // Make .Xauthority readable by all users.
-    THROW_LAST_ERROR_IF(chmod(c_Xauthority, 0644) < 0);
+    if (retryCount > 0) {
+        // Make .Xauthority readable by all users.
+        THROW_LAST_ERROR_IF(chmod(c_Xauthority, 0644) < 0);
+    } else {
+        LOG_ERROR("Fail to generate %s", c_Xauthority);
+    }
 
     return 0;
 }
