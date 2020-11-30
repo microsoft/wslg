@@ -12,6 +12,9 @@ void DebugPrint(const wchar_t* format, ...);
 #define DebugAssert
 #endif // DBG_MESSAGE
 
+// Set to 1 to enable digital signature check.
+#define ENABLE_WSL_SIGNATURE_CHECK 0
+
 HRESULT
 CreateShellLink(_In_z_ LPCWSTR lpszPathLink,
     _In_z_ LPCWSTR lpszPathObj, 
@@ -28,6 +31,13 @@ CreateIconFile(_In_reads_bytes_(cbSize) BYTE* pBuffer,
 BOOL
 GetLocaleName(_Out_writes_z_(localeNameSize) char* localeName,
     int localeNameSize);
+
+#if ENABLE_WSL_SIGNATURE_CHECK
+BOOL
+IsFileTrusted(_In_z_ LPCWSTR pwszFile);
+#else
+#define IsFileTrusted(pwszFile) (true)
+#endif // ENABLE_WSL_SIGNATURE_CHECK
 
 #pragma pack(1)
 //

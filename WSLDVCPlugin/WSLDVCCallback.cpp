@@ -5,6 +5,7 @@
 #include "WSLDVCFileDB.h"
 
 LPCWSTR c_WSL_exe = L"%windir%\\system32\\wsl.exe";
+LPCWSTR c_WSLg_exe = L"%windir%\\system32\\wslg.exe";
 LPCWSTR c_Working_dir = L"%windir%\\system32";
 
 //
@@ -421,12 +422,28 @@ public:
         }
         DebugPrint(L"IconPath: %s\n", m_iconPath);
 
-        if (ExpandEnvironmentStringsW(c_WSL_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
+        if (ExpandEnvironmentStringsW(c_WSLg_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
         {
-            DebugPrint(L"Failed to expand WSL exe: %s : %d\n", c_WSL_exe, GetLastError());
+            DebugPrint(L"Failed to expand WSLg exe: %s : %d\n", c_WSLg_exe, GetLastError());
             return E_FAIL;
         }
-        DebugPrint(L"WSL.exe: %s\n", m_expandedPathObj);
+        DebugPrint(L"WSLg.exe: %s\n", m_expandedPathObj);
+
+        if (!PathFileExistsW(m_expandedPathObj) || !IsFileTrusted(m_expandedPathObj))
+        {
+            if (ExpandEnvironmentStringsW(c_WSL_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
+            {
+                DebugPrint(L"Failed to expand WSL exe: %s : %d\n", c_WSL_exe, GetLastError());
+                return E_FAIL;
+            }
+            DebugPrint(L"WSL.exe: %s\n", m_expandedPathObj);
+
+            if (!PathFileExistsW(m_expandedPathObj) || !IsFileTrusted(m_expandedPathObj))
+            {
+                DebugPrint(L"WSL.exe doesn't exists or not trustable\n");
+                return E_FAIL;
+            }
+        }
 
         if (ExpandEnvironmentStringsW(c_Working_dir, m_expandedWorkingDir, ARRAYSIZE(m_expandedWorkingDir)) == 0)
         {
@@ -646,6 +663,7 @@ public:
         }
 
         /* ignore error from create link */
+        /* This also updates if m_expandedPathObj (wsl.exe or wslg.exe) is changed. */
         CreateShellLink((LPCWSTR)linkPath,
                 (LPCWSTR)m_expandedPathObj,
                 (LPCWSTR)exeArgs,
