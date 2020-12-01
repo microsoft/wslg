@@ -124,6 +124,7 @@ RUN meson --prefix=${prefix} build \
          -Dshell-desktop=false \
          -Dshell-fullscreen=false \
          -Dshell-ivi=false \
+         -Dshell-kiosk=false \
          -Ddemo-clients=false \
          -Dsimple-clients=[] \
          -Dtools=[] \
