@@ -12,7 +12,8 @@ namespace wslgd
         void operator=(const ProcessMonitor&) = delete;
 
         passwd* GetUserInfo() const;
-        int LaunchProcess(std::vector<std::string>&& argv, std::vector<cap_value_t>&& capabilities = {});
+        typedef int (*ProcessLaunchCallack) (passwd* passwordEntry);
+        int LaunchProcess(std::vector<std::string>&& argv, std::vector<cap_value_t>&& capabilities = {}, ProcessLaunchCallack callback = nullptr);
         int Run();
 
     private:
@@ -20,6 +21,7 @@ namespace wslgd
         {
             std::vector<std::string> argv;
             std::vector<cap_value_t> capabilities;
+            ProcessLaunchCallack callback;
         };
 
         std::map<int, ProcessInfo> m_children{};
