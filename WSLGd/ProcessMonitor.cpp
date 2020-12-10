@@ -12,7 +12,7 @@ passwd* wslgd::ProcessMonitor::GetUserInfo() const
     return m_user;
 }
 
-int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::vector<cap_value_t>&& capabilities, ProcessLaunchCallack callback)
+int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::vector<cap_value_t>&& capabilities)
 {
     int childPid;
     THROW_LAST_ERROR_IF((childPid = fork()) < 0);
@@ -56,17 +56,12 @@ int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::v
     }
     CATCH_LOG();
 
-    // If a callback was provided for this process launch, call it now.
-    if (callback) {
-        callback(GetUserInfo());
-    }
-
     // Ensure that the child process exits.
     if (childPid == 0) {
         _exit(1);
     }
 
-    m_children[childPid] = ProcessInfo{std::move(argv), std::move(capabilities), std::move(callback)};
+    m_children[childPid] = ProcessInfo{std::move(argv), std::move(capabilities)};
     return childPid;
 }
 
@@ -113,7 +108,7 @@ int wslgd::ProcessMonitor::Run() try {
                             LOG_INFO("%s terminated with signal %d.", found->second.argv[0].c_str(), WTERMSIG(status));
                         }
 
-                        LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities), std::move(found->second.callback));
+                        LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities));
                     }
 
                     m_children.erase(found);
