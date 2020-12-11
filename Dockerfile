@@ -67,24 +67,25 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     wayland-protocols \
     wget
 
-WORKDIR /work
-CMD /bin/bash
-
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
 
 ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
 
-ENV prefix=/usr/local
-ENV PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:${prefix}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${prefix}/share/pkgconfig
-
+WORKDIR /work
 RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
+
+ENV DESTDIR=/work/build
+ENV PREFIX=/usr
+ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
+ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
+ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
 
 # Build wayland
 COPY vendor/wayland /work/vendor/wayland
 WORKDIR /work/vendor/wayland
-RUN ./autogen.sh --prefix=/usr/local --disable-documentation && \
+RUN ./autogen.sh --prefix=${PREFIX} --disable-documentation && \
     make -j8 && make install
 RUN echo 'wayland:' `git --git-dir=/work/vendor/wayland/.git rev-parse --verify HEAD` >> /work/versions.txt
 
@@ -93,8 +94,8 @@ COPY vendor/FreeRDP /work/vendor/FreeRDP
 WORKDIR /work/vendor/FreeRDP
 RUN cmake -G Ninja \
         -B build \
-        -DCMAKE_INSTALL_PREFIX=${prefix} \
-        -DCMAKE_INSTALL_LIBDIR=${prefix}/lib \
+        -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+        -DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DWITH_SERVER=ON \
         -DWITH_CLIENT=OFF \
@@ -110,7 +111,7 @@ RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
-RUN meson --prefix=${prefix} build \
+RUN meson --prefix=${PREFIX} build \
          -Dbackend-default=rdp \
          -Dbackend-drm=false \
          -Dbackend-drm-screencast-vaapi=false \
@@ -137,7 +138,7 @@ RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HE
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
-RUN meson --prefix=${prefix} build -Ddatabase=simple -Dbluez5=false -Dtests=false
+RUN meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
 RUN ninja -C build -j8 install
 RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
@@ -194,9 +195,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nano \
     vim
 
-# Setup the container environment variable state.
-ENV weston_path=/usr/local
-
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
     mkdir /home/wslg/.config && \
@@ -211,7 +209,7 @@ COPY config/weston.ini /home/wslg/.config/weston.ini
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
 
 # Copy the built artifacts from the build stage.
-COPY --from=dev ${weston_path} ${weston_path}
+COPY --from=dev /work/build /
 COPY --from=dev /work/versions.txt /etc/versions.txt
 
 COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
@@ -224,4 +222,4 @@ COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/li
 #
 EXPOSE 3391/tcp
 
-CMD /usr/local/bin/WSLGd
+CMD /usr/bin/WSLGd

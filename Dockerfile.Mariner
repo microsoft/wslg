@@ -41,6 +41,7 @@ RUN tdnf install -y \
         harfbuzz  \
         harfbuzz-devel  \
         kernel-headers  \
+        intltool \
         libatomic_ops  \
         libcap-devel  \
         libffi  \
@@ -58,6 +59,7 @@ RUN tdnf install -y \
         libusb-devel  \
         libwebp  \
         libwebp-devel  \
+        libxml2 \
         libxml2-devel  \
         make  \
         meson  \
@@ -128,21 +130,18 @@ FROM build-env AS dev
 ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
 
-WORKDIR /work
-CMD /bin/bash
-
-ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/share/pkgconfig:/lib/pkgconfig
-
-RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
+RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSIONf} > /work/versions.txt
 
 ### Meson
-
-# The version of Meson on Mariner repo is to old
-
+# The version of Meson on Mariner repo is too old
 RUN \
 wget https://bootstrap.pypa.io/get-pip.py && \
 python3 get-pip.py --force-reinstall && \
 pip3 install --upgrade --force-reinstall meson
+
+#
+# Build build-time dependencies.
+#
 
 ### wayland-protocols
 WORKDIR /work/vendor
@@ -152,126 +151,34 @@ tar -xvf wayland-protocols-1.20.tar.xz && \
 cd wayland-protocols-1.20/ && \
 ./configure --prefix=/usr && \
 make && \
-make install && \
-tar fczP /work/vendor/wayland-protocols-1.20.tar \
-/usr/share/pkgconfig/wayland-protocols.pc \
-/usr/share/wayland-protocols/stable/presentation-time/presentation-time.xml \
-/usr/share/wayland-protocols/stable/viewporter/viewporter.xml \
-/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml \
-/usr/share/wayland-protocols/unstable/fullscreen-shell/fullscreen-shell-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/input-method/input-method-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/input-timestamps/input-timestamps-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/linux-explicit-synchronization/linux-explicit-synchronization-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/pointer-gestures/pointer-gestures-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/primary-selection/primary-selection-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/relative-pointer/relative-pointer-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/tablet/tablet-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/tablet/tablet-unstable-v2.xml \
-/usr/share/wayland-protocols/unstable/text-input/text-input-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/text-input/text-input-unstable-v3.xml \
-/usr/share/wayland-protocols/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/xdg-foreign/xdg-foreign-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/xdg-foreign/xdg-foreign-unstable-v2.xml \
-/usr/share/wayland-protocols/unstable/xdg-output/xdg-output-unstable-v1.xml \
-/usr/share/wayland-protocols/unstable/xdg-shell/xdg-shell-unstable-v5.xml \
-/usr/share/wayland-protocols/unstable/xdg-shell/xdg-shell-unstable-v6.xml \
-/usr/share/wayland-protocols/unstable/xwayland-keyboard-grab/xwayland-keyboard-grab-unstable-v1.xml
+make install
+
+### xcursorgen
+WORKDIR /work/vendor
+RUN \
+wget https://www.x.org/archive/individual/app/xcursorgen-1.0.7.tar.bz2 && \
+tar -xvf xcursorgen-1.0.7.tar.bz2 && \
+cd xcursorgen-1.0.7/ && \
+./configure --prefix=/usr && \
+make && \
+make install 
+
+#
+# Build runtime dependencies.
+#
+
+ENV DESTDIR=/work/build
+ENV PREFIX=/usr
+ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
+ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include:${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
+ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
 
 # Build wayland
 COPY vendor/wayland /work/vendor/wayland
 WORKDIR /work/vendor/wayland
-RUN ./autogen.sh --prefix=/usr --disable-documentation && \
-    make -j8 && make install && \
-    tar fczP /work/vendor/wayland.tar \
-    /usr/bin/wayland-scanner \
-    /usr/lib/libwayland-client.la \
-    /usr/lib/libwayland-client.so \
-    /usr/lib/libwayland-client.so.0 \
-    /usr/lib/libwayland-client.so.0.3.0 \
-    /usr/lib/libwayland-cursor.la \
-    /usr/lib/libwayland-cursor.so \
-    /usr/lib/libwayland-cursor.so.0 \
-    /usr/lib/libwayland-cursor.so.0.0.0 \
-    /usr/lib/libwayland-egl.la \
-    /usr/lib/libwayland-egl.so \
-    /usr/lib/libwayland-egl.so.1 \
-    /usr/lib/libwayland-egl.so.1.0.0 \
-    /usr/lib/libwayland-server.la \
-    /usr/lib/libwayland-server.so \
-    /usr/lib/libwayland-server.so.0 \
-    /usr/lib/libwayland-server.so.0.1.0 \
-    /usr/lib/pkgconfig/wayland-client.pc \
-    /usr/lib/pkgconfig/wayland-cursor.pc \
-    /usr/lib/pkgconfig/wayland-egl-backend.pc \
-    /usr/lib/pkgconfig/wayland-egl.pc \
-    /usr/lib/pkgconfig/wayland-scanner.pc \
-    /usr/lib/pkgconfig/wayland-server.pc \
-    /usr/share/aclocal/wayland-scanner.m4 \
-    /usr/share/wayland/wayland-scanner.mk \
-    /usr/share/wayland/wayland.dtd \
-    /usr/share/wayland/wayland.xml
+RUN ./autogen.sh --prefix=${PREFIX} --disable-documentation && \
+    make -j8 && make install
 RUN echo 'wayland:' `git --git-dir=/work/vendor/wayland/.git rev-parse --verify HEAD` >> /work/versions.txt
-
-### Xorg-Server 
-
-WORKDIR /work/vendor
-RUN \
-wget https://www.x.org/pub/individual/xserver/xorg-server-1.20.9.tar.bz2 && \
-tar -xvf xorg-server-1.20.9.tar.bz2 && \
-cd xorg-server-1.20.9/ && \
-patch -p1 < ../xwayland_log.patch && \
-./configure --prefix=/usr    \
-            --enable-glamor     \
-            --enable-xwayland   \
-            --enable-install-setuid  \
-            --enable-suid-wrapper    \
-            --disable-systemd-logind \
-            --enable-libunwind=no    \
-            --with-xkb-output=/var/lib/xkb && \
-make && \
-make install && \
-tar fczP /work/vendor/xorg-server-1.20.9.tar \
-/usr/bin/X \
-/usr/bin/Xnest \
-/usr/bin/Xorg \
-/usr/bin/Xvfb \
-/usr/bin/Xwayland \
-/usr/bin/cvt \
-/usr/bin/gtf \
-/usr/lib/pkgconfig/xorg-server.pc \
-/usr/lib/xorg/protocol.txt \
-/usr/lib/xorg/modules/libexa.la \
-/usr/lib/xorg/modules/libexa.so \
-/usr/lib/xorg/modules/libfb.la \
-/usr/lib/xorg/modules/libfb.so \
-/usr/lib/xorg/modules/libfbdevhw.la \
-/usr/lib/xorg/modules/libfbdevhw.so \
-/usr/lib/xorg/modules/libglamoregl.la \
-/usr/lib/xorg/modules/libglamoregl.so \
-/usr/lib/xorg/modules/libint10.la \
-/usr/lib/xorg/modules/libint10.so \
-/usr/lib/xorg/modules/libshadow.la \
-/usr/lib/xorg/modules/libshadow.so \
-/usr/lib/xorg/modules/libshadowfb.la \
-/usr/lib/xorg/modules/libshadowfb.so \
-/usr/lib/xorg/modules/libvbe.la \
-/usr/lib/xorg/modules/libvbe.so \
-/usr/lib/xorg/modules/libvgahw.la \
-/usr/lib/xorg/modules/libvgahw.so \
-/usr/lib/xorg/modules/libwfb.la \
-/usr/lib/xorg/modules/libwfb.so \
-/usr/lib/xorg/modules/drivers/modesetting_drv.la \
-/usr/lib/xorg/modules/drivers/modesetting_drv.so \
-/usr/lib/xorg/modules/extensions/libglx.la \
-/usr/lib/xorg/modules/extensions/libglx.so \
-/usr/libexec/Xorg \
-/usr/libexec/Xorg.wrap \
-/usr/share/X11/xorg.conf.d/10-quirks.conf \
-/usr/share/aclocal/xorg-server.m4
 
 ### libxkbcommon
 WORKDIR /work/vendor
@@ -281,523 +188,65 @@ tar -xvf libxkbcommon-1.0.1.tar.xz && \
 cd libxkbcommon-1.0.1/ && \
 mkdir build && \
 cd    build && \
-meson --prefix=/usr -Dbuildtype=release -Denable-docs=false .. && \
+meson --prefix=${PREFIX} -Dbuildtype=release -Denable-docs=false .. && \
 ninja && \
-ninja install && \
-tar fczP /work/vendor/libxkbcommon-1.0.1.tar \
-/usr/bin/xkbcli \
-/usr/lib/libxkbcommon-x11.so \
-/usr/lib/libxkbcommon-x11.so.0 \
-/usr/lib/libxkbcommon-x11.so.0.0.0 \
-/usr/lib/libxkbcommon.so \
-/usr/lib/libxkbcommon.so.0 \
-/usr/lib/libxkbcommon.so.0.0.0 \
-/usr/lib/libxkbregistry.so \
-/usr/lib/libxkbregistry.so.0 \
-/usr/lib/libxkbregistry.so.0.0.0 \
-/usr/lib/pkgconfig/xkbcommon-x11.pc \
-/usr/lib/pkgconfig/xkbcommon.pc \
-/usr/lib/pkgconfig/xkbregistry.pc \
-/usr/libexec/xkbcommon/xkbcli-compile-keymap \
-/usr/libexec/xkbcommon/xkbcli-how-to-type \
-/usr/libexec/xkbcommon/xkbcli-interactive-evdev \
-/usr/libexec/xkbcommon/xkbcli-interactive-wayland \
-/usr/libexec/xkbcommon/xkbcli-interactive-x11 \
-/usr/libexec/xkbcommon/xkbcli-list
+ninja install
 
-### Little CMS2
-
+### Xorg-Server 
 WORKDIR /work/vendor
 RUN \
-wget https://downloads.sourceforge.net/project/lcms/lcms/2.11/lcms2-2.11.tar.gz && \
-tar -xvf lcms2-2.11.tar.gz && \
-cd lcms2-2.11/ && \
-./configure --prefix=/usr --disable-static && \
+wget https://www.x.org/pub/individual/xserver/xorg-server-1.20.9.tar.bz2 && \
+tar -xvf xorg-server-1.20.9.tar.bz2 && \
+cd xorg-server-1.20.9/ && \
+patch -p1 < ../xwayland_log.patch && \
+./configure --prefix=${PREFIX}  \
+            --enable-glamor     \
+            --enable-xwayland   \
+            --enable-install-setuid  \
+            --enable-suid-wrapper    \
+            --disable-systemd-logind \
+            --enable-libunwind=no    \
+            --with-xkb-output=/var/lib/xkb && \
 make && \
-make install && \
-tar fczP /work/vendor/lcms2-2.11.tar \
-/usr/bin/jpgicc \
-/usr/bin/linkicc \
-/usr/bin/psicc \
-/usr/bin/tificc \
-/usr/bin/transicc \
-/usr/lib/liblcms2.la \
-/usr/lib/liblcms2.so \
-/usr/lib/liblcms2.so.2 \
-/usr/lib/liblcms2.so.2.0.10 \
-/usr/lib/pkgconfig/lcms2.pc
+make install
 
-### libgusb
-
+### xkbcomp
 WORKDIR /work/vendor
 RUN \
-wget https://people.freedesktop.org/~hughsient/releases/libgusb-0.3.5.tar.xz && \
-tar -xvf libgusb-0.3.5.tar.xz && \
-cd libgusb-0.3.5/ && \
-mkdir build && \
-cd    build && \
-meson --prefix=/usr -Dbuildtype=release -Ddocs=false -Dtests=false -Dvapi=false .. && \
-ninja && \
-ninja install && \
-tar fczP /work/vendor/libgusb-0.3.5.tar \
-/usr/bin/gusbcmd \
-/usr/lib/libgusb.so \
-/usr/lib/libgusb.so.2 \
-/usr/lib/libgusb.so.2.0.10 \
-/usr/lib/girepository-1.0/GUsb-1.0.typelib \
-/usr/lib/pkgconfig/gusb.pc \
-/usr/share/gir-1.0/GUsb-1.0.gir
+wget https://www.x.org/archive/individual/app/xkbcomp-1.4.4.tar.bz2 && \
+tar -xvf xkbcomp-1.4.4.tar.bz2 && \
+cd xkbcomp-1.4.4/ && \
+./configure --prefix=${PREFIX} && \
+make && \
+make install
 
-### colord
-
+### Xkeyboard-config
 WORKDIR /work/vendor
 RUN \
-wget https://www.freedesktop.org/software/colord/releases/colord-1.4.4.tar.xz && \
-tar -xvf colord-1.4.4.tar.xz && \
-cd colord-1.4.4/ && \
-mkdir build && \
-cd    build && \
-meson --prefix=/usr      \
-      --sysconfdir=/etc        \
-      --localstatedir=/var     \
-      -Dbuildtype=release       \
-      -Ddaemon=false            \
-      -Dtest=false              \
-      -Dvapi=false              \
-      -Dsystemd=false          \
-      -Dlibcolordcompat=true   \
-      -Dargyllcms_sensor=false \
-      -Dbash_completion=false  \
-      -Ddocs=false             \
-      -Dman=false ..           && \
-ninja && \
-ninja install && \
-tar fczP /work/vendor/colord-1.4.4.tar \
-/usr/bin/cd-create-profile \
-/usr/bin/cd-fix-profile \
-/usr/bin/cd-iccdump \
-/usr/bin/cd-it8 \
-/usr/bin/colormgr \
-/usr/lib/libcolord.so \
-/usr/lib/libcolord.so.2 \
-/usr/lib/libcolord.so.2.0.5 \
-/usr/lib/libcolordcompat.so \
-/usr/lib/libcolordprivate.so \
-/usr/lib/libcolordprivate.so.2 \
-/usr/lib/libcolordprivate.so.2.0.5 \
-/usr/lib/libcolorhug.so \
-/usr/lib/libcolorhug.so.2 \
-/usr/lib/libcolorhug.so.2.0.5 \
-/usr/lib/girepository-1.0/Colord-1.0.typelib \
-/usr/lib/girepository-1.0/Colorhug-1.0.typelib \
-/usr/lib/pkgconfig/colord.pc \
-/usr/lib/pkgconfig/colorhug.pc \
-/usr/libexec/colord-session \
-/usr/share/color/icc/colord/AdobeRGB1998.icc \
-/usr/share/color/icc/colord/AppleRGB.icc \
-/usr/share/color/icc/colord/BestRGB.icc \
-/usr/share/color/icc/colord/BetaRGB.icc \
-/usr/share/color/icc/colord/Bluish.icc \
-/usr/share/color/icc/colord/BruceRGB.icc \
-/usr/share/color/icc/colord/CIE-RGB.icc \
-/usr/share/color/icc/colord/ColorMatchRGB.icc \
-/usr/share/color/icc/colord/Crayons.icc \
-/usr/share/color/icc/colord/DonRGB4.icc \
-/usr/share/color/icc/colord/ECI-RGBv1.icc \
-/usr/share/color/icc/colord/ECI-RGBv2.icc \
-/usr/share/color/icc/colord/EktaSpacePS5.icc \
-/usr/share/color/icc/colord/Gamma5000K.icc \
-/usr/share/color/icc/colord/Gamma5500K.icc \
-/usr/share/color/icc/colord/Gamma6500K.icc \
-/usr/share/color/icc/colord/NTSC-RGB.icc \
-/usr/share/color/icc/colord/PAL-RGB.icc \
-/usr/share/color/icc/colord/ProPhotoRGB.icc \
-/usr/share/color/icc/colord/Rec709.icc \
-/usr/share/color/icc/colord/SMPTE-C-RGB.icc \
-/usr/share/color/icc/colord/SwappedRedAndGreen.icc \
-/usr/share/color/icc/colord/WideGamutRGB.icc \
-/usr/share/color/icc/colord/sRGB.icc \
-/usr/share/color/icc/colord/x11-colors.icc \
-/usr/share/colord/cmf/CIE1931-2deg-XYZ.cmf \
-/usr/share/colord/cmf/CIE1964-10deg-XYZ.cmf \
-/usr/share/colord/icons/color-munki-photo-ambient.svg \
-/usr/share/colord/icons/color-munki-photo-attach.svg \
-/usr/share/colord/icons/color-munki-photo-calibrate.svg \
-/usr/share/colord/icons/color-munki-photo-projector.svg \
-/usr/share/colord/icons/color-munki-photo-screen.svg \
-/usr/share/colord/icons/color-munki-smile-attach.svg \
-/usr/share/colord/icons/colorhug-attach.svg \
-/usr/share/colord/icons/colorhug2-attach.svg \
-/usr/share/colord/icons/dtp94-attach.svg \
-/usr/share/colord/icons/hcfr-attach.svg \
-/usr/share/colord/icons/huey-attach.svg \
-/usr/share/colord/icons/i1-display3-attach.svg \
-/usr/share/colord/icons/i1-monitor-attach.svg \
-/usr/share/colord/icons/i1-pro-attach.svg \
-/usr/share/colord/icons/spyder2-attach.svg \
-/usr/share/colord/icons/spyder3-attach.svg \
-/usr/share/colord/icons/spyder4-attach.svg \
-/usr/share/colord/icons/spyder5-attach.svg \
-/usr/share/colord/illuminant/CIE-A.sp \
-/usr/share/colord/illuminant/CIE-B.sp \
-/usr/share/colord/illuminant/CIE-C.sp \
-/usr/share/colord/illuminant/CIE-D50.sp \
-/usr/share/colord/illuminant/CIE-D55.sp \
-/usr/share/colord/illuminant/CIE-D65.sp \
-/usr/share/colord/illuminant/CIE-D93.sp \
-/usr/share/colord/illuminant/CIE-E.sp \
-/usr/share/colord/illuminant/CIE-F1.sp \
-/usr/share/colord/illuminant/CIE-F10.sp \
-/usr/share/colord/illuminant/CIE-F11.sp \
-/usr/share/colord/illuminant/CIE-F12.sp \
-/usr/share/colord/illuminant/CIE-F2.sp \
-/usr/share/colord/illuminant/CIE-F3.sp \
-/usr/share/colord/illuminant/CIE-F4.sp \
-/usr/share/colord/illuminant/CIE-F5.sp \
-/usr/share/colord/illuminant/CIE-F6.sp \
-/usr/share/colord/illuminant/CIE-F7.sp \
-/usr/share/colord/illuminant/CIE-F8.sp \
-/usr/share/colord/illuminant/CIE-F9.sp \
-/usr/share/colord/ref/CIE-1986-daylight-SPD.cmf \
-/usr/share/colord/ref/CIE-TCS.sp \
-/usr/share/colord/ti1/display-long.ti1 \
-/usr/share/colord/ti1/display-normal.ti1 \
-/usr/share/colord/ti1/display-short.ti1 \
-/usr/share/colord/ti1/printer-long.ti1 \
-/usr/share/colord/ti1/printer-normal.ti1 \
-/usr/share/colord/ti1/printer-short.ti1 \
-/usr/share/dbus-1/interfaces/org.freedesktop.ColorHelper.xml \
-/usr/share/dbus-1/services/org.freedesktop.ColorHelper.service \
-/usr/share/dbus-1/system-services/org.freedesktop.ColorManager.service \
-/usr/share/dbus-1/system.d/org.freedesktop.ColorManager.conf \
-/usr/share/gir-1.0/Colord-1.0.gir \
-/usr/share/gir-1.0/Colorhug-1.0.gir \
-/usr/share/glib-2.0/schemas/org.freedesktop.ColorHelper.gschema.xml \
-/usr/share/locale/as/LC_MESSAGES/colord.mo \
-/usr/share/locale/bn_IN/LC_MESSAGES/colord.mo \
-/usr/share/locale/ca/LC_MESSAGES/colord.mo \
-/usr/share/locale/cs/LC_MESSAGES/colord.mo \
-/usr/share/locale/da/LC_MESSAGES/colord.mo \
-/usr/share/locale/de/LC_MESSAGES/colord.mo \
-/usr/share/locale/el/LC_MESSAGES/colord.mo \
-/usr/share/locale/en_GB/LC_MESSAGES/colord.mo \
-/usr/share/locale/eo/LC_MESSAGES/colord.mo \
-/usr/share/locale/es/LC_MESSAGES/colord.mo \
-/usr/share/locale/eu/LC_MESSAGES/colord.mo \
-/usr/share/locale/fi/LC_MESSAGES/colord.mo \
-/usr/share/locale/fr/LC_MESSAGES/colord.mo \
-/usr/share/locale/fur/LC_MESSAGES/colord.mo \
-/usr/share/locale/gl/LC_MESSAGES/colord.mo \
-/usr/share/locale/gu/LC_MESSAGES/colord.mo \
-/usr/share/locale/he/LC_MESSAGES/colord.mo \
-/usr/share/locale/hi/LC_MESSAGES/colord.mo \
-/usr/share/locale/hr/LC_MESSAGES/colord.mo \
-/usr/share/locale/hu/LC_MESSAGES/colord.mo \
-/usr/share/locale/id/LC_MESSAGES/colord.mo \
-/usr/share/locale/is/LC_MESSAGES/colord.mo \
-/usr/share/locale/it/LC_MESSAGES/colord.mo \
-/usr/share/locale/ja/LC_MESSAGES/colord.mo \
-/usr/share/locale/kk/LC_MESSAGES/colord.mo \
-/usr/share/locale/kn/LC_MESSAGES/colord.mo \
-/usr/share/locale/ko/LC_MESSAGES/colord.mo \
-/usr/share/locale/lt/LC_MESSAGES/colord.mo \
-/usr/share/locale/lv/LC_MESSAGES/colord.mo \
-/usr/share/locale/ml/LC_MESSAGES/colord.mo \
-/usr/share/locale/mr/LC_MESSAGES/colord.mo \
-/usr/share/locale/nb/LC_MESSAGES/colord.mo \
-/usr/share/locale/nl/LC_MESSAGES/colord.mo \
-/usr/share/locale/oc/LC_MESSAGES/colord.mo \
-/usr/share/locale/or/LC_MESSAGES/colord.mo \
-/usr/share/locale/pa/LC_MESSAGES/colord.mo \
-/usr/share/locale/pl/LC_MESSAGES/colord.mo \
-/usr/share/locale/pt/LC_MESSAGES/colord.mo \
-/usr/share/locale/pt_BR/LC_MESSAGES/colord.mo \
-/usr/share/locale/ro/LC_MESSAGES/colord.mo \
-/usr/share/locale/ru/LC_MESSAGES/colord.mo \
-/usr/share/locale/sk/LC_MESSAGES/colord.mo \
-/usr/share/locale/sl/LC_MESSAGES/colord.mo \
-/usr/share/locale/sr/LC_MESSAGES/colord.mo \
-/usr/share/locale/sr@latin/LC_MESSAGES/colord.mo \
-/usr/share/locale/sv/LC_MESSAGES/colord.mo \
-/usr/share/locale/ta/LC_MESSAGES/colord.mo \
-/usr/share/locale/th/LC_MESSAGES/colord.mo \
-/usr/share/locale/tr/LC_MESSAGES/colord.mo \
-/usr/share/locale/uk/LC_MESSAGES/colord.mo \
-/usr/share/locale/zh_CN/LC_MESSAGES/colord.mo \
-/usr/share/locale/zh_TW/LC_MESSAGES/colord.mo
+wget https://www.x.org/archive/individual/data/xkeyboard-config/xkeyboard-config-2.31.tar.bz2 && \
+tar -xvf xkeyboard-config-2.31.tar.bz2 && \
+cd xkeyboard-config-2.31 && \
+./configure --prefix=${PREFIX} && \
+make && \
+make install
 
-### gstreamer
-
-WORKDIR /work/vendor
-RUN \ 
-wget https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-1.18.0.tar.xz && \
-tar -xvf gstreamer-1.18.0.tar.xz && \
-cd gstreamer-1.18.0/ && \
-mkdir build && \
-cd    build && \
-meson  --prefix=/usr \
-       -Dbuildtype=release \
-       -Dgst_debug=false   \
-       -Dcheck=disabled   \
-       -Dbash-completion=disabled   \
-       -Dexamples=disabled   \
-       -Dtests=disabled   \
-       -Dbenchmarks=disabled   \
-       -Dtools=disabled   \
-       -Dgtk_doc=disabled   \
-       -Dpackage-name="GStreamer 1.18.0" && \
-ninja && \
-ninja install && \
-tar fczP /work/vendor/gstreamer-1.18.0.tar \
-/usr/lib/libgstbase-1.0.so \
-/usr/lib/libgstbase-1.0.so.0 \
-/usr/lib/libgstbase-1.0.so.0.1800.0 \
-/usr/lib/libgstcontroller-1.0.so \
-/usr/lib/libgstcontroller-1.0.so.0 \
-/usr/lib/libgstcontroller-1.0.so.0.1800.0 \
-/usr/lib/libgstnet-1.0.so \
-/usr/lib/libgstnet-1.0.so.0 \
-/usr/lib/libgstnet-1.0.so.0.1800.0 \
-/usr/lib/libgstreamer-1.0.so \
-/usr/lib/libgstreamer-1.0.so.0 \
-/usr/lib/libgstreamer-1.0.so.0.1800.0 \
-/usr/lib/girepository-1.0/Gst-1.0.typelib \
-/usr/lib/girepository-1.0/GstBase-1.0.typelib \
-/usr/lib/girepository-1.0/GstController-1.0.typelib \
-/usr/lib/girepository-1.0/GstNet-1.0.typelib \
-/usr/lib/gstreamer-1.0/libgstcoreelements.so \
-/usr/lib/gstreamer-1.0/libgstcoretracers.so \
-/usr/lib/pkgconfig/gstreamer-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-base-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-controller-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-net-1.0.pc \
-/usr/libexec/gstreamer-1.0/gst-hotdoc-plugins-scanner \
-/usr/libexec/gstreamer-1.0/gst-plugin-scanner \
-/usr/libexec/gstreamer-1.0/gst-plugins-doc-cache-generator \
-/usr/libexec/gstreamer-1.0/gst-ptp-helper \
-/usr/share/aclocal/gst-element-check-1.0.m4 \
-/usr/share/gir-1.0/Gst-1.0.gir \
-/usr/share/gir-1.0/GstBase-1.0.gir \
-/usr/share/gir-1.0/GstController-1.0.gir \
-/usr/share/gir-1.0/GstNet-1.0.gir \
-/usr/share/gstreamer-1.0/gdb/glib_gobject_helper.py \
-/usr/share/gstreamer-1.0/gdb/gst_gdb.py \
-/usr/share/locale/af/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/ast/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/az/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/be/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/bg/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/ca/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/cs/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/da/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/de/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/el/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/en_GB/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/eo/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/es/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/eu/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/fi/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/fr/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/fur/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/gl/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/hr/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/hu/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/id/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/it/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/ja/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/lt/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/nb/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/nl/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/pl/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/pt_BR/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/ro/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/ru/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/rw/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/sk/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/sl/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/sq/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/sr/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/sv/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/tr/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/uk/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/vi/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/zh_CN/LC_MESSAGES/gstreamer-1.0.mo \
-/usr/share/locale/zh_TW/LC_MESSAGES/gstreamer-1.0.mo
-
-### gst-plugins-base
+### xcursor-themes
 WORKDIR /work/vendor
 RUN \
-wget https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-base-1.18.0.tar.xz && \
-tar -xvf gst-plugins-base-1.18.0.tar.xz && \
-cd gst-plugins-base-1.18.0/ && \
-mkdir build && \
-cd    build && \
-meson  --prefix=/usr \
-       -Dbuildtype=release \
-       -Dexamples=disabled \
-       -Dtests=disabled \
-       -Dtools=disabled \
-       -Ddoc=disabled \
-       -Dpackage-name="GStreamer 1.18.0"    \
-       --wrap-mode=nodownload && \
-ninja && \
-ninja install && \
-tar fczP /work/vendor/gst-plugins-base-1.18.0.tar \
-/usr/lib/libgstallocators-1.0.so \
-/usr/lib/libgstallocators-1.0.so.0 \
-/usr/lib/libgstallocators-1.0.so.0.1800.0 \
-/usr/lib/libgstapp-1.0.so \
-/usr/lib/libgstapp-1.0.so.0 \
-/usr/lib/libgstapp-1.0.so.0.1800.0 \
-/usr/lib/libgstaudio-1.0.so \
-/usr/lib/libgstaudio-1.0.so.0 \
-/usr/lib/libgstaudio-1.0.so.0.1800.0 \
-/usr/lib/libgstfft-1.0.so \
-/usr/lib/libgstfft-1.0.so.0 \
-/usr/lib/libgstfft-1.0.so.0.1800.0 \
-/usr/lib/libgstgl-1.0.so \
-/usr/lib/libgstgl-1.0.so.0 \
-/usr/lib/libgstgl-1.0.so.0.1800.0 \
-/usr/lib/libgstpbutils-1.0.so \
-/usr/lib/libgstpbutils-1.0.so.0 \
-/usr/lib/libgstpbutils-1.0.so.0.1800.0 \
-/usr/lib/libgstriff-1.0.so \
-/usr/lib/libgstriff-1.0.so.0 \
-/usr/lib/libgstriff-1.0.so.0.1800.0 \
-/usr/lib/libgstrtp-1.0.so \
-/usr/lib/libgstrtp-1.0.so.0 \
-/usr/lib/libgstrtp-1.0.so.0.1800.0 \
-/usr/lib/libgstrtsp-1.0.so \
-/usr/lib/libgstrtsp-1.0.so.0 \
-/usr/lib/libgstrtsp-1.0.so.0.1800.0 \
-/usr/lib/libgstsdp-1.0.so \
-/usr/lib/libgstsdp-1.0.so.0 \
-/usr/lib/libgstsdp-1.0.so.0.1800.0 \
-/usr/lib/libgsttag-1.0.so \
-/usr/lib/libgsttag-1.0.so.0 \
-/usr/lib/libgsttag-1.0.so.0.1800.0 \
-/usr/lib/libgstvideo-1.0.so \
-/usr/lib/libgstvideo-1.0.so.0 \
-/usr/lib/libgstvideo-1.0.so.0.1800.0 \
-/usr/lib/girepository-1.0/GstAllocators-1.0.typelib \
-/usr/lib/girepository-1.0/GstApp-1.0.typelib \
-/usr/lib/girepository-1.0/GstAudio-1.0.typelib \
-/usr/lib/girepository-1.0/GstGL-1.0.typelib \
-/usr/lib/girepository-1.0/GstGLEGL-1.0.typelib \
-/usr/lib/girepository-1.0/GstGLWayland-1.0.typelib \
-/usr/lib/girepository-1.0/GstGLX11-1.0.typelib \
-/usr/lib/girepository-1.0/GstPbutils-1.0.typelib \
-/usr/lib/girepository-1.0/GstRtp-1.0.typelib \
-/usr/lib/girepository-1.0/GstRtsp-1.0.typelib \
-/usr/lib/girepository-1.0/GstSdp-1.0.typelib \
-/usr/lib/girepository-1.0/GstTag-1.0.typelib \
-/usr/lib/girepository-1.0/GstVideo-1.0.typelib \
-/usr/lib/gstreamer-1.0/libgstadder.so \
-/usr/lib/gstreamer-1.0/libgstalsa.so \
-/usr/lib/gstreamer-1.0/libgstapp.so \
-/usr/lib/gstreamer-1.0/libgstaudioconvert.so \
-/usr/lib/gstreamer-1.0/libgstaudiomixer.so \
-/usr/lib/gstreamer-1.0/libgstaudiorate.so \
-/usr/lib/gstreamer-1.0/libgstaudioresample.so \
-/usr/lib/gstreamer-1.0/libgstaudiotestsrc.so \
-/usr/lib/gstreamer-1.0/libgstcompositor.so \
-/usr/lib/gstreamer-1.0/libgstencoding.so \
-/usr/lib/gstreamer-1.0/libgstgio.so \
-/usr/lib/gstreamer-1.0/libgstopengl.so \
-/usr/lib/gstreamer-1.0/libgstoverlaycomposition.so \
-/usr/lib/gstreamer-1.0/libgstpango.so \
-/usr/lib/gstreamer-1.0/libgstpbtypes.so \
-/usr/lib/gstreamer-1.0/libgstplayback.so \
-/usr/lib/gstreamer-1.0/libgstrawparse.so \
-/usr/lib/gstreamer-1.0/libgstsubparse.so \
-/usr/lib/gstreamer-1.0/libgsttcp.so \
-/usr/lib/gstreamer-1.0/libgsttypefindfunctions.so \
-/usr/lib/gstreamer-1.0/libgstvideoconvert.so \
-/usr/lib/gstreamer-1.0/libgstvideorate.so \
-/usr/lib/gstreamer-1.0/libgstvideoscale.so \
-/usr/lib/gstreamer-1.0/libgstvideotestsrc.so \
-/usr/lib/gstreamer-1.0/libgstvolume.so \
-/usr/lib/gstreamer-1.0/libgstximagesink.so \
-/usr/lib/gstreamer-1.0/libgstxvimagesink.so \
-/usr/lib/gstreamer-1.0/include/gst/gl/gstglconfig.h \
-/usr/lib/pkgconfig/gstreamer-allocators-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-app-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-audio-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-fft-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-gl-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-gl-egl-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-gl-prototypes-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-gl-wayland-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-gl-x11-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-pbutils-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-plugins-base-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-riff-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-rtp-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-rtsp-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-sdp-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-tag-1.0.pc \
-/usr/lib/pkgconfig/gstreamer-video-1.0.pc \
-/usr/share/gir-1.0/GstAllocators-1.0.gir \
-/usr/share/gir-1.0/GstApp-1.0.gir \
-/usr/share/gir-1.0/GstAudio-1.0.gir \
-/usr/share/gir-1.0/GstGL-1.0.gir \
-/usr/share/gir-1.0/GstGLEGL-1.0.gir \
-/usr/share/gir-1.0/GstGLWayland-1.0.gir \
-/usr/share/gir-1.0/GstGLX11-1.0.gir \
-/usr/share/gir-1.0/GstPbutils-1.0.gir \
-/usr/share/gir-1.0/GstRtp-1.0.gir \
-/usr/share/gir-1.0/GstRtsp-1.0.gir \
-/usr/share/gir-1.0/GstSdp-1.0.gir \
-/usr/share/gir-1.0/GstTag-1.0.gir \
-/usr/share/gir-1.0/GstVideo-1.0.gir \
-/usr/share/gst-plugins-base/1.0/license-translations.dict \
-/usr/share/locale/af/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/az/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/bg/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/ca/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/cs/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/da/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/de/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/el/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/en_GB/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/eo/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/es/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/eu/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/fi/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/fr/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/fur/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/gl/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/hr/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/hu/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/id/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/it/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/ja/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/lt/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/lv/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/nb/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/nl/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/or/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/pl/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/pt_BR/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/ro/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/ru/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/sk/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/sl/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/sq/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/sr/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/sv/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/tr/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/uk/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/vi/LC_MESSAGES/gst-plugins-base-1.0.mo \
-/usr/share/locale/zh_CN/LC_MESSAGES/gst-plugins-base-1.0.mo
+wget https://www.x.org/archive/individual/data/xcursor-themes-1.0.6.tar.bz2 && \
+tar -xvf xcursor-themes-1.0.6.tar.bz2 && \
+cd xcursor-themes-1.0.6/ && \
+./configure --prefix=${PREFIX} && \
+make && \
+make install 
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
 WORKDIR /work/vendor/FreeRDP
 RUN cmake -G Ninja \
         -B build \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DCMAKE_INSTALL_LIBDIR=/usr/local/lib \
+        -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+        -DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DWITH_SERVER=ON \
         -DWITH_CLIENT=OFF \
@@ -815,7 +264,7 @@ RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
-RUN meson --prefix=/usr/local build \
+RUN meson --prefix=${PREFIX} build \
         -Dbackend-default=rdp \
         -Dbackend-drm=false \
         -Dbackend-drm-screencast-vaapi=false \
@@ -823,11 +272,13 @@ RUN meson --prefix=/usr/local build \
         -Dbackend-wayland=false \
         -Dbackend-x11=false \
         -Dbackend-fbdev=false \
+        -Dcolor-management-colord=false \
         -Dscreenshare=false \
         -Dremoting=false \
         -Dpipewire=false \
         -Dshell-desktop=false \
         -Dshell-fullscreen=false \
+        -Dcolor-management-lcms=false \
         -Dshell-ivi=false \
         -Dshell-kiosk=false \
         -Ddemo-clients=false \
@@ -844,7 +295,7 @@ RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HE
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
-RUN meson --prefix=/usr/local build -Ddatabase=simple -Dbluez5=false -Dtests=false
+RUN meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
 RUN cd build && \
     ninja && \
     ninja install
@@ -857,7 +308,6 @@ RUN make -j8
 RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build WSLg Daemon
-
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
 RUN make && make install
@@ -876,6 +326,7 @@ COPY config/marinerui-derivative-public.repo /etc/yum.repos.d/marinerui-derivati
 RUN echo " Install Core/UI Runtime Dependencies "
 RUN tdnf    install -y \
             libinput \
+            libltdl \
             libpng \
             libjpeg-turbo \
             libwebp \
@@ -906,60 +357,23 @@ RUN tdnf install -y \
             procps-ng \
             vim
 
-# Setup the container environment variable state.
-ENV weston_path=/usr/local
-
 # Create wslg user.
-RUN useradd --uid 1000 --create-home --user-group wslg
+RUN useradd -u 1000 --create-home wslg && \
+    mkdir /home/wslg/.config && \
+    chown wslg /home/wslg/.config
 
 # Copy config files.
 COPY config/wsl.conf /etc/wsl.conf
-COPY config/system-distro.conf /etc/ld.so.conf.d/system-distro.conf
+COPY config/weston.ini /home/wslg/.config/weston.ini
 
 # Copy default icon file.
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
 
-####################
-# Copy dependencies manually, cherry-picking only the dependencies that we need
-# This is a temporary solution, in the future we will have pre-built packages that we will install
-# just like we do for other dependencies
+# Copy the build artifacts from the build stage.
+COPY --from=dev /work/build /
 
-## Copy, binaries
-COPY --from=dev /work/vendor/wayland-protocols-1.20.tar \
-                /work/vendor/wayland.tar \
-                /work/vendor/xorg-server-1.20.9.tar \
-                /work/vendor/libxkbcommon-1.0.1.tar \
-                /work/vendor/lcms2-2.11.tar \
-                /work/vendor/libgusb-0.3.5.tar \
-                /work/vendor/colord-1.4.4.tar \
-                /work/vendor/gstreamer-1.18.0.tar \
-                /work/vendor/gst-plugins-base-1.18.0.tar \
-                /
-
-RUN cd / && \
-    tar xvfP wayland-protocols-1.20.tar && \
-    tar xvfP wayland.tar && \
-    tar xvfP xorg-server-1.20.9.tar && \
-    tar xvfP libxkbcommon-1.0.1.tar && \
-    tar xvfP lcms2-2.11.tar && \
-    tar xvfP libgusb-0.3.5.tar && \
-    tar xvfP colord-1.4.4.tar && \
-    tar xvfP gstreamer-1.18.0.tar && \
-    tar xvfP gst-plugins-base-1.18.0.tar && \
-    rm wayland-protocols-1.20.tar && \
-    rm wayland.tar && \
-    rm xorg-server-1.20.9.tar && \
-    rm libxkbcommon-1.0.1.tar && \
-    rm lcms2-2.11.tar && \
-    rm libgusb-0.3.5.tar && \
-    rm colord-1.4.4.tar && \
-    rm gstreamer-1.18.0.tar && \
-    rm gst-plugins-base-1.18.0.tar
-
-# Copy the built artifacts from the build stage.
-COPY --from=dev ${weston_path} ${weston_path}
 COPY --from=dev /work/versions.txt /etc/versions.txt
 
 COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
 
-CMD /usr/local/bin/WSLGd
+CMD /usr/bin/WSLGd
