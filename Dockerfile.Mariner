@@ -119,6 +119,7 @@ RUN tdnf    install -y \
             libxkbfile-devel \
             libxshmfence-devel \
             lxrandr \
+            wayland-protocols-devel \
             xcb-util-devel \
             xcb-util-keysyms-devel \
             xcursor-themes \
@@ -142,16 +143,6 @@ pip3 install --upgrade --force-reinstall meson
 #
 # Build build-time dependencies.
 #
-
-### wayland-protocols
-WORKDIR /work/vendor
-RUN \
-wget https://wayland.freedesktop.org/releases/wayland-protocols-1.20.tar.xz && \
-tar -xvf wayland-protocols-1.20.tar.xz && \
-cd wayland-protocols-1.20/ && \
-./configure --prefix=/usr && \
-make && \
-make install
 
 ### xcursorgen
 WORKDIR /work/vendor
@@ -339,6 +330,7 @@ RUN tdnf    install -y \
             libva \
             lxrandr \
             xtrans \
+            wayland-protocols-devel \
             xorg-applications \
             xclock
 

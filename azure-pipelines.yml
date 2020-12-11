@@ -50,7 +50,7 @@ jobs:
             ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
       displayName: Prepare buildx
       env:
-        BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.4.1/buildx-v0.4.1.linux-amd64
+        BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64
 
     - script: |
               echo '{ "experimental": true }' | sudo tee /etc/docker/daemon.json
