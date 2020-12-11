@@ -130,7 +130,7 @@ FROM build-env AS dev
 ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
 
-RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSIONf} > /work/versions.txt
+RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 
 ### Meson
 # The version of Meson on Mariner repo is too old
