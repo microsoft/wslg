@@ -48,6 +48,9 @@ try {
         }
     }
 
+    // Restore default processing for SIGCHLD as both WSLGd and Xwayland depends on this.
+    signal(SIGCHLD, SIG_DFL);
+
     // Ensure the daemon is launched as root.
     if (geteuid() != 0) {
         LOG_ERROR("must be run as root.");
@@ -106,7 +109,7 @@ try {
         {"USER", passwordEntry->pw_name},
         {"LOGNAME", passwordEntry->pw_name},
         {"SHELL", passwordEntry->pw_shell},
-        {"PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"},
+        {"PATH", "/usr/sbin:/usr/bin:/sbin:/bin:/usr/games"},
         {"XDG_RUNTIME_DIR", c_xdgRuntimeDir},
         {"WAYLAND_DISPLAY", "wayland-0"},
         {"DISPLAY", ":0"},
@@ -127,7 +130,7 @@ try {
     // Launch weston.
     // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
     monitor.LaunchProcess(std::vector<std::string>{
-        "/usr/local/bin/weston",
+        "/usr/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
         "--shell=rdprail-shell.so",
@@ -157,14 +160,16 @@ try {
         "--nofork",
         "--nopidfile",
         "--system"
-    });
+        },
+        std::vector<cap_value_t>{CAP_SETGID, CAP_SETUID}
+    );
 
     // Launch pulseaudio and the associated dbus daemon.
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/bin/sh",
         "-c",
         "/usr/bin/dbus-launch "
-        "/usr/local/bin/pulseaudio "
+        "/usr/bin/pulseaudio "
         "--log-target=file:" SHARE_PATH "/pulseaudio.log "
         "--load=\"module-rdp-sink sink_name=RDPSink\" "
         "--load=\"module-rdp-source source_name=RDPSource\" "
