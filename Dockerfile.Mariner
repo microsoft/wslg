@@ -332,7 +332,8 @@ RUN tdnf    install -y \
             xtrans \
             wayland-protocols-devel \
             xorg-applications \
-            xclock
+            xclock \
+            tzdata
 
 # TODO: Review Mariner dependencies installing libinput adds more then 200Mb adding pango add more then 50Mb
 
