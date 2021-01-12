@@ -148,9 +148,11 @@ WORKDIR /work/vendor/sharedguestalloc
 RUN make -j8
 RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git rev-parse --verify HEAD` >> /work/versions.txt
 
+# Build WSLGd
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
-RUN make && make install
+RUN meson --prefix=${PREFIX} build
+RUN ninja -C build -j8 install
 
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
