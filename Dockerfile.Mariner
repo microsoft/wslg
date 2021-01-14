@@ -301,7 +301,8 @@ RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git r
 # Build WSLg Daemon
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
-RUN make && make install
+RUN meson --prefix=${PREFIX} build
+RUN ninja -C build -j8 install
 
 ########################################################################
 ########################################################################
