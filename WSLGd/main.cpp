@@ -127,6 +127,30 @@ try {
         THROW_LAST_ERROR_IF(setenv(var.name, var.value, true) < 0);
     }
 
+#ifdef HAVE_WINPR2 
+    // Set additional environment variables.
+    wIniFile* wslgConfigIniFile = IniFile_New();
+    if (wslgConfigIniFile) {
+        if (IniFile_ReadFile(wslgConfigIniFile,
+            "/mnt/c/ProgramData/Microsoft/WSL/wslgconfig.ini") > 0) {
+            int numKeys = 0;
+            char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile,
+                "system-distro-env",
+                &numKeys);
+            for (int n = 0; keyNames && n < numKeys; n++) {
+                const char *value = IniFile_GetKeyValueString(wslgConfigIniFile,
+                    "system-distro-env",
+                    keyNames[n]);
+                if (value) {
+                    setenv(keyNames[n], value, true);
+                }
+            }
+        }
+        IniFile_Free(wslgConfigIniFile);
+        wslgConfigIniFile = NULL;
+    }
+#endif // HAVE_WINPR2 
+
     // Launch weston.
     // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
     monitor.LaunchProcess(std::vector<std::string>{

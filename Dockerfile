@@ -80,6 +80,7 @@ ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
 ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
+ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
 
 # Build wayland
@@ -151,8 +152,8 @@ RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git r
 # Build WSLGd
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
-RUN meson --prefix=${PREFIX} build
-RUN ninja -C build -j8 install
+RUN meson --prefix=${PREFIX} build && \
+    ninja -C build -j8 install
 
 # Create the distro image with just what's needed at runtime.
 FROM ubuntu:20.04 as runtime
