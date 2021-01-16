@@ -16,6 +16,9 @@ constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 
+constexpr auto c_wslgconfigFile = "/mnt/c/ProgramData/Microsoft/WSL/wslgconfig.ini";
+constexpr auto c_systemDistroEnvSection = "system-distro-env";
+
 void LogException(const char *message, const char *exceptionDescription) noexcept
 {
     fprintf(stderr, "<3>WSLGd: %s %s", message ? message : "Exception:", exceptionDescription);
@@ -31,6 +34,32 @@ std::string ToServiceId(unsigned int port)
     THROW_LAST_ERROR_IF(snprintf(&serviceId[0], serviceId.size(), c_serviceIdTemplate, port) < 0);
 
     return serviceId;
+}
+
+void SetupOptionalEnv()
+{
+#ifdef HAVE_WINPR2 
+    // Set additional environment variables.
+    wIniFile* wslgConfigIniFile = IniFile_New();
+    if (wslgConfigIniFile) {
+        if (IniFile_ReadFile(wslgConfigIniFile, c_wslgconfigFile) > 0) {
+            int numKeys = 0;
+            char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile,
+                c_systemDistroEnvSection,
+                &numKeys);
+            for (int n = 0; keyNames && n < numKeys; n++) {
+                const char *value = IniFile_GetKeyValueString(wslgConfigIniFile,
+                    c_systemDistroEnvSection,
+                    keyNames[n]);
+                if (value) {
+                    setenv(keyNames[n], value, true);
+                }
+            }
+        }
+        IniFile_Free(wslgConfigIniFile);
+        wslgConfigIniFile = NULL;
+    }
+#endif // HAVE_WINPR2 
 }
 
 int main(int Argc, char *Argv[])
@@ -127,29 +156,7 @@ try {
         THROW_LAST_ERROR_IF(setenv(var.name, var.value, true) < 0);
     }
 
-#ifdef HAVE_WINPR2 
-    // Set additional environment variables.
-    wIniFile* wslgConfigIniFile = IniFile_New();
-    if (wslgConfigIniFile) {
-        if (IniFile_ReadFile(wslgConfigIniFile,
-            "/mnt/c/ProgramData/Microsoft/WSL/wslgconfig.ini") > 0) {
-            int numKeys = 0;
-            char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile,
-                "system-distro-env",
-                &numKeys);
-            for (int n = 0; keyNames && n < numKeys; n++) {
-                const char *value = IniFile_GetKeyValueString(wslgConfigIniFile,
-                    "system-distro-env",
-                    keyNames[n]);
-                if (value) {
-                    setenv(keyNames[n], value, true);
-                }
-            }
-        }
-        IniFile_Free(wslgConfigIniFile);
-        wslgConfigIniFile = NULL;
-    }
-#endif // HAVE_WINPR2 
+    SetupOptionalEnv();
 
     // Launch weston.
     // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
