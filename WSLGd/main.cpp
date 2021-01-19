@@ -16,7 +16,7 @@ constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 
-constexpr auto c_wslgconfigFile = "/mnt/c/ProgramData/Microsoft/WSL/wslgconfig.ini";
+constexpr auto c_wslgconfigFile = "/mnt/c/ProgramData/Microsoft/WSL/.wslgconfig";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
 void LogException(const char *message, const char *exceptionDescription) noexcept
@@ -55,6 +55,8 @@ void SetupOptionalEnv()
                     setenv(keyNames[n], value, true);
                 }
             }
+            if (keyNames)
+                free(keyNames);
         }
         IniFile_Free(wslgConfigIniFile);
         wslgConfigIniFile = NULL;
