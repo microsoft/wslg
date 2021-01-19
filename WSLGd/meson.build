@@ -4,7 +4,7 @@ project('WSLGd', 'cpp',
 
 config_h = configuration_data()
 
-dep_winpr = dependency('winpr2', version: '>= 2.0.0', required: true)
+dep_winpr = dependency('winpr2', version: '>= 2.0.0', required: false)
 if dep_winpr.found()
   config_h.set('HAVE_WINPR2', '1')
 endif

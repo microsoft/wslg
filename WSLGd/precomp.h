@@ -26,3 +26,6 @@
 #include <vector>
 #include "config.h"
 #include "lxwil.h"
+#ifdef HAVE_WINPR2 
+#include "winpr/ini.h"
+#endif // HAVE_WINPR2
