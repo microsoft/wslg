@@ -33,9 +33,14 @@
             <RegistrySearch Id="WslInstallingKey" Root="HKLM" Key="$(var.LxssRegKey)" Name="WslInstalling" Type="raw" />
         </Property>
 
-        <Condition Message="This update only applies to machines with the Windows Subsytem for Linux"><![CDATA[Installed OR CHECKLXSS="#1" OR WSL_INSTALLING]]></Condition>
-        <Condition Message="This application requires build 20240 or later">
-            <![CDATA[WINDOWSCURRENTBUILDNUMBER >= "20240"]]>
+        <Condition Message="This update only applies to machines with the Windows Subsytem for Linux">
+            <![CDATA[Installed OR CHECKLXSS="#1" OR WSL_INSTALLING]]>
+        </Condition>
+        <Condition Message="There is an old version installed, please uninstall it first">
+            <![CDATA[ WINDOWSCURRENTBUILDNUMBER > 1]]>
+        </Condition>
+        <Condition Message="This application requires build 20240 or later (current version: [WINDOWSCURRENTBUILDNUMBER]) ">
+            <![CDATA[ WINDOWSCURRENTBUILDNUMBER >= 20240]]>
         </Condition>
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="WSLRDPFILE" />
