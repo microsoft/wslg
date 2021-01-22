@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM cblmariner.azurecr.io/cblmariner:1.0 AS build-env-initial
+FROM cblmariner.azurecr.io/cblmariner:1.0 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -85,61 +85,41 @@ COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
 COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
 
-# Create an image with builds of FreeRDP and Weston
-FROM build-env-initial AS build-env
-
 RUN echo " Install UI dependencies "
 RUN tdnf    install -y \
-#            atk \
-#            gdk-pixbuf \
-#            gdk-pixbuf-devel \
-#            gtk2 \
-            libinput-devel \
-            libSM-devel \
-            libXcursor \
-            libXcursor-devel \
-            libXdamage-devel \
-#            libXfont-devel \
-            libXfont2-devel \
-            libXi \
-            libXi-devel \
-            libXtst \
-            libXtst-devel \
-#            libXv-devel \
-            libXxf86vm-devel \
+            cairo \
+            cairo-devel \
             libdrm-devel \
+            libepoxy-devel \
             libevdev \
             libevdev-devel \
             libinput \
+            libinput-devel \
             libpciaccess-devel \
+            libSM-devel \
             libsndfile \
             libsndfile-devel \
-#            libva \
-#            libva-devel \
-            libxkbfile-devel \
-            libxshmfence-devel \
-# Checking to see if we only need 'libXrandr' instead of 'lxrandr' \
-            libXrandr \
-            meson \
-            wayland-protocols-devel \
-#            xcb-util-devel \
-#            xcb-util-keysyms-devel \
-#            xcursor-themes \
-            libepoxy-devel \
-# From migrated repo:
-            xorg-x11-server-devel \
-            xkbcomp \
-# Needed to provide package 'xorg-macros'.
-            xorg-x11-util-macros \
-            xkeyboard-config \
-# Needed to build Weston.
-            cairo \
-            cairo-devel  \
+            libXcursor \
+            libXcursor-devel \
+            libXdamage-devel \
+            libXfont2-devel \
+            libXi \
+            libXi-devel \
             libxkbcommon-devel \
-            wayland-devel
+            libxkbfile-devel \
+            libXrandr \
+            libxshmfence-devel \
+            libXtst \
+            libXtst-devel \
+            libXxf86vm-devel \
+            meson \
+            wayland-devel \
+            wayland-protocols-devel \
+            xkbcomp \
+            xkeyboard-config \
+            xorg-x11-server-devel \
+            xorg-x11-util-macros
 
-# Added packages: libdrm-devel
-# Require wayland: xorg-server-devel        <---Requires---     libepoxy-devel
 
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
@@ -247,31 +227,28 @@ COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
 
 RUN echo " Install Core/UI Runtime Dependencies "
 RUN tdnf    install -y \
+            cairo \
+            dbus \
+            dbus-glib \
+            freefont \
             libinput \
+            libjpeg-turbo \
             libltdl \
             libpng \
-            libjpeg-turbo \
+            libsndfile \
+            libwayland-client \
+            libwayland-server \
             libwebp \
             libXcursor \
-            cairo \
-            dbus  \
-            dbus-glib  \
-            pango \
-            libsndfile \
-#            libva \
-            libwayland-server \
-            libwayland-client \
             libxkbcommon \
-# Trying to replace 'lxrandr' with below package
             libXrandr \
-# Trying to replace 'xtrans' with below package
-            xorg-x11-xtrans-devel \
-            wayland-protocols-devel \
-            xorg-x11-apps \
+            pango \
             tzdata \
-# Added explicitly after switching to migrated packages:
+            wayland-protocols-devel \
             xcursor-themes \
-            xorg-x11-server-Xwayland
+            xorg-x11-apps \
+            xorg-x11-server-Xwayland \
+            xorg-x11-xtrans-devel
 
 RUN rm /etc/tdnf/mariner_user.key && \
     rm /etc/tdnf/mariner_user.crt && \
