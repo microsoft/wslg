@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM cblmariner.azurecr.io/cblmariner:1.0 AS build-env
+FROM cblmariner.azurecr.io/cblmariner:1.0 AS build-env-initial
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -17,8 +17,6 @@ RUN tdnf install -y \
         binutils  \
         bison  \
         build-essential  \
-        cairo \
-        cairo-devel  \
         clang  \
         clang-devel  \
         cmake  \
@@ -85,45 +83,63 @@ RUN tdnf install -y \
 
 COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/marinerui-derivative-public.repo /etc/yum.repos.d/marinerui-derivative-public.repo
-COPY config/xwayland_log.patch /work/vendor/xwayland_log.patch
+COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
+
+# Create an image with builds of FreeRDP and Weston
+FROM build-env-initial AS build-env
 
 RUN echo " Install UI dependencies "
 RUN tdnf    install -y \
-            atk \
-            gdk-pixbuf \
-            gdk-pixbuf-devel \
-            gtk2 \
+#            atk \
+#            gdk-pixbuf \
+#            gdk-pixbuf-devel \
+#            gtk2 \
             libinput-devel \
             libSM-devel \
             libXcursor \
             libXcursor-devel \
             libXdamage-devel \
-            libXfont-devel \
+#            libXfont-devel \
             libXfont2-devel \
             libXi \
             libXi-devel \
             libXtst \
             libXtst-devel \
-            libXv-devel \
+#            libXv-devel \
             libXxf86vm-devel \
-            libepoxy-devel \
+            libdrm-devel \
             libevdev \
             libevdev-devel \
             libinput \
             libpciaccess-devel \
             libsndfile \
             libsndfile-devel \
-            libva \
-            libva-devel \
+#            libva \
+#            libva-devel \
             libxkbfile-devel \
             libxshmfence-devel \
-            lxrandr \
+# Checking to see if we only need 'libXrandr' instead of 'lxrandr' \
+            libXrandr \
+            meson \
             wayland-protocols-devel \
-            xcb-util-devel \
-            xcb-util-keysyms-devel \
-            xcursor-themes \
-            xorg-server-devel 
+#            xcb-util-devel \
+#            xcb-util-keysyms-devel \
+#            xcursor-themes \
+            libepoxy-devel \
+# From migrated repo:
+            xorg-x11-server-devel \
+            xkbcomp \
+# Needed to provide package 'xorg-macros'.
+            xorg-x11-util-macros \
+            xkeyboard-config \
+# Needed to build Weston.
+            cairo \
+            cairo-devel  \
+            libxkbcommon-devel \
+            wayland-devel
+
+# Added packages: libdrm-devel
+# Require wayland: xorg-server-devel        <---Requires---     libepoxy-devel
 
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
@@ -131,28 +147,8 @@ FROM build-env AS dev
 ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
 
+WORKDIR /work
 RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
-
-### Meson
-# The version of Meson on Mariner repo is too old
-RUN \
-wget https://bootstrap.pypa.io/get-pip.py && \
-python3 get-pip.py --force-reinstall && \
-pip3 install --upgrade --force-reinstall meson
-
-#
-# Build build-time dependencies.
-#
-
-### xcursorgen
-WORKDIR /work/vendor
-RUN \
-wget https://www.x.org/archive/individual/app/xcursorgen-1.0.7.tar.bz2 && \
-tar -xvf xcursorgen-1.0.7.tar.bz2 && \
-cd xcursorgen-1.0.7/ && \
-./configure --prefix=/usr && \
-make && \
-make install 
 
 #
 # Build runtime dependencies.
@@ -164,73 +160,6 @@ ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${
 ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include:${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
 ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
-
-# Build wayland
-COPY vendor/wayland /work/vendor/wayland
-WORKDIR /work/vendor/wayland
-RUN ./autogen.sh --prefix=${PREFIX} --disable-documentation && \
-    make -j8 && make install
-RUN echo 'wayland:' `git --git-dir=/work/vendor/wayland/.git rev-parse --verify HEAD` >> /work/versions.txt
-
-### libxkbcommon
-WORKDIR /work/vendor
-RUN \
-wget https://xkbcommon.org/download/libxkbcommon-1.0.1.tar.xz && \
-tar -xvf libxkbcommon-1.0.1.tar.xz && \
-cd libxkbcommon-1.0.1/ && \
-mkdir build && \
-cd    build && \
-meson --prefix=${PREFIX} -Dbuildtype=release -Denable-docs=false .. && \
-ninja && \
-ninja install
-
-### Xorg-Server 
-WORKDIR /work/vendor
-RUN \
-wget https://www.x.org/pub/individual/xserver/xorg-server-1.20.9.tar.bz2 && \
-tar -xvf xorg-server-1.20.9.tar.bz2 && \
-cd xorg-server-1.20.9/ && \
-patch -p1 < ../xwayland_log.patch && \
-./configure --prefix=${PREFIX}  \
-            --enable-glamor     \
-            --enable-xwayland   \
-            --enable-install-setuid  \
-            --enable-suid-wrapper    \
-            --disable-systemd-logind \
-            --enable-libunwind=no    \
-            --with-xkb-output=/var/lib/xkb && \
-make && \
-make install
-
-### xkbcomp
-WORKDIR /work/vendor
-RUN \
-wget https://www.x.org/archive/individual/app/xkbcomp-1.4.4.tar.bz2 && \
-tar -xvf xkbcomp-1.4.4.tar.bz2 && \
-cd xkbcomp-1.4.4/ && \
-./configure --prefix=${PREFIX} && \
-make && \
-make install
-
-### Xkeyboard-config
-WORKDIR /work/vendor
-RUN \
-wget https://www.x.org/archive/individual/data/xkeyboard-config/xkeyboard-config-2.31.tar.bz2 && \
-tar -xvf xkeyboard-config-2.31.tar.bz2 && \
-cd xkeyboard-config-2.31 && \
-./configure --prefix=${PREFIX} && \
-make && \
-make install
-
-### xcursor-themes
-WORKDIR /work/vendor
-RUN \
-wget https://www.x.org/archive/individual/data/xcursor-themes-1.0.6.tar.bz2 && \
-tar -xvf xcursor-themes-1.0.6.tar.bz2 && \
-cd xcursor-themes-1.0.6/ && \
-./configure --prefix=${PREFIX} && \
-make && \
-make install 
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -314,7 +243,7 @@ FROM cblmariner.azurecr.io/cblmariner:1.0 AS runtime
 
 COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/marinerui-derivative-public.repo /etc/yum.repos.d/marinerui-derivative-public.repo
+COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
 
 RUN echo " Install Core/UI Runtime Dependencies "
 RUN tdnf    install -y \
@@ -329,20 +258,24 @@ RUN tdnf    install -y \
             dbus-glib  \
             pango \
             libsndfile \
-            libva \
-            lxrandr \
-            xtrans \
+#            libva \
+            libwayland-server \
+            libwayland-client \
+            libxkbcommon \
+# Trying to replace 'lxrandr' with below package
+            libXrandr \
+# Trying to replace 'xtrans' with below package
+            xorg-x11-xtrans-devel \
             wayland-protocols-devel \
-            xorg-applications \
-            xclock \
-            tzdata
-
-# TODO: Review Mariner dependencies installing libinput adds more then 200Mb adding pango add more then 50Mb
-
+            xorg-x11-apps \
+            tzdata \
+# Added explicitly after switching to migrated packages:
+            xcursor-themes \
+            xorg-x11-server-Xwayland
 
 RUN rm /etc/tdnf/mariner_user.key && \
     rm /etc/tdnf/mariner_user.crt && \
-    rm /etc/yum.repos.d/marinerui-derivative-public.repo
+    rm /etc/yum.repos.d/migrated-marinerui.repo 
 
 # Install packages to aid in development.
 # TODO: these should not be included when building the retail image.

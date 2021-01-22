@@ -82,14 +82,14 @@ jobs:
         secureFile: 'mariner_user_key'
     
     - task: DownloadSecureFile@1
-      name: marinerui_derivative_public_repo
-      displayName: 'Download Mariner UI Repo file'
+      name: migrated_marinerui_repo
+      displayName: 'Download Migrated Mariner UI Repo file'
       inputs:
-        secureFile: 'marinerui_derivative_public_repo'
+        secureFile: 'migrated_marinerui_repo'
 
     - script: cp $(mariner_user_crt.secureFilePath) ./wslg/config/mariner_user.crt && 
               cp $(mariner_user_key.secureFilePath) ./wslg/config/mariner_user.key && 
-              cp $(marinerui_derivative_public_repo.secureFilePath) ./wslg/config/marinerui-derivative-public.repo
+              cp $(migrated_marinerui_repo.secureFilePath) ./wslg/config/migrated-marinerui.repo
       displayName: 'Copy cert/key/repo'
 
     - script: docker build -f ./wslg/Dockerfile.Mariner -t system-distro-mariner-x64 
