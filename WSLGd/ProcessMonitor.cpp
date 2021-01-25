@@ -12,7 +12,7 @@ passwd* wslgd::ProcessMonitor::GetUserInfo() const
     return m_user;
 }
 
-int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::vector<cap_value_t>&& capabilities, int retries)
+int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::vector<cap_value_t>&& capabilities)
 {
     int childPid;
     THROW_LAST_ERROR_IF((childPid = fork()) < 0);
@@ -61,7 +61,7 @@ int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::v
         _exit(1);
     }
 
-    m_children[childPid] = ProcessInfo{std::move(argv), std::move(capabilities), retries};
+    m_children[childPid] = ProcessInfo{std::move(argv), std::move(capabilities)};
     return childPid;
 }
 
@@ -101,12 +101,6 @@ int wslgd::ProcessMonitor::Run() try {
                 auto found = m_children.find(pid);
                 if (found != m_children.end()) {
 
-                    if (found->second.retries > 50) {
-                        m_children.erase(found);
-                        LOG_INFO("%s crashing too fast, removing from children list", found->second.argv[0].c_str());
-                        break;
-                    }
-
                     if (!found->second.argv.empty()) {
                         if (WIFEXITED(status)) {
                             LOG_INFO("%s exited with status %d.", found->second.argv[0].c_str(), WEXITSTATUS(status));
@@ -115,7 +109,7 @@ int wslgd::ProcessMonitor::Run() try {
                             LOG_INFO("%s terminated with signal %d.", found->second.argv[0].c_str(), WTERMSIG(status));
                         }
 
-                        LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities), found->second.retries + 1);
+                        LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities));
                     }
 
                     m_children.erase(found);
