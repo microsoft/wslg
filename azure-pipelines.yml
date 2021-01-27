@@ -41,7 +41,7 @@ jobs:
     - task: DockerInstaller@0
       inputs:
         dockerVersion: '20.10.2'
-        releaseType: 'edge'
+        releaseType: 'stable'
     - bash: |
             curl -L -o ~/.docker/cli-plugins/docker-buildx --create-dirs ${BUILDX_URL}
             chmod a+x ~/.docker/cli-plugins/docker-buildx
