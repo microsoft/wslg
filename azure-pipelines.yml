@@ -91,6 +91,14 @@ jobs:
               cp $(mariner_user_key.secureFilePath) ./wslg/config/mariner_user.key && 
               cp $(migrated_marinerui_repo.secureFilePath) ./wslg/config/migrated-marinerui.repo
       displayName: 'Copy cert/key/repo'
+      
+    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.Mariner
+              --output type=tar,dest=$(Agent.BuildDirectory)/system_mariner_arm64.tar 
+              --platform=linux/arm64 
+              ./wslg 
+              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
+              --build-arg WSLG_ARCH=aarch64
+      displayName: 'Create system_mariner_arm64.tar'
 
     - script: docker build -f ./wslg/Dockerfile.Mariner -t system-distro-mariner-x64 
               ./wslg 
@@ -109,14 +117,6 @@ jobs:
 
     - script: docker export `docker create system-distro-ubuntu-x64` > $(Agent.BuildDirectory)/system_ubuntu_x64.tar
       displayName: 'Create system_ubuntu_x64.tar'
-
-   - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.Mariner
-              --output type=tar,dest=$(Agent.BuildDirectory)/system_mariner_arm64.tar 
-              --platform=linux/arm64 
-              ./wslg 
-              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
-              --build-arg WSLG_ARCH=aarch64
-      displayName: 'Create system_mariner_arm64.tar'
 
     - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
               --output type=tar,dest=$(Agent.BuildDirectory)/system_ubuntu_arm64.tar 
