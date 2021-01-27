@@ -40,7 +40,7 @@ jobs:
 
     - task: DockerInstaller@0
       inputs:
-        dockerVersion: '19.03.12'
+        dockerVersion: '20.10.2'
         releaseType: 'edge'
     - bash: |
             curl -L -o ~/.docker/cli-plugins/docker-buildx --create-dirs ${BUILDX_URL}
@@ -50,7 +50,7 @@ jobs:
             ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
       displayName: Prepare buildx
       env:
-        BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64
+        BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
 
     - script: |
               echo '{ "experimental": true }' | sudo tee /etc/docker/daemon.json
@@ -110,6 +110,14 @@ jobs:
     - script: docker export `docker create system-distro-ubuntu-x64` > $(Agent.BuildDirectory)/system_ubuntu_x64.tar
       displayName: 'Create system_ubuntu_x64.tar'
 
+   - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.Mariner
+              --output type=tar,dest=$(Agent.BuildDirectory)/system_mariner_arm64.tar 
+              --platform=linux/arm64 
+              ./wslg 
+              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
+              --build-arg WSLG_ARCH=aarch64
+      displayName: 'Create system_mariner_arm64.tar'
+
     - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
               --output type=tar,dest=$(Agent.BuildDirectory)/system_ubuntu_arm64.tar 
               --platform=linux/arm64 
@@ -118,7 +126,7 @@ jobs:
               --build-arg WSLG_ARCH=aarch64
       displayName: 'Create system_ubuntu_arm64.tar'
 
-    - script: git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git
+    - script: git clone --branch v0.8.14 --single-branch https://github.com/microsoft/hcsshim.git
       displayName: 'Clone hcsshim repo for tar2ext4 tool'
 
     - task: Go@0
