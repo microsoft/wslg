@@ -1,6 +1,8 @@
 # Create a builder image with the compilers, etc. needed
 FROM viniciusjarina/cblmariner:latest AS build-env
 
+ARG WSLG_ARCH="x86_64"
+
 # Install all the required packages for building. This list is probably
 # longer than necessary.
 RUN echo " Install Git/CA certificates "
@@ -83,7 +85,7 @@ RUN tdnf install -y \
 
 COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
+COPY config/migrated-marinerui-${WSLG_ARCH}.repo /etc/yum.repos.d/migrated-marinerui.repo
 
 RUN echo " Install UI dependencies "
 RUN tdnf    install -y \
@@ -150,6 +152,8 @@ RUN cmake -G Ninja \
         -DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DWITH_SERVER=ON \
+        -DWITH_CHANNEL_GFXREDIR=ON \
+        -DWITH_CHANNEL_RDPAPPLIST=ON \
         -DWITH_CLIENT=OFF \
         -DWITH_CLIENT_COMMON=OFF \
         -DWITH_CLIENT_CHANNELS=OFF \
@@ -217,7 +221,7 @@ FROM viniciusjarina/cblmariner:latest AS runtime
 
 COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/migrated-marinerui-aarch64.repo /etc/yum.repos.d/migrated-marinerui.repo
+COPY config/migrated-marinerui-${WSLG_ARCH}.repo /etc/yum.repos.d/migrated-marinerui.repo
 
 RUN echo " Install Core/UI Runtime Dependencies "
 RUN tdnf    install -y \

@@ -1,6 +1,8 @@
 # Create a builder image with the compilers, etc. needed
 FROM ubuntu:20.04 AS build-env
 
+ARG WSLG_ARCH="x86_64"
+
 # Install all the required packages for building. This list is probably
 # longer than necessary.
 ENV DEBIAN_FRONTEND=noninteractive
@@ -99,6 +101,8 @@ RUN cmake -G Ninja \
         -DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DWITH_SERVER=ON \
+        -DWITH_CHANNEL_GFXREDIR=ON \
+        -DWITH_CHANNEL_RDPAPPLIST=ON \
         -DWITH_CLIENT=OFF \
         -DWITH_CLIENT_COMMON=OFF \
         -DWITH_CLIENT_CHANNELS=OFF \

@@ -50,7 +50,7 @@ jobs:
             ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
       displayName: Prepare buildx
       env:
-        BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64
+        BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
 
     - script: |
               echo '{ "experimental": true }' | sudo tee /etc/docker/daemon.json
@@ -251,7 +251,7 @@ jobs:
     workingDirectory: msi
     displayName: 'WiX Candle (Ubuntu-x64)'
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_ubuntu_x64\wslg.wixobj -o bin\wsl_graphics_update_x64.msi'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_ubuntu_x64\wslg.wixobj -o bin\wsl_graphics_update_ubuntu_x64.msi'
     workingDirectory: msi
     displayName: 'WiX Light (Ubuntu-x64)'
 
@@ -267,15 +267,15 @@ jobs:
     workingDirectory: msi
     displayName: 'WiX Candle (Mariner-x64)'
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_mariner_x64\wslg.wixobj -o bin\wsl_graphics_update_mariner_x64.msi'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_mariner_x64\wslg.wixobj -o bin\wsl_graphics_update_x64.msi'
     workingDirectory: msi
     displayName: 'WiX Light (Mariner-x64)'
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLG installer (Ubuntu)'
     inputs:
-      targetPath: msi/bin/wsl_graphics_update_x64.msi
-      artifact: 'wsl_graphics_update_x64.msi'
+      targetPath: msi/bin/wsl_graphics_update_ubuntu_x64.msi
+      artifact: 'wsl_graphics_update_ubuntu_x64.msi'
       publishLocation: 'pipeline'
 
   - task: PublishPipelineArtifact@1
@@ -288,6 +288,6 @@ jobs:
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLG installer (Mariner)'
     inputs:
-      targetPath: msi/bin/wsl_graphics_update_mariner_x64.msi
-      artifact: 'wsl_graphics_update_mariner_x64.msi'
+      targetPath: msi/bin/wsl_graphics_update_x64.msi
+      artifact: 'wsl_graphics_update_x64.msi'
       publishLocation: 'pipeline'
