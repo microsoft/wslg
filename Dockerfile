@@ -99,6 +99,8 @@ RUN cmake -G Ninja \
         -DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DWITH_SERVER=ON \
+        -DWITH_CHANNEL_GFXREDIR=ON \
+        -DWITH_CHANNEL_RDPAPPLIST=ON \
         -DWITH_CLIENT=OFF \
         -DWITH_CLIENT_COMMON=OFF \
         -DWITH_CLIENT_CHANNELS=OFF \
