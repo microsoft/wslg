@@ -205,7 +205,6 @@ RUN useradd -u 1000 --create-home wslg && \
 
 # Copy config files.
 COPY config/wsl.conf /etc/wsl.conf
-COPY config/${WSLG_ARCH}-system-distro.conf /etc/ld.so.conf.d/${WSLG_ARCH}-system-distro.conf
 COPY config/weston.ini /home/wslg/.config/weston.ini
 
 # Copy default icon file.

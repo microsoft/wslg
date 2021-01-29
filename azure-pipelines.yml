@@ -89,7 +89,8 @@ jobs:
 
     - script: cp $(mariner_user_crt.secureFilePath) ./wslg/config/mariner_user.crt && 
               cp $(mariner_user_key.secureFilePath) ./wslg/config/mariner_user.key && 
-              cp $(migrated_marinerui_repo.secureFilePath) ./wslg/config/migrated-marinerui.repo
+              cp $(migrated_marinerui_repo_x86_64.secureFilePath) ./wslg/config/migrated-marinerui-x86_64.repo &&
+              cp $(migrated_marinerui_repo_aarch64.secureFilePath) ./wslg/config/migrated-marinerui-aarch64.repo
       displayName: 'Copy cert/key/repo'
 
     - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.MarinerARM64
