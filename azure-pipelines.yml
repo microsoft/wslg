@@ -82,10 +82,16 @@ jobs:
         secureFile: 'mariner_user_key'
     
     - task: DownloadSecureFile@1
-      name: migrated_marinerui_repo
-      displayName: 'Download Migrated Mariner UI Repo file'
+      name: migrated_marinerui_repo_x86_64
+      displayName: 'Download Migrated Mariner UI x86_64 Repo file'
       inputs:
-        secureFile: 'migrated_marinerui_repo'
+        secureFile: 'migrated_marinerui_repo_x86_64'
+
+    - task: DownloadSecureFile@1
+      name: migrated_marinerui_repo_aarch64
+      displayName: 'Download Migrated Mariner UI aarch64 Repo file'
+      inputs:
+        secureFile: 'migrated_marinerui_repo_aarch64'
 
     - script: cp $(mariner_user_crt.secureFilePath) ./wslg/config/mariner_user.crt && 
               cp $(mariner_user_key.secureFilePath) ./wslg/config/mariner_user.key && 
