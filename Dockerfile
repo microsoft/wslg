@@ -149,7 +149,7 @@ WORKDIR /work/vendor/sharedguestalloc
 RUN make -j8
 RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git rev-parse --verify HEAD` >> /work/versions.txt
 
-# Build WSLGd
+# Build WSLGd Daemon
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
 RUN meson --prefix=${PREFIX} build && \

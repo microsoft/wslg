@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM cblmariner.azurecr.io/cblmariner:1.0 AS build-env
+FROM viniciusjarina/cblmariner:latest AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -213,7 +213,7 @@ RUN meson --prefix=${PREFIX} build && \
 
 ## Create the distro image with just what's needed at runtime
 
-FROM cblmariner.azurecr.io/cblmariner:1.0 AS runtime
+FROM viniciusjarina/cblmariner:latest AS runtime
 
 COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
