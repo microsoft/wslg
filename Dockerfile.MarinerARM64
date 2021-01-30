@@ -219,7 +219,7 @@ FROM viniciusjarina/cblmariner:latest AS runtime
 
 COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/migrated-marinerui-${WSLG_ARCH}.repo /etc/yum.repos.d/migrated-marinerui.repo
+COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
 
 RUN echo " Install Core/UI Runtime Dependencies "
 RUN tdnf    install -y \
