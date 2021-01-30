@@ -1,8 +1,6 @@
 # Create a builder image with the compilers, etc. needed
 FROM ubuntu:20.04 AS build-env
 
-ARG WSLG_ARCH="x86_64"
-
 # Install all the required packages for building. This list is probably
 # longer than necessary.
 ENV DEBIAN_FRONTEND=noninteractive

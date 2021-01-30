@@ -99,6 +99,9 @@ jobs:
               cp $(migrated_marinerui_repo_aarch64.secureFilePath) ./wslg/config/migrated-marinerui-aarch64.repo
       displayName: 'Copy cert/key/repo'
 
+    - script: yes | cp -rf ./wslg/config/migrated-marinerui-aarch64.repo ./wslg/config/migrated-marinerui.repo
+      displayName: 'Copy repo-arch'
+
     - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.MarinerARM64
               --output type=tar,dest=$(Agent.BuildDirectory)/system_mariner_arm64.tar 
               --platform=linux/arm64 
@@ -106,6 +109,17 @@ jobs:
               --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
               --build-arg WSLG_ARCH=aarch64
       displayName: 'Create system_mariner_arm64.tar'
+
+    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
+              --output type=tar,dest=$(Agent.BuildDirectory)/system_ubuntu_arm64.tar 
+              --platform=linux/arm64 
+              ./wslg 
+              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
+              --build-arg WSLG_ARCH=aarch64
+      displayName: 'Create system_ubuntu_arm64.tar'
+
+    - script: yes | cp -rf ./wslg/config/migrated-marinerui-x86_64.repo ./wslg/config/migrated-marinerui.repo
+      displayName: 'Copy repo-arch'
     
     - script: docker build -f ./wslg/Dockerfile.Mariner -t system-distro-mariner-x64 
               ./wslg 
@@ -116,13 +130,6 @@ jobs:
     - script: docker export `docker create system-distro-mariner-x64` > $(Agent.BuildDirectory)/system_mariner_x64.tar
       displayName: 'Create system_mariner_x64.tar'
 
-    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
-              --output type=tar,dest=$(Agent.BuildDirectory)/system_ubuntu_arm64.tar 
-              --platform=linux/arm64 
-              ./wslg 
-              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
-              --build-arg WSLG_ARCH=aarch64
-      displayName: 'Create system_ubuntu_arm64.tar'
 
     - script: docker build -f ./wslg/Dockerfile -t system-distro-ubuntu-x64 
               ./wslg 
@@ -160,6 +167,14 @@ jobs:
         workingDirectory: 'hcsshim/cmd/tar2ext4'
       displayName: 'Create system_mariner_x64.vhd'
 
+    - task: Go@0
+      inputs:
+        command: 'custom'
+        customCommand: 'run'
+        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_mariner_arm64.tar -o $(Agent.BuildDirectory)/system_mariner_arm64.vhd'
+        workingDirectory: 'hcsshim/cmd/tar2ext4'
+      displayName: 'Create system_mariner_arm64.vhd'
+
     - task: PublishPipelineArtifact@1
       displayName: 'Publish system_ubuntu_x64.vhd artifact'
       inputs:
@@ -173,7 +188,14 @@ jobs:
         targetPath: $(Agent.BuildDirectory)/system_ubuntu_arm64.vhd
         artifact: 'system_ubuntu_arm64.vhd'
         publishLocation: 'pipeline'
-      
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish system_mariner_arm64.vhd artifact'
+      inputs:
+        targetPath: $(Agent.BuildDirectory)/system_mariner_arm64.vhd
+        artifact: 'system_mariner_arm64.vhd'
+        publishLocation: 'pipeline'
+
     - task: PublishPipelineArtifact@1
       displayName: 'Publish system_mariner_x64.vhd artifact'
       inputs:
@@ -223,6 +245,13 @@ jobs:
     inputs:
       buildType: 'current'
       artifactName: 'system_mariner_x64.vhd'
+      targetPath: 'msi/'
+
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download system_mariner_arm64.vhd'
+    inputs:
+      buildType: 'current'
+      artifactName: 'system_mariner_arm64.vhd'
       targetPath: 'msi/'
 
   - task: MSBuild@1
@@ -277,6 +306,14 @@ jobs:
     workingDirectory: msi
     displayName: 'WiX Light (Mariner-x64)'
 
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_mariner_arm64.vhd -dPlatform=arm64 -o obj_mariner_arm64\'
+    workingDirectory: msi
+    displayName: 'WiX Candle (Mariner-arm64)'
+
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_mariner_arm64\wslg.wixobj -o bin\wsl_graphics_update_mariner_arm64.msi'
+    workingDirectory: msi
+    displayName: 'WiX Light (Mariner-arm64)'
+
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLG installer (Ubuntu)'
     inputs:
@@ -296,4 +333,12 @@ jobs:
     inputs:
       targetPath: msi/bin/wsl_graphics_update_x64.msi
       artifact: 'wsl_graphics_update_x64.msi'
+      publishLocation: 'pipeline'
+
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish WSLG installer (Mariner) ARM64'
+    inputs:
+      targetPath: msi/bin/wsl_graphics_update_mariner_arm64.msi
+      artifact: 'wsl_graphics_update_mariner_arm64.msi'
       publishLocation: 'pipeline'

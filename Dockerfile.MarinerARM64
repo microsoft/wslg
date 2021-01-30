@@ -1,8 +1,6 @@
 # Create a builder image with the compilers, etc. needed
 FROM viniciusjarina/cblmariner:latest AS build-env
 
-ARG WSLG_ARCH="x86_64"
-
 # Install all the required packages for building. This list is probably
 # longer than necessary.
 RUN echo " Install Git/CA certificates "
@@ -85,7 +83,7 @@ RUN tdnf install -y \
 
 COPY config/mariner_user.key /etc/tdnf/mariner_user.key
 COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/migrated-marinerui-${WSLG_ARCH}.repo /etc/yum.repos.d/migrated-marinerui.repo
+COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
 
 RUN echo " Install UI dependencies "
 RUN tdnf    install -y \
