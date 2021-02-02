@@ -26,6 +26,8 @@ trigger:
 jobs:
 - job: 'Build_Ubuntu'
   displayName: 'Build (Ubuntu)'
+  variables:
+    - group: 'Keys'
 
   pool:
     vmImage: 'ubuntu-latest'
@@ -101,6 +103,9 @@ jobs:
 
     - script: yes | cp -rf ./wslg/config/migrated-marinerui-aarch64.repo ./wslg/config/migrated-marinerui.repo
       displayName: 'Copy repo-arch'
+
+    - script: echo $(docker_token) | docker login --username viniciusjarina --password-stdin
+      displayName: 'Docker Login'
 
     - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.MarinerARM64
               --output type=tar,dest=$(Agent.BuildDirectory)/system_mariner_arm64.tar 
@@ -334,7 +339,6 @@ jobs:
       targetPath: msi/bin/wsl_graphics_update_x64.msi
       artifact: 'wsl_graphics_update_x64.msi'
       publishLocation: 'pipeline'
-
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLG installer (Mariner) ARM64'

@@ -140,6 +140,8 @@ ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${
 ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
 ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -165,7 +167,7 @@ RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
-RUN meson --prefix=${PREFIX} build \
+RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dbackend-default=rdp \
         -Dbackend-drm=false \
         -Dbackend-drm-screencast-vaapi=false \
@@ -194,7 +196,7 @@ RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HE
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
-RUN meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
+RUN /usr/bin/meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
 RUN ninja -C build -j8 install
 RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
@@ -204,10 +206,13 @@ WORKDIR /work/vendor/sharedguestalloc
 RUN make -j8
 RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git rev-parse --verify HEAD` >> /work/versions.txt
 
+ENV CC=/usr/bin/clang
+ENV CXX=/usr/bin/clang++
+
 # Build WSLGd Daemon
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
-RUN meson --prefix=${PREFIX} build && \
+RUN /usr/bin/meson --prefix=${PREFIX} build && \
     ninja -C build -j8 install
 
 ########################################################################
@@ -270,8 +275,12 @@ COPY config/weston.ini /home/wslg/.config/weston.ini
 # Copy default icon file.
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
 
-# Copy the build artifacts from the build stage.
-COPY --from=dev /work/build /
+# Copy the built artifacts from the build stage.
+COPY --from=dev /work/build/ /work/build
+RUN cp -R /work/build/usr/* /usr/ && \
+    cp -R /work/build/etc/* /etc/ && \
+    cp -R /work/build/lib/* /lib/ && \
+    rm -rf /work
 
 COPY --from=dev /work/versions.txt /etc/versions.txt
 

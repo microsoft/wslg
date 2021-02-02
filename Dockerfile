@@ -82,6 +82,8 @@ ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${
 ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
 ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
 
 # Build wayland
 COPY vendor/wayland /work/vendor/wayland
@@ -114,7 +116,7 @@ RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
-RUN meson --prefix=${PREFIX} build \
+RUN /usr/bin/meson --prefix=${PREFIX} build \
          -Dbackend-default=rdp \
          -Dbackend-drm=false \
          -Dbackend-drm-screencast-vaapi=false \
@@ -122,11 +124,13 @@ RUN meson --prefix=${PREFIX} build \
          -Dbackend-wayland=false \
          -Dbackend-x11=false \
          -Dbackend-fbdev=false \
+         -Dcolor-management-colord=false \
          -Dscreenshare=false \
          -Dremoting=false \
          -Dpipewire=false \
          -Dshell-desktop=false \
          -Dshell-fullscreen=false \
+         -Dcolor-management-lcms=false \
          -Dshell-ivi=false \
          -Dshell-kiosk=false \
          -Ddemo-clients=false \
@@ -141,7 +145,7 @@ RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HE
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
-RUN meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
+RUN /usr/bin/meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
 RUN ninja -C build -j8 install
 RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
@@ -151,13 +155,20 @@ WORKDIR /work/vendor/sharedguestalloc
 RUN make -j8
 RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git rev-parse --verify HEAD` >> /work/versions.txt
 
+ENV CC=/usr/bin/clang
+ENV CXX=/usr/bin/clang++
+
 # Build WSLGd Daemon
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
-RUN meson --prefix=${PREFIX} build && \
+RUN /usr/bin/meson --prefix=${PREFIX} build && \
     ninja -C build -j8 install
 
-# Create the distro image with just what's needed at runtime.
+########################################################################
+########################################################################
+
+## Create the distro image with just what's needed at runtime
+
 FROM ubuntu:20.04 as runtime
 
 ARG WSLG_ARCH="x86_64"
@@ -213,17 +224,14 @@ COPY config/weston.ini /home/wslg/.config/weston.ini
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
 
 # Copy the built artifacts from the build stage.
-COPY --from=dev /work/build /
+COPY --from=dev /work/build/ /work/build
+RUN cp -R /work/build/usr/* /usr/ && \
+    cp -R /work/build/etc/* /etc/ && \
+    cp -R /work/build/lib/* /lib/ && \
+    rm -rf /work
+
 COPY --from=dev /work/versions.txt /etc/versions.txt
 
 COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
-
-# start weston with RDP.
-#
-# --backend=rdp-backend.so : this enables RDP server in weston.
-# --port=3391 : port to listen RDP connection (default is 3389)
-# --xwayland : enable X11 app support in weston.
-#
-EXPOSE 3391/tcp
 
 CMD /usr/bin/WSLGd
