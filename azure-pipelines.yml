@@ -327,12 +327,12 @@ jobs:
       artifact: 'wsl_graphics_update_ubuntu_x64.msi'
       publishLocation: 'pipeline'
 
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer (Ubuntu)'
-    inputs:
-      targetPath: msi/bin/wsl_graphics_update_arm64.msi
-      artifact: 'wsl_graphics_update_arm64.msi'
-      publishLocation: 'pipeline'
+  # - task: PublishPipelineArtifact@1
+  #   displayName: 'Publish WSLG installer (Ubuntu)'
+  #   inputs:
+  #     targetPath: msi/bin/wsl_graphics_update_arm64.msi
+  #     artifact: 'wsl_graphics_update_arm64.msi'
+  #     publishLocation: 'pipeline'
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLG installer (Mariner)'
