@@ -279,7 +279,6 @@ COPY resources/linux.png /usr/share/icons/wsl/linux.png
 COPY --from=dev /work/build/ /work/build
 RUN cp -R /work/build/usr/* /usr/ && \
     cp -R /work/build/etc/* /etc/ && \
-    cp -R /work/build/lib/* /lib/ 2> /dev/null && \
     rm -rf /work
 
 COPY --from=dev /work/versions.txt /etc/versions.txt
