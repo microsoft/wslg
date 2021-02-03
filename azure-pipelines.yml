@@ -123,7 +123,7 @@ jobs:
     - script: docker export `docker create system-distro-ubuntu-x64` > $(Agent.BuildDirectory)/system_ubuntu_x64.tar
       displayName: 'Create system_ubuntu_x64.tar'
 
-    - script: rm ./wslg/config/migrated-marinerui.repo && \
+    - script: rm ./wslg/config/migrated-marinerui.repo &&
               cp ./wslg/config/migrated-marinerui-aarch64.repo ./wslg/config/migrated-marinerui.repo
       displayName: 'Copy repo-arch (aarch64)'
 
