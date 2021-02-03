@@ -224,6 +224,20 @@ jobs:
       platform: 'ARM64'
       configuration: 'Release'
 
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish WSLDVCPlugin pdb (x64)'
+    inputs:
+      targetPath: WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb
+      artifact: 'x64.WSLDVCPlugin.pdb'
+      publishLocation: 'pipeline'
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish WSLDVCPlugin pdb (ARM64)'
+    inputs:
+      targetPath: WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb
+      artifact: 'ARM64.WSLDVCPlugin.pdb'
+      publishLocation: 'pipeline'
+
   - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_x64.dll'
     displayName: 'Move plugin to msi (x64)'
 
