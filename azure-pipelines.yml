@@ -70,39 +70,6 @@ jobs:
               tar -xvf gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
               sudo mv gitversion /usr/local/bin
       displayName: 'Install GitVersion'
-
-    - task: DownloadSecureFile@1
-      name: mariner_user_crt
-      displayName: 'Download Mariner UI certificate'
-      inputs:
-        secureFile: 'mariner_user_crt'
-
-    - task: DownloadSecureFile@1
-      name: mariner_user_key
-      displayName: 'Download Mariner UI Key'
-      inputs:
-        secureFile: 'mariner_user_key'
-    
-    - task: DownloadSecureFile@1
-      name: migrated_marinerui_repo_x86_64
-      displayName: 'Download Migrated Mariner UI x86_64 Repo file'
-      inputs:
-        secureFile: 'migrated_marinerui_repo_x86_64'
-
-    - task: DownloadSecureFile@1
-      name: migrated_marinerui_repo_aarch64
-      displayName: 'Download Migrated Mariner UI aarch64 Repo file'
-      inputs:
-        secureFile: 'migrated_marinerui_repo_aarch64'
-
-    - script: cp $(mariner_user_crt.secureFilePath) ./wslg/config/mariner_user.crt && 
-              cp $(mariner_user_key.secureFilePath) ./wslg/config/mariner_user.key && 
-              cp $(migrated_marinerui_repo_x86_64.secureFilePath) ./wslg/config/migrated-marinerui-x86_64.repo &&
-              cp $(migrated_marinerui_repo_aarch64.secureFilePath) ./wslg/config/migrated-marinerui-aarch64.repo
-      displayName: 'Copy cert/key/repo'
-    
-    - script: cp ./wslg/config/migrated-marinerui-x86_64.repo ./wslg/config/migrated-marinerui.repo
-      displayName: 'Copy repo-arch (x86_64)'
     
     - script: docker build -f ./wslg/Dockerfile.Mariner -t system-distro-mariner-x64 
               ./wslg 
@@ -123,10 +90,8 @@ jobs:
     - script: docker export `docker create system-distro-ubuntu-x64` > $(Agent.BuildDirectory)/system_ubuntu_x64.tar
       displayName: 'Create system_ubuntu_x64.tar'
 
-    - script: rm ./wslg/config/migrated-marinerui.repo &&
-              cp ./wslg/config/migrated-marinerui-aarch64.repo ./wslg/config/migrated-marinerui.repo
-      displayName: 'Copy repo-arch (aarch64)'
-
+      # TODO: Use ARM64 image from ACR
+      #
     - script: echo $(docker_token) | docker login --username viniciusjarina --password-stdin
       displayName: 'Docker Login'
 

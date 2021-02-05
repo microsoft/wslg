@@ -8,6 +8,10 @@ RUN tdnf install -y \
         git \
         ca-certificates
 
+RUN echo " Install mariner-repos-ui REPO"
+RUN tdnf install -y mariner-repos-ui
+RUN tdnf install -y UI-cairo UI-cairo-devel
+
 RUN echo " Install Core dependencies "
 RUN tdnf install -y \
         alsa-lib \
@@ -81,14 +85,8 @@ RUN tdnf install -y \
         vala-devel  \
         vala-tools
 
-COPY config/mariner_user.key /etc/tdnf/mariner_user.key
-COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
-
 RUN echo " Install UI dependencies "
 RUN tdnf    install -y \
-            cairo \
-            cairo-devel \
             libdrm-devel \
             libepoxy-devel \
             libevdev \
@@ -112,7 +110,6 @@ RUN tdnf    install -y \
             libXtst \
             libXtst-devel \
             libXxf86vm-devel \
-            meson \
             wayland-devel \
             wayland-protocols-devel \
             xkbcomp \
@@ -222,9 +219,8 @@ RUN /usr/bin/meson --prefix=${PREFIX} build && \
 
 FROM cblmariner.azurecr.io/cblmariner:1.0 AS runtime
 
-COPY config/mariner_user.key /etc/tdnf/mariner_user.key
-COPY config/mariner_user.crt /etc/tdnf/mariner_user.crt
-COPY config/migrated-marinerui.repo /etc/yum.repos.d/migrated-marinerui.repo
+RUN echo " Install mariner-repos-ui REPO"
+RUN tdnf install -y mariner-repos-ui
 
 RUN echo " Install Core/UI Runtime Dependencies "
 RUN tdnf    install -y \
@@ -250,10 +246,6 @@ RUN tdnf    install -y \
             xorg-x11-apps \
             xorg-x11-server-Xwayland \
             xorg-x11-xtrans-devel
-
-RUN rm /etc/tdnf/mariner_user.key && \
-    rm /etc/tdnf/mariner_user.crt && \
-    rm /etc/yum.repos.d/migrated-marinerui.repo 
 
 # Install packages to aid in development.
 # TODO: these should not be included when building the retail image.
