@@ -10,7 +10,6 @@ RUN tdnf install -y \
 
 RUN echo " Install mariner-repos-ui REPO"
 RUN tdnf install -y mariner-repos-ui
-RUN tdnf install -y UI-cairo UI-cairo-devel
 
 RUN echo " Install Core dependencies "
 RUN tdnf install -y \
@@ -80,6 +79,8 @@ RUN tdnf install -y \
         python3-mako  \
         sqlite-devel \
         systemd-devel  \
+        UI-cairo \
+        UI-cairo-devel \
         unzip  \
         vala  \
         vala-devel  \
@@ -224,7 +225,6 @@ RUN tdnf install -y mariner-repos-ui
 
 RUN echo " Install Core/UI Runtime Dependencies "
 RUN tdnf    install -y \
-            cairo \
             dbus \
             dbus-glib \
             freefont \
@@ -241,6 +241,7 @@ RUN tdnf    install -y \
             libXrandr \
             pango \
             tzdata \
+            UI-cairo \
             wayland-protocols-devel \
             xcursor-themes \
             xorg-x11-apps \
