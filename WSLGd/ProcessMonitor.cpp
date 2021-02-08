@@ -100,6 +100,7 @@ int wslgd::ProcessMonitor::Run() try {
 
                 auto found = m_children.find(pid);
                 if (found != m_children.end()) {
+
                     if (!found->second.argv.empty()) {
                         if (WIFEXITED(status)) {
                             LOG_INFO("%s exited with status %d.", found->second.argv[0].c_str(), WEXITSTATUS(status));

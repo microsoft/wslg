@@ -1,71 +1,123 @@
 # Create a builder image with the compilers, etc. needed
-FROM ubuntu:20.04 AS build-env
+FROM cblmariner.azurecr.io/cblmariner:1.0 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    autopoint \
-    autoconf \
-    build-essential \
-    clang \
-    cmake \
-    gettext \
-    git \
-    libcairo2-dev \
-    libcap-dev \
-    libcolord-dev \
-    libdbus-glib-1-dev \
-    libdrm-dev \
-    libffi-dev \
-    libgbm-dev \
-    libgles2-mesa-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libgstreamer1.0-dev \
-    libinput-dev \
-    libjpeg-dev \
-    liblcms2-dev \
-    libltdl-dev \
-    libpam-dev \
-    libpango1.0-dev \
-    libpixman-1-dev \
-    libsndfile1 \
-    libsndfile-dev \
-    libssl-dev \
-    libsystemd-dev \
-    libtool \
-    libudev-dev \
-    libudev-dev \
-    libusb-1.0-0-dev \
-    libva-dev \
-    libwayland-dev \
-    libwebp-dev \
-    libx11-dev \
-    libx11-xcb-dev \
-    libxcb-composite0-dev \
-    libxcb-xkb-dev \
-    libxcursor-dev \
-    libxdamage-dev \
-    libxext-dev \
-    libxfixes-dev \
-    libxi-dev \
-    libxinerama-dev \
-    libxkbcommon-dev \
-    libxkbfile-dev \
-    libxml2-dev \
-    libxml-parser-perl \
-    libxrandr-dev \
-    libxrender-dev \
-    libxtst-dev \
-    libxv-dev \
-    lsb-release \
-    meson \
-    ninja-build \
-    pkg-config \
-    software-properties-common \
-    uuid-dev \
-    wayland-protocols \
-    wget
+RUN echo " Install Git/CA certificates "
+RUN tdnf install -y \
+        git \
+        ca-certificates
+
+RUN echo " Install mariner-repos-ui REPO"
+RUN tdnf install -y mariner-repos-ui
+
+RUN echo " Install Core dependencies "
+RUN tdnf install -y \
+        alsa-lib \
+        alsa-lib-devel  \
+        autoconf  \
+        automake  \
+        binutils  \
+        bison  \
+        build-essential  \
+        clang  \
+        clang-devel  \
+        cmake  \
+        dbus  \
+        dbus-devel  \
+        dbus-glib  \
+        dbus-glib-devel  \
+        diffutils  \
+        elfutils-devel  \
+        file-libs  \
+        flex  \
+        fontconfig-devel  \
+        gawk  \
+        gcc  \
+        gettext  \
+        glibc-devel  \
+        glib-schemas \
+        gobject-introspection  \
+        gobject-introspection-devel  \
+        harfbuzz  \
+        harfbuzz-devel  \
+        kernel-headers  \
+        intltool \
+        libatomic_ops  \
+        libcap-devel  \
+        libffi  \
+        libffi-devel  \
+        libgudev  \
+        libgudev-devel  \
+        libjpeg-turbo  \
+        libjpeg-turbo-devel  \
+        libltdl  \
+        libltdl-devel  \
+        libpng-devel  \
+        libtiff  \
+        libtiff-devel  \
+        libusb  \
+        libusb-devel  \
+        libwebp  \
+        libwebp-devel  \
+        libxml2 \
+        libxml2-devel  \
+        make  \
+        meson  \
+        newt  \
+        nss  \
+        nss-libs  \
+        openldap  \
+        openssl-devel  \
+        pam-devel  \
+        pango  \
+        pango-devel  \
+        patch  \
+        perl-XML-Parser \
+        polkit-devel  \
+        python2-devel \
+        python3-mako  \
+        sqlite-devel \
+        systemd-devel  \
+        UI-cairo \
+        UI-cairo-devel \
+        unzip  \
+        vala  \
+        vala-devel  \
+        vala-tools
+
+RUN echo " Install UI dependencies "
+RUN tdnf    install -y \
+            libdrm-devel \
+            libepoxy-devel \
+            libevdev \
+            libevdev-devel \
+            libinput \
+            libinput-devel \
+            libpciaccess-devel \
+            libSM-devel \
+            libsndfile \
+            libsndfile-devel \
+            libXcursor \
+            libXcursor-devel \
+            libXdamage-devel \
+            libXfont2-devel \
+            libXi \
+            libXi-devel \
+            libxkbcommon-devel \
+            libxkbfile-devel \
+            libXrandr \
+            libxshmfence-devel \
+            libXtst \
+            libXtst-devel \
+            libXxf86vm-devel \
+            wayland-devel \
+            wayland-protocols-devel \
+            xkbcomp \
+            xkeyboard-config \
+            xorg-x11-server-devel \
+            xorg-x11-util-macros
+
 
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
@@ -76,19 +128,18 @@ ARG WSLG_ARCH="x86_64"
 WORKDIR /work
 RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 
+#
+# Build runtime dependencies.
+#
+
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
 ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
 ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
-
-# Build wayland
-COPY vendor/wayland /work/vendor/wayland
-WORKDIR /work/vendor/wayland
-RUN ./autogen.sh --prefix=${PREFIX} --disable-documentation && \
-    make -j8 && make install
-RUN echo 'wayland:' `git --git-dir=/work/vendor/wayland/.git rev-parse --verify HEAD` >> /work/versions.txt
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -114,34 +165,36 @@ RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
-RUN meson --prefix=${PREFIX} build \
-         -Dbackend-default=rdp \
-         -Dbackend-drm=false \
-         -Dbackend-drm-screencast-vaapi=false \
-         -Dbackend-headless=false \
-         -Dbackend-wayland=false \
-         -Dbackend-x11=false \
-         -Dbackend-fbdev=false \
-         -Dscreenshare=false \
-         -Dremoting=false \
-         -Dpipewire=false \
-         -Dshell-desktop=false \
-         -Dshell-fullscreen=false \
-         -Dshell-ivi=false \
-         -Dshell-kiosk=false \
-         -Ddemo-clients=false \
-         -Dsimple-clients=[] \
-         -Dtools=[] \
-         -Dresize-pool=false \
-         -Dwcap-decode=false \
-         -Dtest-junit-xml=false && \
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        -Dbackend-default=rdp \
+        -Dbackend-drm=false \
+        -Dbackend-drm-screencast-vaapi=false \
+        -Dbackend-headless=false \
+        -Dbackend-wayland=false \
+        -Dbackend-x11=false \
+        -Dbackend-fbdev=false \
+        -Dcolor-management-colord=false \
+        -Dscreenshare=false \
+        -Dremoting=false \
+        -Dpipewire=false \
+        -Dshell-desktop=false \
+        -Dshell-fullscreen=false \
+        -Dcolor-management-lcms=false \
+        -Dshell-ivi=false \
+        -Dshell-kiosk=false \
+        -Ddemo-clients=false \
+        -Dsimple-clients=[] \
+        -Dtools=[] \
+        -Dresize-pool=false \
+        -Dwcap-decode=false \
+        -Dtest-junit-xml=false && \
     ninja -C build -j8 install
 RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
-RUN meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
+RUN /usr/bin/meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
 RUN ninja -C build -j8 install
 RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
@@ -151,54 +204,57 @@ WORKDIR /work/vendor/sharedguestalloc
 RUN make -j8
 RUN echo 'sharedguestalloc:' `git --git-dir=/work/vendor/sharedguestalloc/.git rev-parse --verify HEAD` >> /work/versions.txt
 
-# Build WSLGd
+ENV CC=/usr/bin/clang
+ENV CXX=/usr/bin/clang++
+
+# Build WSLGd Daemon
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
-RUN meson --prefix=${PREFIX} build && \
+RUN /usr/bin/meson --prefix=${PREFIX} build && \
     ninja -C build -j8 install
 
-# Create the distro image with just what's needed at runtime.
-FROM ubuntu:20.04 as runtime
+########################################################################
+########################################################################
 
-ARG WSLG_ARCH="x86_64"
+## Create the distro image with just what's needed at runtime
 
-# Install the packages needed to run weston, freerdp, and xwayland.
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    check \
-    dbus \
-    dbus-x11 \
-    libcairo2 \
-    libcap-dev \
-    libdbus-1-3 \
-    libegl1 \
-    libinput10 \
-    libjpeg8 \
-    liborc-0.4-0 \
-    libpango-1.0.0 \
-    libpangocairo-1.0.0 \
-    libsndfile1 \
-    libsndfile-dev \
-    libssl1.1 \
-    libtdb-dev \
-    libwayland-client0 \
-    libwayland-cursor0 \
-    libwayland-server0 \
-    libwebp6 \
-    libxcb-composite0-dev \
-    libxcursor1 \
-    libxkbcommon0 \
-    tzdata \
-    xinit \
-    xcursor-themes \
-    xwayland
+FROM cblmariner.azurecr.io/cblmariner:1.0 AS runtime
+
+RUN echo " Install mariner-repos-ui REPO"
+RUN tdnf install -y mariner-repos-ui
+
+RUN echo " Install Core/UI Runtime Dependencies "
+RUN tdnf    install -y \
+            dbus \
+            dbus-glib \
+            freefont \
+            libinput \
+            libjpeg-turbo \
+            libltdl \
+            libpng \
+            libsndfile \
+            libwayland-client \
+            libwayland-server \
+            libwebp \
+            libXcursor \
+            libxkbcommon \
+            libXrandr \
+            pango \
+            tzdata \
+            UI-cairo \
+            wayland-protocols-devel \
+            xcursor-themes \
+            xorg-x11-apps \
+            xorg-x11-server-Xwayland \
+            xorg-x11-xtrans-devel
 
 # Install packages to aid in development.
 # TODO: these should not be included when building the retail image.
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    gdb \
-    nano \
-    vim
+RUN tdnf install -y \
+            gdb \
+            nano \
+            procps-ng \
+            vim
 
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
@@ -207,24 +263,19 @@ RUN useradd -u 1000 --create-home wslg && \
 
 # Copy config files.
 COPY config/wsl.conf /etc/wsl.conf
-COPY config/${WSLG_ARCH}-system-distro.conf /etc/ld.so.conf.d/${WSLG_ARCH}-system-distro.conf
 COPY config/weston.ini /home/wslg/.config/weston.ini
 
 # Copy default icon file.
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
 
 # Copy the built artifacts from the build stage.
-COPY --from=dev /work/build /
+COPY --from=dev /work/build/ /work/build
+RUN cp -R /work/build/usr/* /usr/ && \
+    cp -R /work/build/etc/* /etc/ && \
+    rm -rf /work
+
 COPY --from=dev /work/versions.txt /etc/versions.txt
 
 COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
-
-# start weston with RDP.
-#
-# --backend=rdp-backend.so : this enables RDP server in weston.
-# --port=3391 : port to listen RDP connection (default is 3389)
-# --xwayland : enable X11 app support in weston.
-#
-EXPOSE 3391/tcp
 
 CMD /usr/bin/WSLGd
