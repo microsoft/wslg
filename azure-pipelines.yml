@@ -1,9 +1,5 @@
 resources:
   repositories:
-  - repository: wayland
-    type: git
-    name: DxgkLinux/wayland
-    ref: working
   - repository: FreeRDP
     type: git
     name: DxgkLinux/FreeRDP
@@ -25,7 +21,7 @@ trigger:
   - working
 jobs:
 - job: 'Build_Ubuntu'
-  displayName: 'Build (Ubuntu)'
+  displayName: 'Build (Ubuntu Pipeline)'
   variables:
     - group: 'Keys'
 
@@ -33,7 +29,6 @@ jobs:
     vmImage: 'ubuntu-latest'
     
   steps:
-    - checkout: wayland
     - checkout: FreeRDP
     - checkout: weston
     - checkout: pulseaudio
@@ -59,8 +54,7 @@ jobs:
               sudo service docker restart
       displayName: 'Enable Docker Engine experimental '
 
-    - script: mv wayland/ wslg/vendor/ &&
-              mv FreeRDP/ wslg/vendor/ &&
+    - script: mv FreeRDP/ wslg/vendor/ &&
               mv weston/ wslg/vendor/ &&
               mv sharedguestalloc/ wslg/vendor/ &&
               mv pulseaudio/ wslg/vendor/
@@ -71,45 +65,27 @@ jobs:
               sudo mv gitversion /usr/local/bin
       displayName: 'Install GitVersion'
     
-    - script: docker build -f ./wslg/Dockerfile.Mariner -t system-distro-mariner-x64 
+    - script: docker build -f ./wslg/Dockerfile -t system-distro-x64 
               ./wslg 
               --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion`
               --build-arg WSLG_ARCH=x86_64
       displayName: 'Create System Distro Docker image Mariner-x64'
 
-    - script: docker export `docker create system-distro-mariner-x64` > $(Agent.BuildDirectory)/system_mariner_x64.tar
-      displayName: 'Create system_mariner_x64.tar'
-
-
-    - script: docker build -f ./wslg/Dockerfile -t system-distro-ubuntu-x64 
-              ./wslg 
-              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion`
-              --build-arg WSLG_ARCH=x86_64
-      displayName: 'Create System Distro Docker image Ubuntu-x64'
-
-    - script: docker export `docker create system-distro-ubuntu-x64` > $(Agent.BuildDirectory)/system_ubuntu_x64.tar
-      displayName: 'Create system_ubuntu_x64.tar'
+    - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
+      displayName: 'Create system_x64.tar'
 
       # TODO: Use ARM64 image from ACR
       #
     - script: echo $(docker_token) | docker login --username viniciusjarina --password-stdin
       displayName: 'Docker Login'
 
-    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.MarinerARM64
-              --output type=tar,dest=$(Agent.BuildDirectory)/system_mariner_arm64.tar 
+    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.ARM64
+              --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
               --platform=linux/arm64 
               ./wslg 
               --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
               --build-arg WSLG_ARCH=aarch64
-      displayName: 'Create system_mariner_arm64.tar'
-
-    # - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
-    #           --output type=tar,dest=$(Agent.BuildDirectory)/system_ubuntu_arm64.tar 
-    #           --platform=linux/arm64 
-    #           ./wslg 
-    #           --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
-    #           --build-arg WSLG_ARCH=aarch64
-    #   displayName: 'Create system_ubuntu_arm64.tar'
+      displayName: 'Create system_arm64.tar'
 
     - script: git clone --branch v0.8.14 --single-branch https://github.com/microsoft/hcsshim.git
       displayName: 'Clone hcsshim repo for tar2ext4 tool'
@@ -118,60 +94,30 @@ jobs:
       inputs:
         command: 'custom'
         customCommand: 'run'
-        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_ubuntu_x64.tar -o $(Agent.BuildDirectory)/system_ubuntu_x64.vhd'
+        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_x64.tar -o $(Agent.BuildDirectory)/system_x64.vhd'
         workingDirectory: 'hcsshim/cmd/tar2ext4'
-      displayName: 'Create system_ubuntu_x64.vhd'
-
-    # - task: Go@0
-    #   inputs:
-    #     command: 'custom'
-    #     customCommand: 'run'
-    #     arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_ubuntu_arm64.tar -o $(Agent.BuildDirectory)/system_ubuntu_arm64.vhd'
-    #     workingDirectory: 'hcsshim/cmd/tar2ext4'
-    #   displayName: 'Create system_ubuntu_arm64.vhd'
+      displayName: 'Create system_x64.vhd'
 
     - task: Go@0
       inputs:
         command: 'custom'
         customCommand: 'run'
-        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_mariner_x64.tar -o $(Agent.BuildDirectory)/system_mariner_x64.vhd'
+        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_arm64.tar -o $(Agent.BuildDirectory)/system_arm64.vhd'
         workingDirectory: 'hcsshim/cmd/tar2ext4'
-      displayName: 'Create system_mariner_x64.vhd'
-
-    - task: Go@0
-      inputs:
-        command: 'custom'
-        customCommand: 'run'
-        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_mariner_arm64.tar -o $(Agent.BuildDirectory)/system_mariner_arm64.vhd'
-        workingDirectory: 'hcsshim/cmd/tar2ext4'
-      displayName: 'Create system_mariner_arm64.vhd'
+      displayName: 'Create system_arm64.vhd'
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish system_ubuntu_x64.vhd artifact'
+      displayName: 'Publish system_arm64.vhd artifact'
       inputs:
-        targetPath: $(Agent.BuildDirectory)/system_ubuntu_x64.vhd
-        artifact: 'system_ubuntu_x64.vhd'
-        publishLocation: 'pipeline'
-
-    # - task: PublishPipelineArtifact@1
-    #   displayName: 'Publish system_ubuntu_arm64.vhd artifact'
-    #   inputs:
-    #     targetPath: $(Agent.BuildDirectory)/system_ubuntu_arm64.vhd
-    #     artifact: 'system_ubuntu_arm64.vhd'
-    #     publishLocation: 'pipeline'
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish system_mariner_arm64.vhd artifact'
-      inputs:
-        targetPath: $(Agent.BuildDirectory)/system_mariner_arm64.vhd
-        artifact: 'system_mariner_arm64.vhd'
+        targetPath: $(Agent.BuildDirectory)/system_arm64.vhd
+        artifact: 'system_arm64.vhd'
         publishLocation: 'pipeline'
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish system_mariner_x64.vhd artifact'
+      displayName: 'Publish system_x64.vhd artifact'
       inputs:
-        targetPath: $(Agent.BuildDirectory)/system_mariner_x64.vhd
-        artifact: 'system_mariner_x64.vhd'
+        targetPath: $(Agent.BuildDirectory)/system_x64.vhd
+        artifact: 'system_x64.vhd'
         publishLocation: 'pipeline'
         
 - job: 'Build_Windows'
@@ -198,31 +144,17 @@ jobs:
     displayName: 'Install Wix'
 
   - task: DownloadPipelineArtifact@2
-    displayName: 'Download system_ubuntu_x64.vhd'
+    displayName: 'Download system_x64.vhd'
     inputs:
       buildType: 'current'
-      artifactName: 'system_ubuntu_x64.vhd'
-      targetPath: 'msi/'
-
-  # - task: DownloadPipelineArtifact@2
-  #   displayName: 'Download system_ubuntu_arm64.vhd'
-  #   inputs:
-  #     buildType: 'current'
-  #     artifactName: 'system_ubuntu_arm64.vhd'
-  #     targetPath: 'msi/'
-
-  - task: DownloadPipelineArtifact@2
-    displayName: 'Download system_mariner_x64.vhd'
-    inputs:
-      buildType: 'current'
-      artifactName: 'system_mariner_x64.vhd'
+      artifactName: 'system_x64.vhd'
       targetPath: 'msi/'
 
   - task: DownloadPipelineArtifact@2
-    displayName: 'Download system_mariner_arm64.vhd'
+    displayName: 'Download system_arm64.vhd'
     inputs:
       buildType: 'current'
-      artifactName: 'system_mariner_arm64.vhd'
+      artifactName: 'system_arm64.vhd'
       targetPath: 'msi/'
 
   - task: MSBuild@1
@@ -253,62 +185,32 @@ jobs:
       arguments: '.\msi\wslg.wxs'
       pwsh: true
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch x64 -dVhdFile=system_ubuntu_x64.vhd -dPlatform=x64 -o obj_ubuntu_x64\'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch x64 -dVhdFile=system_x64.vhd -dPlatform=x64 -o obj_x64\'
     workingDirectory: msi
-    displayName: 'WiX Candle (Ubuntu-x64)'
+    displayName: 'WiX Candle (x64)'
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_ubuntu_x64\wslg.wixobj -o bin\wsl_graphics_update_ubuntu_x64.msi'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_x64\wslg.wixobj -o bin\wsl_graphics_update_x64.msi'
     workingDirectory: msi
-    displayName: 'WiX Light (Ubuntu-x64)'
+    displayName: 'WiX Light (x64)'
 
-  # - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_ubuntu_arm64.vhd -dPlatform=arm64 -o obj_ubuntu_arm64\'
-  #   workingDirectory: msi
-  #   displayName: 'WiX Candle (Ubuntu-arm64)'
-
-  # - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_ubuntu_arm64\wslg.wixobj -o bin\wsl_graphics_update_arm64.msi'
-  #   workingDirectory: msi
-  #   displayName: 'WiX Light (Ubuntu-arm64)'
-
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch x64 -dVhdFile=system_mariner_x64.vhd -dPlatform=x64 -o obj_mariner_x64\'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_arm64.vhd -dPlatform=arm64 -o obj_arm64\'
     workingDirectory: msi
-    displayName: 'WiX Candle (Mariner-x64)'
+    displayName: 'WiX Candle (arm64)'
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_mariner_x64\wslg.wixobj -o bin\wsl_graphics_update_x64.msi'
+  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_arm64\wslg.wixobj -o bin\wsl_graphics_update_arm64.msi'
     workingDirectory: msi
-    displayName: 'WiX Light (Mariner-x64)'
-
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_mariner_arm64.vhd -dPlatform=arm64 -o obj_mariner_arm64\'
-    workingDirectory: msi
-    displayName: 'WiX Candle (Mariner-arm64)'
-
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_mariner_arm64\wslg.wixobj -o bin\wsl_graphics_update_mariner_arm64.msi'
-    workingDirectory: msi
-    displayName: 'WiX Light (Mariner-arm64)'
+    displayName: 'WiX Light (arm64)'
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer (Ubuntu)'
-    inputs:
-      targetPath: msi/bin/wsl_graphics_update_ubuntu_x64.msi
-      artifact: 'wsl_graphics_update_ubuntu_x64.msi'
-      publishLocation: 'pipeline'
-
-  # - task: PublishPipelineArtifact@1
-  #   displayName: 'Publish WSLG installer (Ubuntu)'
-  #   inputs:
-  #     targetPath: msi/bin/wsl_graphics_update_arm64.msi
-  #     artifact: 'wsl_graphics_update_arm64.msi'
-  #     publishLocation: 'pipeline'
-
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer (Mariner)'
+    displayName: 'Publish WSLG installer'
     inputs:
       targetPath: msi/bin/wsl_graphics_update_x64.msi
       artifact: 'wsl_graphics_update_x64.msi'
       publishLocation: 'pipeline'
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer (Mariner) ARM64'
+    displayName: 'Publish WSLG installer ARM64'
     inputs:
-      targetPath: msi/bin/wsl_graphics_update_mariner_arm64.msi
-      artifact: 'wsl_graphics_update_mariner_arm64.msi'
+      targetPath: msi/bin/wsl_graphics_update_arm64.msi
+      artifact: 'wsl_graphics_update_arm64.msi'
       publishLocation: 'pipeline'
