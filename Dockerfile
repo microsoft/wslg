@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM cblmariner.azurecr.io/cblmariner:1.0 AS build-env
+FROM cblmariner.azurecr.io/base/core:1.0.20210127 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
