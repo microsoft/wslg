@@ -1,16 +1,19 @@
 resources:
   repositories:
   - repository: FreeRDP
-    type: git
-    name: DxgkLinux/FreeRDP
+    type: github
+    endpoint: GitHub connection 1
+    name: microsoft/FreeRDP-mirror
     ref: working
   - repository: weston
-    type: git
-    name: DxgkLinux/weston
+    type: github
+    endpoint: GitHub connection 1
+    name: microsoft/weston-mirror
     ref: working
   - repository: pulseaudio
-    type: git
-    name: DxgkLinux/pulseaudio
+    type: github
+    endpoint: GitHub connection 1
+    name: microsoft/pulseaudio-mirror
     ref: working
   - repository: sharedguestalloc
     type: git
@@ -54,10 +57,10 @@ jobs:
               sudo service docker restart
       displayName: 'Enable Docker Engine experimental '
 
-    - script: mv FreeRDP/ wslg/vendor/ &&
-              mv weston/ wslg/vendor/ &&
-              mv sharedguestalloc/ wslg/vendor/ &&
-              mv pulseaudio/ wslg/vendor/
+    - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
+              mv weston-mirror/ wslg/vendor/weston &&
+              mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
+              mv sharedguestalloc/ wslg/vendor/sharedguestalloc
       displayName: 'Move sub projects (FreeRDP, Weston)'
 
     - script: wget https://github.com/GitTools/GitVersion/releases/download/5.3.7/gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
