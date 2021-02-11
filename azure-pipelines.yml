@@ -77,12 +77,7 @@ jobs:
     - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
       displayName: 'Create system_x64.tar'
 
-      # TODO: Use ARM64 image from ACR
-      #
-    - script: echo $(docker_token) | docker login --username viniciusjarina --password-stdin
-      displayName: 'Docker Login'
-
-    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile.ARM64
+    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
               --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
               --platform=linux/arm64 
               ./wslg 
