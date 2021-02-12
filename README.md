@@ -1,8 +1,8 @@
 
 |  | Status | 
 | :------ | :------: | 
-| Build (Ubuntu) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?branchName=master&jobName=Build%20(Ubuntu))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&branchName=master) |
-| Package MSI (Windows) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?branchName=master&jobName=Package%20(Windows))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&branchName=master) |
+| Build (Ubuntu) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20(Ubuntu%20Pipeline))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+| Package MSI (Windows) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Package%20(Windows))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
 
 # Install WSLg
 
