@@ -9,7 +9,7 @@ WSLg is short for *Windows Subsystem for Linux GUI* and the purpose of the proje
 
 WSLg provides an integrated experience for developers, scientists or enthusiasts that prefer or need to run Windows on their PC but also need the ability to run tools or applications which works best, or exclusively, in a Linux environment. While users can accomplish this using a multiple system setup, with individual PC dedicated to Windows and Linux, virtual machine hosting either Windows or Linux, or an XServer running on Windows and projected into WSL, WSLg provide a more integrated, user friendly and productive alternative.
 
-WSLg strive to make Linux GUI applications feel native and natural to use. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux application, WSLg enables a seamless desktop experience mixing Windows and Linux applications.
+WSLg strive to make Linux GUI applications feel native and natural to use. From integration into the Start Menu for application launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux applications, WSLg enables a seamless desktop experience and workflow leveraging Windows and Linux applications.
 
 ![WSLg Integrated Desktop](/docs/WSLg_IntegratedDesktop.png)
 
