@@ -4,6 +4,29 @@
 | Build (Ubuntu) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20(Ubuntu%20Pipeline))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
 | Package MSI (Windows) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Package%20(Windows))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
 
+# Welcome to WSLg
+WSLg is short for *Windows Subsystem for Linux GUI* and the purpose of the project is to enable support for running Linux GUI applications (X11 and Wayland) on Windows in a fully integrated desktop experience. 
+
+WSLg provides an integrated experience for developers, scientists or enthusiasts that prefer or need to run Windows on their PC but also need the ability to run tools or applications which works best, or exclusively, in a Linux environment. While users can accomplish this using a multiple system setup, with individual PC dedicated to Windows and Linux, virtual machine hosting either Windows or Linux, or an XServer running on Windows and projected into WSL, WSLg provide a more integrated, user friendly and productive alternative.
+
+WSLg strive to make Linux GUI applications feel native and natural to use. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux application, WSLg enables a seamless desktop experience mixing Windows and Linux applications.
+
+![WSLg Integrated Desktop](/docs/WSLg_IntegratedDesktop.png)
+
+# Architecture Overview
+
+TODO
+
+## Graphics Hardware acceleration
+
+
+# Additional Resources
+
+Blog giving an overview of our vGPU projection inside of WSL.
+   * https://devblogs.microsoft.com/directx/directx-heart-linux/
+
+
+
 # Install WSLg
 
 ## Pre-requisites
