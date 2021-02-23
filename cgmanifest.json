@@ -1,0 +1,14 @@
+{
+    "Registrations": [ 
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/pulseaudio", 
+                    "CommitHash": "0e691b96640919b1c7ed91ae9240761c5775deeb"
+                }
+            },
+            "DevelopmentDependency": false
+        },
+    ]
+}
