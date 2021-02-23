@@ -274,6 +274,19 @@ RUN cp -R /work/build/usr/* /usr/ && \
     cp -R /work/build/etc/* /etc/ && \
     rm -rf /work
 
+# Copy the licensing information for PulseAudio
+COPY --from=dev /work/vendor/pulseaudio/GPL /usr/share/doc/pulseaudio/GPL
+COPY --from=dev /work/vendor/pulseaudio/LGPL /usr/share/doc/pulseaudio/LGPL
+COPY --from=dev /work/vendor/pulseaudio/LICENSE /usr/share/doc/pulseaudio/LICENSE
+COPY --from=dev /work/vendor/pulseaudio/NEWS /usr/share/doc/pulseaudio/NEWS
+COPY --from=dev /work/vendor/pulseaudio/README /usr/share/doc/pulseaudio/README
+
+# Copy the licensing information for Weston
+COPY --from=dev /work/vendor/weston/COPYING /usr/share/doc/weston/COPYING
+
+# Copy the licensing information for FreeRDP
+COPY --from=dev /work/vendor/FreeRDP/LICENSE /usr/share/doc/FreeRDP/LICENSE
+
 COPY --from=dev /work/versions.txt /etc/versions.txt
 
 COPY --from=dev /work/vendor/sharedguestalloc/libsharedguestalloc.so /usr/lib/libsharedguestalloc.so
