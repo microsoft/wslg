@@ -10,5 +10,25 @@
             },
             "DevelopmentDependency": false
         },
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/wayland-project/weston", 
+                    "CommitHash": "04d3ae265d8d8f84352c8dac21ec40b2fe07e7d2"
+                }
+            },
+            "DevelopmentDependency": false
+        },
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/FreeRDP/FreeRDP", 
+                    "CommitHash": "39f56443f2dc50e0dcfa52d4f8f15008d5b8ed8e"
+                }
+            },
+            "DevelopmentDependency": false
+        },        
     ]
 }
