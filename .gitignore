@@ -3,7 +3,7 @@ vendor/*
 !vendor/.preserve
 out
 tmp
-
+*.nupkg
 *.tar
 *.vhd
 msi/bin/
@@ -17,3 +17,5 @@ WSLDVCPlugin/x64
 WSLDVCPlugin/ARM64/Debug/
 WSLDVCPlugin/ARM64/Release/
 WSLDVCPlugin/WSLDVCPlugin.aps
+msi/*.dll
+msi/obj_*

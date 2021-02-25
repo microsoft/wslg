@@ -49,6 +49,7 @@ jobs:
             ~/.docker/cli-plugins/docker-buildx create --use
             ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
       displayName: Prepare buildx
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
       env:
         BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
 
@@ -84,6 +85,7 @@ jobs:
               --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
               --build-arg WSLG_ARCH=aarch64
       displayName: 'Create system_arm64.tar'
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
 
     - script: git clone --branch v0.8.14 --single-branch https://github.com/microsoft/hcsshim.git
       displayName: 'Clone hcsshim repo for tar2ext4 tool'
@@ -103,9 +105,11 @@ jobs:
         arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_arm64.tar -o $(Agent.BuildDirectory)/system_arm64.vhd'
         workingDirectory: 'hcsshim/cmd/tar2ext4'
       displayName: 'Create system_arm64.vhd'
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
 
     - task: PublishPipelineArtifact@1
       displayName: 'Publish system_arm64.vhd artifact'
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
       inputs:
         targetPath: $(Agent.BuildDirectory)/system_arm64.vhd
         artifact: 'system_arm64.vhd'
@@ -150,6 +154,7 @@ jobs:
 
   - task: DownloadPipelineArtifact@2
     displayName: 'Download system_arm64.vhd'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       buildType: 'current'
       artifactName: 'system_arm64.vhd'
@@ -164,6 +169,7 @@ jobs:
 
   - task: MSBuild@1
     displayName: 'Build RDP Plugin (ARM64)'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
       platform: 'ARM64'
@@ -178,6 +184,7 @@ jobs:
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish WSLDVCPlugin pdb (ARM64)'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       targetPath: WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb
       artifact: 'ARM64.WSLDVCPlugin.pdb'
@@ -187,14 +194,15 @@ jobs:
     displayName: 'Move plugin to msi (x64)'
 
   - script: 'MOVE WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_ARM64.dll'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     displayName: 'Move plugin to msi (ARM64)'
 
   - task: PowerShell@2
     displayName: 'Update wslg.wxs version'
     inputs:
       targetType: filePath
-      filePath: .\msi\updateversion.ps1
-      arguments: '.\msi\wslg.wxs'
+      filePath: .\updateversion.ps1 
+      arguments: .\msi\wslg.wxs "Wix.Product" "Version" 
       pwsh: true
 
   - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch x64 -dVhdFile=system_x64.vhd -dPlatform=x64 -o obj_x64\'
@@ -208,21 +216,61 @@ jobs:
   - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_arm64.vhd -dPlatform=arm64 -o obj_arm64\'
     workingDirectory: msi
     displayName: 'WiX Candle (arm64)'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
 
   - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_arm64\wslg.wixobj -o bin\wsl_graphics_update_arm64.msi'
     workingDirectory: msi
     displayName: 'WiX Light (arm64)'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer'
+    displayName: 'Publish WSLg installer'
     inputs:
       targetPath: msi/bin/wsl_graphics_update_x64.msi
       artifact: 'wsl_graphics_update_x64.msi'
       publishLocation: 'pipeline'
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer ARM64'
+    displayName: 'Publish WSLg installer ARM64'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       targetPath: msi/bin/wsl_graphics_update_arm64.msi
       artifact: 'wsl_graphics_update_arm64.msi'
       publishLocation: 'pipeline'
+
+  - task: PowerShell@2
+    displayName: 'Update Microsoft.WSLg.nuspec version'
+    inputs:
+      targetType: filePath
+      filePath: .\updateversion.ps1 
+      arguments: .\Microsoft.WSLg.nuspec "package.metadata.version" "" "-beta"
+      pwsh: true
+
+  - task: PowerShell@2
+    displayName: 'Update Microsoft.WSLg.nuspec release notes'
+    inputs:
+      targetType: filePath
+      filePath: .\updateversion.ps1 
+      arguments: .\Microsoft.WSLg.nuspec "package.metadata.releaseNotes" "" "-beta" 'hash'
+      pwsh: true
+
+  - script: 'nuget pack .\Microsoft.WSLg.nuspec'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    displayName: 'Package NuGet'
+
+  - script: 'rename *.nupkg Microsoft.WSLg.nupkg'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    displayName: 'Rename Nuget Package'
+
+  - task: PublishPipelineArtifact@1
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    displayName: 'Save Microsoft.WSLg.nupkg artifact'
+    inputs:
+      targetPath: Microsoft.WSLg.nupkg
+      artifact: 'Microsoft.WSLg.nupkg'
+      publishLocation: 'pipeline'
+
+  - script: 'nuget.exe push -Source "https://microsoft.pkgs.visualstudio.com/Base/_packaging/lifted_wsl/nuget/v3/index.json" -ApiKey az Microsoft.WSLg.nupkg'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    displayName: 'Push Nuget Package'
+    continueOnError: true # Continue on error, to avoid failures if the same commit run more then once
