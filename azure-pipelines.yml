@@ -270,7 +270,17 @@ jobs:
       artifact: 'Microsoft.WSLg.nupkg'
       publishLocation: 'pipeline'
 
-  - script: 'nuget.exe push -Source "https://microsoft.pkgs.visualstudio.com/Base/_packaging/lifted_wsl/nuget/v3/index.json" -ApiKey az Microsoft.WSLg.nupkg'
+  - task: NuGetAuthenticate@0
+    inputs:
+      nuGetServiceConnections: 'NuGetConnection'
+
+  - task: NuGetCommand@2
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    displayName: 'Push Nuget Package'
-    continueOnError: true # Continue on error, to avoid failures if the same commit run more then once
+    displayName: 'Push Nuget Package (lifted_wsl feed)'
+    continueOnError: true
+    inputs:
+      command: 'push'
+      packagesToPush: 'Microsoft.WSLg.nupkg'
+      nuGetFeedType: 'external'
+      publishFeedCredentials: 'NuGetConnection'
+      verbosityPush: 'Normal'
