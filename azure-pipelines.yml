@@ -279,8 +279,9 @@ jobs:
     displayName: 'Push Nuget Package (lifted_wsl feed)'
     continueOnError: true
     inputs:
-      command: 'push'
+      command: push
       packagesToPush: 'Microsoft.WSLg.nupkg'
       nuGetFeedType: 'external'
       publishFeedCredentials: 'NuGetConnection'
       verbosityPush: 'Normal'
+      publishVstsFeed: Base/lifted_wsl
