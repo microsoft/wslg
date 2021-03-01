@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 #include "pch.h"
 #include "utils.h"
 #include "WSLDVCFileDB.h"

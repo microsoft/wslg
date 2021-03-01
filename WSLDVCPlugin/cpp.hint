@@ -1,2 +1,4 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 #define WSLDVCPLUGIN_API __declspec(dllexport)
 #define WSLDVCPLUGIN_API __declspec(dllimport)

@@ -1,4 +1,5 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 #include "pch.h"
 #include <cchannel.h>
 #include "WSLDVCPlugin.h"

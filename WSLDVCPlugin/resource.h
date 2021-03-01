@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by WSLDVCPlugin.rc

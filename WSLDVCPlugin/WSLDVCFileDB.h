@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 #pragma once
 
 MIDL_INTERFACE("5802f934-1683-4e81-bb5a-7a0c29a2b1c7")
