@@ -11,7 +11,7 @@ WSLG provides an integrated experience for developers, scientists or enthusiasts
 
 WSLG strive to make Linux GUI applications feel native and natural to use on Windows. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux applications, WSLG enables a seamless desktop experience and workflow leveraging Windows and Linux applications.
 
-[WSLG Integrated Desktop](/docs/WSLg_IntegratedDesktop.png)
+![WSLG Integrated Desktop](/docs/WSLg_IntegratedDesktop.png)
 
 # Installing WSLG
 
@@ -128,7 +128,7 @@ Once these applications are installed, you'll find them in your start menu under
 
 # WSLG Architecture Overview
 
-[WSLG Architecture Overview](/docs/WSLG_ArchitectureOverview.png)
+![WSLG Architecture Overview](/docs/WSLG_ArchitectureOverview.png)
 
 ## User Distro
 The user distro is essentially the WSL distribution you are using for your Linux work. The default WSL distro when installing WSL with `wsl --install` is Ubuntu. You can browse the Windows Store to find additional Linux distribution built for WSL.
