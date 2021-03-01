@@ -67,11 +67,11 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "ï¿½ Microsoft Corporation. All rights reserved"
+            VALUE "CompanyName", "© Microsoft Corporation. All rights reserved"
             VALUE "FileDescription", "WSL Remote Application List Plug-in"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "WSLDVCPl.dll"
-            VALUE "LegalCopyright", "ï¿½ Microsoft Corporation. All rights reserved"
+            VALUE "LegalCopyright", "© Microsoft Corporation. All rights reserved"
             VALUE "OriginalFilename", "WSLDVCPl.dll"
             VALUE "ProductName", "WSL Remote Application List Plug-in"
             VALUE "ProductVersion", "1.0.0.1"
