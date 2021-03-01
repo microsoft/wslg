@@ -9,7 +9,7 @@ WSLG is short for *Windows Subsystem for Linux GUI* and the purpose of the proje
 
 WSLG provides an integrated experience for developers, scientists or enthusiasts that prefer or need to run Windows on their PC but also need the ability to run tools or applications which works best, or exclusively, in a Linux environment. While users can accomplish this today using a multiple system setup, with individual PC dedicated to Windows and Linux, virtual machine hosting either Windows or Linux, or an XServer running on Windows and projected into WSL, WSLG provides a more integrated, user friendly and productive alternative.
 
-WSLG strive to make Linux GUI applications feel native and natural to use on Windows. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux applications, WSLG enables a seamless desktop experience and workflow leveraging Windows and Linux applications.
+WSLG strives to make Linux GUI applications feel native and natural to use on Windows. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux applications, WSLG enables a seamless desktop experience and workflow leveraging Windows and Linux applications.
 
 ![WSLG Integrated Desktop](/docs/WSLg_IntegratedDesktop.png)
 
@@ -20,7 +20,7 @@ WSLG strive to make Linux GUI applications feel native and natural to use on Win
 - Windows 10 Insider Preview build *TODO_UPDATE_ONCE_AVAILABLE*
    - WSLG is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLG, you'll need to join the [Windows Insider Program](https://insider.windows.com/en-us/) and be running a Windows 10 Insider Preview build from the dev channel.
 
-- It recommended to run WSLG on a system with vGPU enabled so you can benefit from hardware accelerated rendering. You can find preview driver supporting WSL from each of our partners below.
+- It recommended to run WSLG on a system with virtual GPU (vGPU) enabled for WSL so you can benefit from hardware accelerated OpenGL rendering. You can find preview driver supporting WSL from each of our partners below.
 
    - [Intel GPU driver for WSL](https://downloadcenter.intel.com/download/29526)
 
