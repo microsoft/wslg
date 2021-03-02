@@ -244,17 +244,16 @@ RUN tdnf    install -y \
             UI-cairo \
             wayland-protocols-devel \
             xcursor-themes \
-            xorg-x11-apps \
             xorg-x11-server-Xwayland \
             xorg-x11-xtrans-devel
 
 # Install packages to aid in development.
 # TODO: these should not be included when building the retail image.
-RUN tdnf install -y \
-            gdb \
-            nano \
-            procps-ng \
-            vim
+# RUN tdnf install -y \
+#             gdb \
+#             nano \
+#             procps-ng \
+#             vim
 
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
@@ -275,11 +274,11 @@ RUN cp -R /work/build/usr/* /usr/ && \
     rm -rf /work
 
 # Copy the licensing information for PulseAudio
-COPY --from=dev /work/vendor/pulseaudio/GPL /usr/share/doc/pulseaudio/GPL
-COPY --from=dev /work/vendor/pulseaudio/LGPL /usr/share/doc/pulseaudio/LGPL
-COPY --from=dev /work/vendor/pulseaudio/LICENSE /usr/share/doc/pulseaudio/LICENSE
-COPY --from=dev /work/vendor/pulseaudio/NEWS /usr/share/doc/pulseaudio/NEWS
-COPY --from=dev /work/vendor/pulseaudio/README /usr/share/doc/pulseaudio/README
+COPY --from=dev /work/vendor/pulseaudio/GPL \
+                /work/vendor/pulseaudio/LGPL \
+                /work/vendor/pulseaudio/LICENSE \
+                /work/vendor/pulseaudio/NEWS \
+                /work/vendor/pulseaudio/README /usr/share/doc/pulseaudio/
 
 # Copy the licensing information for Weston
 COPY --from=dev /work/vendor/weston/COPYING /usr/share/doc/weston/COPYING

@@ -14,6 +14,8 @@ constexpr auto c_dbusDir = "/var/run/dbus";
 constexpr auto c_launchPulse = "/home/wslg/launch_pulse.sh";
 constexpr auto c_versionFile = "/etc/versions.txt";
 constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
+constexpr auto c_shareDocsDir = "/usr/share/doc";
+constexpr auto c_shareDocsMount = SHARE_PATH "/doc";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 
@@ -102,6 +104,9 @@ try {
     }
 
     THROW_LAST_ERROR_IF(mount(c_versionFile, c_versionMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
+
+    THROW_LAST_ERROR_IF(mkdir(c_shareDocsMount, (S_IRUSR | S_IRGRP | S_IROTH)) < 0);
+    THROW_LAST_ERROR_IF(mount(c_shareDocsDir, c_shareDocsMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
 
     // Create a process monitor to track child processes
     wslgd::ProcessMonitor monitor(c_userName);
