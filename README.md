@@ -175,7 +175,7 @@ WSLG makes use of a custom RDP virtual channel between the Weston RDP Server and
 
 While WSLG works with or without virtual GPU support, if you intend to run graphics intensive applications such as Blender or Gazebo, it is best to be running on a system with a GPU and driver that can support WSL. An overview of our vGPU architecture and how we make it possible for Linux applications to access the GPU in WSL is available at our [DirectX blog](https://devblogs.microsoft.com/directx/directx-heart-linux/).
 
-Support for OpenGL accelerated rendering is made possible through the work our D3D team has done with the Mesa community on creating a [d3d12 Gallium driver](https://devblogs.microsoft.com/directx/in-the-works-opencl-and-opengl-mapping-layers-to-directx/). 
+Support for OpenGL accelerated rendering is made possible through the work our D3D team has done with Collabora and the Mesa community on creating a [d3d12 Gallium driver](https://devblogs.microsoft.com/directx/in-the-works-opencl-and-opengl-mapping-layers-to-directx/). 
 
 Support for Linux, including support for WSLG, has been upstream and part of the Mesa 21.0 release. To take advantage of this acceleration, you'll need to update the version of Mesa installed in your user distro. It also require that your distro vendor choose to build and publish the new d3d12 Gallium driver to their package repository.
 
