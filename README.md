@@ -29,7 +29,7 @@ WSLG strives to make Linux GUI applications feel native and natural to use on Wi
    - [AMD GPU driver for WSL](https://community.amd.com/community/radeon-pro-graphics/blog/2020/06/17/announcing-amd-support-for-gpu-accelerated-machine-learning-training-on-windows-10)
    
    
-## Install instruction (Fresh Install - no prior WSL installation)
+## Install instructions (Fresh Install - no prior WSL installation)
 
 From a command prompt with administrator privileges, run the command `wsl --install -d Ubuntu`, then reboot when prompted.
 
@@ -37,7 +37,7 @@ After reboot the installation will continue. You'll be asked to enter a username
 
 Voila! WSL and WSLG are installed and ready to be used!
 
-## Install instruction (Existing WSL install)
+## Install instructions (Existing WSL install)
 
 If you have an existing WSL installation without WSLG and want to update to the latest version of WSL which includes WSLG, run the command `wsl --update` from an elevated command prompt. 
 
@@ -131,7 +131,9 @@ Once these applications are installed, you'll find them in your start menu under
 ![WSLG Architecture Overview](/docs/WSLG_ArchitectureOverview.png)
 
 ## User Distro
-The user distro is essentially the WSL distribution you are using for your Linux work. The default WSL distro when installing WSL with `wsl --install` is Ubuntu. You can browse the Windows Store to find additional Linux distribution built for WSL.
+The user distro is essentially the WSL distribution you are using for your Linux work. You can use the command `wsl --list --online` from an elevated Windows command prompt to list the WSL distributions available on your system. You can run multiple user distros side-by-side and they will peacefully coexist, so don't be afraid of trying out new distro. Each user distro will be paired with a unique instance of the system distro, but you can still interact accross GUI applications running in different user distro seamlessly, such as cut/paste between them. The underlying containerization should be invisible to you of the various userspace should be invisible to you.
+
+All user and system distros for a particular Windows user run within the same WSL virtual machine against a single instance of the Linux kernel. Different Windows users on a PC have their own VM and instance of WSL. Your Linux environment is guarantee to always be your own and not shared with other Windows users on the same PC.
 
 ## WSLG System Distro
 The system distro is where all of the magic happens. The sytem distro is a containerized Linux environment where the WSLG XServer, Wayland server and Pulse Audio server are running. Communication socket for each of these servers are projected into the user distro so client applications can connect to them. We preconfigure the user distro environment variables DISPLAY, WAYLAND_DISPLAY and PULSE_SERVER to refer these servers by default so WSLG lights up out of the box.
