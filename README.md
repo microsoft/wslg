@@ -11,7 +11,7 @@ WSLG provides an integrated experience for developers, scientists or enthusiasts
 
 WSLG strives to make Linux GUI applications feel native and natural to use on Windows. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux applications, WSLG enables a seamless desktop experience and workflow leveraging Windows and Linux applications.
 
-![WSLG Integrated Desktop](/docs/WSLg_IntegratedDesktop.png)
+![WSLG Integrated Desktop](/docs/WSLG_IntegratedDesktop.png)
 
 # Installing WSLG
 

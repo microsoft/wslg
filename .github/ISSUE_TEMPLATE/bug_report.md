@@ -23,7 +23,7 @@ Collect WSL logs if needed by following these instructions: https://github.com/M
 
 **WSL logs**: 
 
-* Attach WSLg logs from  `/mnt/wslg`
+* Attach WSLG logs from  `/mnt/wslg`
 
 You can access the wslg logs using explorer at: `\\wsl\<Distro-Name>\mnt\wslg` (eg: `\\wsl\Ubuntu-20.04\mnt\wslg`)
 
