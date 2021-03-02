@@ -31,7 +31,7 @@ WSLG strives to make Linux GUI applications feel native and natural to use on Wi
    
 ## Install instruction (Fresh Install - no prior WSL installation)
 
-From a command prompt with administrator privileges, run the command `wsl --install`, then reboot when prompted.
+From a command prompt with administrator privileges, run the command `wsl --install -d Ubuntu`, then reboot when prompted.
 
 After reboot the installation will continue. You'll be asked to enter a username and password. These will be your Linux credential, they can be anything you want and don't have to match your Windows credentials.
 
@@ -68,9 +68,9 @@ You'll need to restart WSL for the changes to take effect. You can restart WSL b
 
 ## First Launch
 
-If you have installed the default Linux distro per these instructions, you'll find a `Ubuntu` icon in your start menu, launch it. This will launch the WSL 2 VM, launch the Ubuntu WSL distro in that VM and give you a terminal to interact with it. Voila! You're running Linux on Windows! 
+If you have installed the `Ubuntu` Linux distro per these instructions, you'll find a `Ubuntu` icon in your start menu, launch it. This will launch the WSL 2 VM, launch the Ubuntu WSL distro in that VM and give you a terminal to interact with it. Voila! You're running Linux on Windows! 
 
-Ubuntu is the default distro if you took the easy `wsl --install` route to setup your WSL environment. If you would like to try additional Linux distribution, search in the Microsoft Store for "WSL distribution" and install your favorite. You can have multiple distribution and they will happily coexist side-by-side.
+If you would like to explore additional Linux distributions built for WSL, you can use the `wsl --list --online` command from an elevated command prompt to enumerate the list of available distribution for your system. You can have multiple Linux distribution installed within WSL and they will happily coexist side-by-side, so don't be scare to experiment and try things out.
 
 Congrats you are done and ready to use GUI apps! 
 
