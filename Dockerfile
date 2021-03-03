@@ -194,8 +194,12 @@ RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HE
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
-RUN /usr/bin/meson --prefix=${PREFIX} build -Ddatabase=simple -Dbluez5=false -Dtests=false
-RUN ninja -C build -j8 install
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        -Ddatabase=simple \
+        -Dbluez5=false \
+        -Dgsettings=disabled \
+        -Dtests=false && \
+    ninja -C build -j8 install
 RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build sharedguestalloc
