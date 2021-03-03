@@ -27,15 +27,20 @@ The WSLG system distro is built using docker build. We essentially start from a 
 
 0. Install and start Docker in a Linux or WSL 2 environment.
 
-1. Clone the FreeRDP ,Weston and PulseAudio side by side this repo repositories and checkout the **working** branch from each:
+1. Clone the WSLG project:
+
+```
+    git clone https://github.com/microsoft/wslg wslg
+```
+
+2. Clone the FreeRDP ,Weston and PulseAudio mirror repro under wslg/vendor, this is where our docker build script except to find the source code. MAke sure to checkout the **working** branch from each of these project, the **master** branch references the upstream code.
 
     ```bash
-    git clone https://github.com/microsoft/FreeRDP-mirror vendor/FreeRDP -b working
+    git clone https://github.com/microsoft/FreeRDP-mirror wslg/vendor/FreeRDP -b working
 
-    git clone https://github.com/microsoft/weston-mirror vendor/weston -b working
+    git clone https://github.com/microsoft/weston-mirror wslg/vendor/weston -b working
 
-    git clone https://github.com/microsoft/PulseAudio-mirror vendor/pulseaudio -b working
-
+    git clone https://github.com/microsoft/PulseAudio-mirror wslg/vendor/pulseaudio -b working
     ```
 
 2. Create the VHD:
