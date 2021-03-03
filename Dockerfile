@@ -252,12 +252,14 @@ RUN tdnf    install -y \
             xorg-x11-xtrans-devel
 
 # Install packages to aid in development.
-# TODO: these should not be included when building the retail image.
-# RUN tdnf install -y \
-#             gdb \
-#             nano \
-#             procps-ng \
-#             vim
+ARG SYSTEMDISTRO_DEBUG_BUILD
+RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" = "on" ] ; then \
+        tdnf install -y \
+             gdb \
+             nano \
+             procps-ng \
+             vim ; \
+    fi
 
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
