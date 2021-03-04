@@ -1,7 +1,7 @@
 
 |  | Status | 
 | :------ | :------: | 
-| Build (Mariner)| [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20(Ubuntu%20Pipeline))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+| Build (CBL-Mariner)| [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20(Ubuntu%20Pipeline))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
 | Package MSI (Windows) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Package%20(Windows))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
 
 # Welcome to WSLG
