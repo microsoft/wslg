@@ -29,7 +29,7 @@ The WSLG system distro is built using docker build. We essentially start from a 
 
 ```
     sudo apt-get update
-    sudo apt install docker.io
+    sudo apt install docker.io golang-go
     sudo dockerd
 ```
 
