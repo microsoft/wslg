@@ -21,7 +21,7 @@ The system distro is essentially a Linux container packaged and distributed as a
 
 For folks who want to tinker with or customize their system distro, we give the ability to run a private version of the system distro. When running a private version of WSLG, Windows will load and run your private and ignore the Microsoft published one. If you update your WSL setup (`wsl --update`), the Microsoft published WSLG vhd will be updated, but you will continue to be running your private. You can switch between the Microsoft pulished WSLG system distro and a private one at any time although it does require restarting WSL (`wsl --shutdown`).
 
-The WSLG system distro is built using docker build. We essentially start from a [Mariner](https://github.com/microsoft/CBL-MarinerDemo) base image, install various packages, then build and install version of Weston, FreeRDP and PulseAudio from our mirror repo. This repository contains a Dockerfile and supporting tools to build the WSLG container and convert the container into an ext4 vhd that Windows will load as the system distro.
+The WSLG system distro is built using docker build. We essentially start from a [CBL-Mariner](https://github.com/microsoft/CBL-MarinerDemo) base image, install various packages, then build and install version of Weston, FreeRDP and PulseAudio from our mirror repo. This repository contains a Dockerfile and supporting tools to build the WSLG container and convert the container into an ext4 vhd that Windows will load as the system distro.
 
 ## Build instructions
 
