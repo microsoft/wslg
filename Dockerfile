@@ -259,6 +259,15 @@ RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" = "on" ] ; then \
              nano \
              procps-ng \
              vim ; \
+    else                                            \
+        rpm -e --nodeps python2                     \
+        rpm -e --nodeps curl                        \
+        rpm -e --nodeps python-xml                  \
+        rpm -e --nodeps pkg-config                  \
+        rpm -e --nodeps vim                         \
+        rpm -e --nodeps wget                        \
+        rpm -e --nodeps python3                     \
+        rpm -e --nodeps python2-libs;               \
     fi
 
 # Create wslg user.
