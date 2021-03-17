@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a bug in WSLG
+about: Report a bug in WSLg
 title: ''
 labels: 'bug'
 assignees: ''
@@ -12,7 +12,7 @@ assignees: ''
 ```none
 Windows build number: [run `[Environment]::OSVersion` for powershell, or `ver` for cmd]
 Your Distribution version: [On Debian or Ubuntu run `lsb_release -r` in WSL]
-Your WSLG version: [Open 'Apps and Features' and check the version of 'Windows Subsystem for Linux GUI app support', e.g: 0.2.3.13]
+Your WSLg version: [Open 'Apps and Features' and check the version of 'Windows Subsystem for Linux GUI app support', e.g: 0.2.3.13]
 ```
 
 # Steps to reproduce
@@ -23,7 +23,7 @@ Collect WSL logs if needed by following these instructions: https://github.com/M
 
 **WSL logs**: 
 
-* Attach WSLG logs from  `/mnt/wslg`
+* Attach WSLg logs from  `/mnt/wslg`
 
 You can access the wslg logs using explorer at: `\\wsl\<Distro-Name>\mnt\wslg` (eg: `\\wsl\Ubuntu-20.04\mnt\wslg`)
 

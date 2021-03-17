@@ -224,14 +224,14 @@ jobs:
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer'
+    displayName: 'Publish WSLg installer'
     inputs:
       targetPath: msi/bin/wsl_graphics_update_x64.msi
       artifact: 'wsl_graphics_update_x64.msi'
       publishLocation: 'pipeline'
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLG installer ARM64'
+    displayName: 'Publish WSLg installer ARM64'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       targetPath: msi/bin/wsl_graphics_update_arm64.msi
@@ -239,35 +239,35 @@ jobs:
       publishLocation: 'pipeline'
 
   - task: PowerShell@2
-    displayName: 'Update Microsoft.WSLG.nuspec version'
+    displayName: 'Update Microsoft.WSLg.nuspec version'
     inputs:
       targetType: filePath
       filePath: .\updateversion.ps1 
-      arguments: .\Microsoft.WSLG.nuspec "package.metadata.version" "" "-beta"
+      arguments: .\Microsoft.WSLg.nuspec "package.metadata.version" "" "-beta"
       pwsh: true
 
   - task: PowerShell@2
-    displayName: 'Update Microsoft.WSLG.nuspec release notes'
+    displayName: 'Update Microsoft.WSLg.nuspec release notes'
     inputs:
       targetType: filePath
       filePath: .\updateversion.ps1 
-      arguments: .\Microsoft.WSLG.nuspec "package.metadata.releaseNotes" "" "-beta" 'hash'
+      arguments: .\Microsoft.WSLg.nuspec "package.metadata.releaseNotes" "" "-beta" 'hash'
       pwsh: true
 
-  - script: 'nuget pack .\Microsoft.WSLG.nuspec'
+  - script: 'nuget pack .\Microsoft.WSLg.nuspec'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     displayName: 'Package NuGet'
 
-  - script: 'rename *.nupkg Microsoft.WSLG.nupkg'
+  - script: 'rename *.nupkg Microsoft.WSLg.nupkg'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     displayName: 'Rename Nuget Package'
 
   - task: PublishPipelineArtifact@1
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    displayName: 'Save Microsoft.WSLG.nupkg artifact'
+    displayName: 'Save Microsoft.WSLg.nupkg artifact'
     inputs:
-      targetPath: Microsoft.WSLG.nupkg
-      artifact: 'Microsoft.WSLG.nupkg'
+      targetPath: Microsoft.WSLg.nupkg
+      artifact: 'Microsoft.WSLg.nupkg'
       publishLocation: 'pipeline'
 
   - task: NuGetAuthenticate@0
@@ -280,7 +280,7 @@ jobs:
     continueOnError: true
     inputs:
       command: push
-      packagesToPush: 'Microsoft.WSLG.nupkg'
+      packagesToPush: 'Microsoft.WSLg.nupkg'
       nuGetFeedType: 'external'
       publishFeedCredentials: 'NuGetConnection'
       verbosityPush: 'Normal'

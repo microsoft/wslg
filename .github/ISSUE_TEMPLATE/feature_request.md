@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a feature for WSLG
+about: Suggest a feature for WSLg
 title: ''
 labels: 'enhancement'
 assignees: ''

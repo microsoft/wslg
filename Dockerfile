@@ -126,7 +126,7 @@ ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
 
 WORKDIR /work
-RUN echo "WSLG (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
+RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 
 #
 # Build runtime dependencies.
