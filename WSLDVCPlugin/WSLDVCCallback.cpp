@@ -7,7 +7,7 @@
 #include "WSLDVCFileDB.h"
 
 LPCWSTR c_WSL_exe = L"%windir%\\system32\\wsl.exe";
-LPCWSTR c_WSLG_exe = L"%windir%\\system32\\wslg.exe";
+LPCWSTR c_WSLg_exe = L"%windir%\\system32\\wslg.exe";
 LPCWSTR c_Working_dir = L"%windir%\\system32";
 
 //
@@ -424,12 +424,12 @@ public:
         }
         DebugPrint(L"IconPath: %s\n", m_iconPath);
 
-        if (ExpandEnvironmentStringsW(c_WSLG_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
+        if (ExpandEnvironmentStringsW(c_WSLg_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
         {
-            DebugPrint(L"Failed to expand WSLG exe: %s : %d\n", c_WSLG_exe, GetLastError());
+            DebugPrint(L"Failed to expand WSLg exe: %s : %d\n", c_WSLg_exe, GetLastError());
             return E_FAIL;
         }
-        DebugPrint(L"WSLG.exe: %s\n", m_expandedPathObj);
+        DebugPrint(L"WSLg.exe: %s\n", m_expandedPathObj);
 
         if (!PathFileExistsW(m_expandedPathObj) || !IsFileTrusted(m_expandedPathObj))
         {
