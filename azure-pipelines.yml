@@ -15,11 +15,6 @@ resources:
     endpoint: GitHub connection 1
     name: microsoft/pulseaudio-mirror
     ref: working
-  - repository: mesa
-    type: github
-    endpoint: GitHub connection 1
-    name: mesa3d/mesa
-    ref: 21.0    
   - repository: sharedguestalloc
     type: git
     name: DxgkLinux/sharedguestalloc
@@ -40,7 +35,6 @@ jobs:
     - checkout: FreeRDP
     - checkout: weston
     - checkout: pulseaudio
-    - checkout: mesa
     - checkout: sharedguestalloc
     - checkout: self
 
@@ -64,10 +58,14 @@ jobs:
               sudo service docker restart
       displayName: 'Enable Docker Engine experimental '
 
+    - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz &&
+              tar -xvf mesa-21.0.0.tar.xz
+      displayName: 'Download Mesa from CBL Mariner'
+
     - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
               mv weston-mirror/ wslg/vendor/weston &&
               mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
-              mv mesa/ wslg/vendor/mesa &&
+              mv mesa-21.0.0/ wslg/vendor/mesa &&
               mv sharedguestalloc/ wslg/vendor/sharedguestalloc
       displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa)'
 
