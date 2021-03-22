@@ -106,7 +106,7 @@ RUN tdnf    install -y \
             libXi-devel \
             libxkbcommon-devel \
             libxkbfile-devel \
-            libXrandr \
+            libXrandr-devel \
             libxshmfence-devel \
             libXtst \
             libXtst-devel \
@@ -132,6 +132,7 @@ RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 # Build runtime dependencies.
 #
 
+ENV BUILDTYPE=release
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
@@ -166,6 +167,7 @@ RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify 
 COPY vendor/weston /work/vendor/weston
 WORKDIR /work/vendor/weston
 RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE} \
         -Dbackend-default=rdp \
         -Dbackend-drm=false \
         -Dbackend-drm-screencast-vaapi=false \
@@ -195,12 +197,25 @@ RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HE
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
 RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE} \
         -Ddatabase=simple \
         -Dbluez5=false \
         -Dgsettings=disabled \
         -Dtests=false && \
     ninja -C build -j8 install
 RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
+
+# Build mesa with the minimal options we need.
+COPY vendor/mesa /work/vendor/mesa
+WORKDIR /work/vendor/mesa
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE} \
+        -Dgallium-drivers=swrast,d3d12 \
+        -Ddri-drivers= \
+        -Dvulkan-drivers= \
+        -Dllvm=disabled && \
+    ninja -C build -j8 install
+RUN echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build sharedguestalloc
 COPY vendor/sharedguestalloc /work/vendor/sharedguestalloc
@@ -283,10 +298,8 @@ COPY config/weston.ini /home/wslg/.config/weston.ini
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
 
 # Copy the built artifacts from the build stage.
-COPY --from=dev /work/build/ /work/build
-RUN cp -R /work/build/usr/* /usr/ && \
-    cp -R /work/build/etc/* /etc/ && \
-    rm -rf /work
+COPY --from=dev /work/build/usr/ /usr/
+COPY --from=dev /work/build/etc/ /etc/
 
 # Copy the licensing information for PulseAudio
 COPY --from=dev /work/vendor/pulseaudio/GPL \
@@ -300,6 +313,9 @@ COPY --from=dev /work/vendor/weston/COPYING /usr/share/doc/weston/COPYING
 
 # Copy the licensing information for FreeRDP
 COPY --from=dev /work/vendor/FreeRDP/LICENSE /usr/share/doc/FreeRDP/LICENSE
+
+# copy the documentation and licensing information for mesa
+COPY --from=dev /work/vendor/mesa/docs /usr/share/doc/mesa/
 
 COPY --from=dev /work/versions.txt /etc/versions.txt
 

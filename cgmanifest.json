@@ -30,5 +30,15 @@
             },
             "DevelopmentDependency": false
         },        
+        {
+            "Component": { 
+                "Type": "mesa", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/mesa3d/mesa", 
+                    "CommitHash": "731ea06758663a2de3a2bd1f12eb8809d4c136fd"
+                }
+            },
+            "DevelopmentDependency": false
+        },
     ]
 }

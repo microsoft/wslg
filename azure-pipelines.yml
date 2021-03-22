@@ -15,6 +15,11 @@ resources:
     endpoint: GitHub connection 1
     name: microsoft/pulseaudio-mirror
     ref: working
+  - repository: mesa
+    type: github
+    endpoint: GitHub connection 1
+    name: mesa3d/mesa
+    ref: 21.0    
   - repository: sharedguestalloc
     type: git
     name: DxgkLinux/sharedguestalloc
@@ -35,6 +40,7 @@ jobs:
     - checkout: FreeRDP
     - checkout: weston
     - checkout: pulseaudio
+    - checkout: mesa
     - checkout: sharedguestalloc
     - checkout: self
 
@@ -61,8 +67,9 @@ jobs:
     - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
               mv weston-mirror/ wslg/vendor/weston &&
               mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
+              mv mesa/ wslg/vendor/mesa &&
               mv sharedguestalloc/ wslg/vendor/sharedguestalloc
-      displayName: 'Move sub projects (FreeRDP, Weston)'
+      displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa)'
 
     - script: wget https://github.com/GitTools/GitVersion/releases/download/5.3.7/gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
               tar -xvf gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
