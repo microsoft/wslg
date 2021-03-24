@@ -25,7 +25,7 @@ trigger:
 jobs:
 - job: 'Build_Ubuntu'
   displayName: 'Build (Ubuntu Pipeline)'
-  timeoutInMinutes: 120
+  timeoutInMinutes: 240
   variables:
     - group: 'Keys'
 
