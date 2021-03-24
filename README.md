@@ -1,8 +1,12 @@
 
 |  | Status | 
 | :------ | :------: | 
-| Build (CBL-Mariner)| [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20(Ubuntu%20Pipeline))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
-| Package MSI (Windows) | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Package%20(Windows))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+| Build x64 system distro | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20x64%20system%20distro)](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+| Build WSLDCV (x64) Plugin / Create x64 msi | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20WSLDCV%20(x64)%20Plugin%20%2F%20Create%20x64%20msi)](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+| Build ARM64 system distro | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20ARM64%20system%20distro)](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+| Build WSLDCV (ARM64) Plugin / Create ARM64 msi | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=Build%20WSLDCV%20(ARM64)%20Plugin%20%2F%20Create%20ARM64%20msi)](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+| NuGet Package | [![Build Status](https://microsoft.visualstudio.com/DxgkLinux/_apis/build/status/wslg?repoName=microsoft%2Fwslg&branchName=master&jobName=NuGet%20Package%20(Windows))](https://microsoft.visualstudio.com/DxgkLinux/_build/latest?definitionId=55786&repoName=microsoft%2Fwslg&branchName=master) |
+
 
 # Welcome to WSLg
 WSLg is short for *Windows Subsystem for Linux GUI* and the purpose of the project is to enable support for running Linux GUI applications (X11 and Wayland) on Windows in a fully integrated desktop experience. 

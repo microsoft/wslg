@@ -229,6 +229,8 @@ jobs:
   steps:
   - checkout: self
 
+  - template: devops/common-win.yml
+
   - task: DownloadPipelineArtifact@2
     displayName: 'Download system_arm64.vhd'
     inputs:
