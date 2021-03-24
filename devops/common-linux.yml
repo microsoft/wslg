@@ -1,0 +1,13 @@
+steps:
+  - task: DockerInstaller@0
+    inputs:
+      dockerVersion: '20.10.5'
+      releaseType: 'stable'
+
+  - script: wget https://github.com/GitTools/GitVersion/releases/download/5.3.7/gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
+            tar -xvf gitversion-ubuntu.18.04-x64-5.3.7.tar.gz &&
+            sudo mv gitversion /usr/local/bin
+    displayName: 'Install GitVersion'
+
+  - script: git clone --branch v0.8.14 --single-branch https://github.com/microsoft/hcsshim.git
+    displayName: 'Clone hcsshim repo for tar2ext4 tool'

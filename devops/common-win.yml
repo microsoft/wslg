@@ -1,0 +1,7 @@
+steps:
+- script: 'choco install gitversion.portable --pre'
+  displayName: 'Install GitVersion'
+  
+- powershell: (New-Object Net.WebClient).DownloadFile('https://wixtoolset.org/downloads/v3.14.0.4118/wix314-binaries.zip',  'wix314-binaries.zip');
+              Expand-Archive wix314-binaries.zip -DestinationPath $(Agent.BuildDirectory)\wix314-binaries
+  displayName: 'Install Wix'
