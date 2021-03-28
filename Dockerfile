@@ -181,7 +181,6 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dscreenshare=false \
         -Dremoting=false \
         -Dpipewire=false \
-        -Dshell-desktop=false \
         -Dshell-fullscreen=false \
         -Dcolor-management-lcms=false \
         -Dshell-ivi=false \
@@ -256,6 +255,7 @@ RUN tdnf    install -y \
             libsndfile \
             libwayland-client \
             libwayland-server \
+            libwayland-cursor \
             libwebp \
             libXcursor \
             libxkbcommon \

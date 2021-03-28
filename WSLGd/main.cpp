@@ -22,6 +22,9 @@ constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 constexpr auto c_wslgconfigFile = "/mnt/c/ProgramData/Microsoft/WSL/.wslgconfig";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
+constexpr auto c_weston_shell_override = "WSL2_WESTON_SHELL_OVERRIDE";
+constexpr auto c_rdprail_shell = "rdprail-shell";
+
 void LogException(const char *message, const char *exceptionDescription) noexcept
 {
     fprintf(stderr, "<3>WSLGd: %s %s", message ? message : "Exception:", exceptionDescription);
@@ -167,14 +170,41 @@ try {
 
     SetupOptionalEnv();
 
+    // Check if weston shell override is specified.
+    // Otherwise, default shell is 'rdprail-shell'.
+    bool is_rdprail_shell;
+    std::string weston_shell_name;
+    auto weston_shell_env = getenv(c_weston_shell_override);
+    if (!weston_shell_env) {
+        weston_shell_name = c_rdprail_shell;
+        is_rdprail_shell = true;
+    } else {
+        weston_shell_name = weston_shell_env;
+        is_rdprail_shell = (weston_shell_name.compare(c_rdprail_shell) == 0);
+    }
+
+    // Construct shell option string.
+    std::string weston_shell_option("--shell=");
+    weston_shell_option += weston_shell_name;
+    weston_shell_option += ".so";
+
+    // Construct logger option string.
+    // By default, enable standard log and rdp-backend.
+    std::string weston_logger_option("--logger-scopes=log,rdp-backend");
+    // If rdprail-shell is used, enable logger for that.
+    if (is_rdprail_shell) {
+        weston_logger_option += ",";
+        weston_logger_option += c_rdprail_shell;
+    }
+
     // Launch weston.
     // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
-        "--shell=rdprail-shell.so",
-        "--logger-scopes=rdp-backend,rdprail-shell,log",
+        std::move(weston_shell_option),
+        std::move(weston_logger_option),
         "--log=" SHARE_PATH "/weston.log"
         },
         std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
