@@ -22,275 +22,280 @@ resources:
 
 trigger:
   - working
-jobs:
-- job: 'Build_Ubuntu_x64'
-  displayName: 'Build x64 system distro'
-  variables:
-    - group: 'Keys'
 
-  pool:
-    vmImage: 'ubuntu-latest'
+stages:
+- stage: Build_SystemDistro
+  displayName: "Build System Distro (x64 and ARM64)"
+  jobs:
+  - job: 'Build_Ubuntu_x64'
+    displayName: 'Build x64 system distro'
+    variables:
+      - group: 'Keys'
+
+    pool:
+      vmImage: 'ubuntu-latest'
+      
+    steps:
+      - checkout: FreeRDP
+      - checkout: weston
+      - checkout: pulseaudio
+      - checkout: sharedguestalloc
+      - checkout: self
+
+      - template: devops/common-linux.yml
+
+      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz &&
+                tar -xvf mesa-21.0.0.tar.xz
+        displayName: 'Download Mesa from CBL Mariner'
+
+      - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
+                mv weston-mirror/ wslg/vendor/weston &&
+                mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
+                mv mesa-21.0.0/ wslg/vendor/mesa &&
+                mv sharedguestalloc/ wslg/vendor/sharedguestalloc
+        displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa)'
+
+      - script: docker build -f ./wslg/Dockerfile -t system-distro-x64 
+                ./wslg 
+                --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion`
+                --build-arg WSLG_ARCH=x86_64
+        displayName: 'Create System Distro Docker image Mariner-x64'
+
+      - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
+        displayName: 'Create system_x64.tar'
+
+      - task: Go@0
+        inputs:
+          command: 'custom'
+          customCommand: 'run'
+          arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_x64.tar -o $(Agent.BuildDirectory)/system_x64.vhd'
+          workingDirectory: 'hcsshim/cmd/tar2ext4'
+        displayName: 'Create system_x64.vhd'
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish system_x64.vhd artifact'
+        inputs:
+          targetPath: $(Agent.BuildDirectory)/system_x64.vhd
+          artifact: 'system_x64.vhd'
+          publishLocation: 'pipeline'
+          
+  - job: 'Build_Windows_x64'
+    dependsOn: 'Build_Ubuntu_x64'
+    displayName: 'Build WSLDCV (x64) Plugin / Create x64 msi'
     
-  steps:
-    - checkout: FreeRDP
-    - checkout: weston
-    - checkout: pulseaudio
-    - checkout: sharedguestalloc
+    pool:
+      vmImage: 'windows-2019'
+      demands:
+      - msbuild
+      - visualstudio
+
+    steps:
     - checkout: self
 
-    - template: devops/common-linux.yml
+    - template: devops/common-win.yml
 
-    - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz &&
-              tar -xvf mesa-21.0.0.tar.xz
-      displayName: 'Download Mesa from CBL Mariner'
-
-    - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
-              mv weston-mirror/ wslg/vendor/weston &&
-              mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
-              mv mesa-21.0.0/ wslg/vendor/mesa &&
-              mv sharedguestalloc/ wslg/vendor/sharedguestalloc
-      displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa)'
-
-    - script: docker build -f ./wslg/Dockerfile -t system-distro-x64 
-              ./wslg 
-              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion`
-              --build-arg WSLG_ARCH=x86_64
-      displayName: 'Create System Distro Docker image Mariner-x64'
-
-    - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
-      displayName: 'Create system_x64.tar'
-
-    - task: Go@0
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download system_x64.vhd'
       inputs:
-        command: 'custom'
-        customCommand: 'run'
-        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_x64.tar -o $(Agent.BuildDirectory)/system_x64.vhd'
-        workingDirectory: 'hcsshim/cmd/tar2ext4'
-      displayName: 'Create system_x64.vhd'
+        buildType: 'current'
+        artifactName: 'system_x64.vhd'
+        targetPath: 'msi/'
+
+    - task: MSBuild@1
+      displayName: 'Build RDP Plugin (x64)'
+      inputs:
+        solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
+        platform: 'x64'
+        configuration: 'Release'
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish system_x64.vhd artifact'
+      displayName: 'Publish WSLDVCPlugin pdb (x64)'
       inputs:
-        targetPath: $(Agent.BuildDirectory)/system_x64.vhd
-        artifact: 'system_x64.vhd'
+        targetPath: WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb
+        artifact: 'x64.WSLDVCPlugin.pdb'
         publishLocation: 'pipeline'
-        
-- job: 'Build_Windows_x64'
-  dependsOn: 'Build_Ubuntu_x64'
-  displayName: 'Build WSLDCV (x64) Plugin / Create x64 msi'
-  
-  pool:
-    vmImage: 'windows-2019'
-    demands:
-    - msbuild
-    - visualstudio
 
-  steps:
-  - checkout: self
+    - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_x64.dll'
+      displayName: 'Move plugin to msi (x64)'
 
-  - template: devops/common-win.yml
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish WSLDVCPlugin DLL (x64)'
+      inputs:
+        targetPath: msi\WSLDVCPlugin_x64.dll
+        artifact: 'x64.WSLDVCPlugin.dll'
+        publishLocation: 'pipeline'
 
-  - task: DownloadPipelineArtifact@2
-    displayName: 'Download system_x64.vhd'
-    inputs:
-      buildType: 'current'
-      artifactName: 'system_x64.vhd'
-      targetPath: 'msi/'
+    - task: PowerShell@2
+      displayName: 'Update wslg.wxs version'
+      inputs:
+        targetType: filePath
+        filePath: .\updateversion.ps1 
+        arguments: .\msi\wslg.wxs "Wix.Product" "Version" 
+        pwsh: true
 
-  - task: MSBuild@1
-    displayName: 'Build RDP Plugin (x64)'
-    inputs:
-      solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
-      platform: 'x64'
-      configuration: 'Release'
+    - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch x64 -dVhdFile=system_x64.vhd -dPlatform=x64 -o obj_x64\'
+      workingDirectory: msi
+      displayName: 'WiX Candle (x64)'
 
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLDVCPlugin pdb (x64)'
-    inputs:
-      targetPath: WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb
-      artifact: 'x64.WSLDVCPlugin.pdb'
-      publishLocation: 'pipeline'
+    - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_x64\wslg.wixobj -o bin\wsl_graphics_support_x64.msi'
+      workingDirectory: msi
+      displayName: 'WiX Light (x64)'
 
-  - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_x64.dll'
-    displayName: 'Move plugin to msi (x64)'
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish WSLg installer'
+      inputs:
+        targetPath: msi/bin/wsl_graphics_support_x64.msi
+        artifact: 'wsl_graphics_support_x64.msi'
+        publishLocation: 'pipeline'
 
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLDVCPlugin DLL (x64)'
-    inputs:
-      targetPath: msi\WSLDVCPlugin_x64.dll
-      artifact: 'x64.WSLDVCPlugin.dll'
-      publishLocation: 'pipeline'
+  - job: 'Build_Ubuntu_ARM64'
+    displayName: 'Build ARM64 system distro'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    timeoutInMinutes: 150
+    variables:
+      - group: 'Keys'
 
-  - task: PowerShell@2
-    displayName: 'Update wslg.wxs version'
-    inputs:
-      targetType: filePath
-      filePath: .\updateversion.ps1 
-      arguments: .\msi\wslg.wxs "Wix.Product" "Version" 
-      pwsh: true
+    pool:
+      vmImage: 'ubuntu-latest'
+      
+    steps:
+      - checkout: FreeRDP
+      - checkout: weston
+      - checkout: pulseaudio
+      - checkout: sharedguestalloc
+      - checkout: self
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch x64 -dVhdFile=system_x64.vhd -dPlatform=x64 -o obj_x64\'
-    workingDirectory: msi
-    displayName: 'WiX Candle (x64)'
+      - template: devops/common-linux.yml
 
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_x64\wslg.wixobj -o bin\wsl_graphics_support_x64.msi'
-    workingDirectory: msi
-    displayName: 'WiX Light (x64)'
+      - bash: |
+              curl -L -o ~/.docker/cli-plugins/docker-buildx --create-dirs ${BUILDX_URL}
+              chmod a+x ~/.docker/cli-plugins/docker-buildx
+              docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+              ~/.docker/cli-plugins/docker-buildx create --use
+              ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
+        displayName: Prepare buildx
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+        env:
+          BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
 
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLg installer'
-    inputs:
-      targetPath: msi/bin/wsl_graphics_support_x64.msi
-      artifact: 'wsl_graphics_support_x64.msi'
-      publishLocation: 'pipeline'
+      - script: |
+                echo '{ "experimental": true }' | sudo tee /etc/docker/daemon.json
+                sudo service docker restart
+        displayName: 'Enable Docker Engine experimental '
 
-- job: 'Build_Ubuntu_ARM64'
-  displayName: 'Build ARM64 system distro'
-  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
-  timeoutInMinutes: 150
-  variables:
-    - group: 'Keys'
+      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz &&
+                tar -xvf mesa-21.0.0.tar.xz
+        displayName: 'Download Mesa from CBL Mariner'
 
-  pool:
-    vmImage: 'ubuntu-latest'
+      - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
+                mv weston-mirror/ wslg/vendor/weston &&
+                mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
+                mv mesa-21.0.0/ wslg/vendor/mesa &&
+                mv sharedguestalloc/ wslg/vendor/sharedguestalloc
+        displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa)'
+
+      - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
+                --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
+                --platform=linux/arm64 
+                ./wslg 
+                --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
+                --build-arg WSLG_ARCH=aarch64
+        displayName: 'Create system_arm64.tar'
+
+      - task: Go@0
+        inputs:
+          command: 'custom'
+          customCommand: 'run'
+          arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_arm64.tar -o $(Agent.BuildDirectory)/system_arm64.vhd'
+          workingDirectory: 'hcsshim/cmd/tar2ext4'
+        displayName: 'Create system_arm64.vhd'
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish system_arm64.vhd artifact'
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+        inputs:
+          targetPath: $(Agent.BuildDirectory)/system_arm64.vhd
+          artifact: 'system_arm64.vhd'
+          publishLocation: 'pipeline'
+
+  - job: 'Build_Windows_ARM64'
+    displayName: 'Build WSLDCV (ARM64) Plugin / Create ARM64 msi'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    dependsOn: 
+    - 'Build_Ubuntu_ARM64'
     
-  steps:
-    - checkout: FreeRDP
-    - checkout: weston
-    - checkout: pulseaudio
-    - checkout: sharedguestalloc
+    pool:
+      vmImage: 'windows-2019'
+      demands:
+      - msbuild
+      - visualstudio
+
+    steps:
     - checkout: self
 
-    - template: devops/common-linux.yml
+    - template: devops/common-win.yml
 
-    - bash: |
-            curl -L -o ~/.docker/cli-plugins/docker-buildx --create-dirs ${BUILDX_URL}
-            chmod a+x ~/.docker/cli-plugins/docker-buildx
-            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-            ~/.docker/cli-plugins/docker-buildx create --use
-            ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
-      displayName: Prepare buildx
-      condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
-      env:
-        BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
-
-    - script: |
-              echo '{ "experimental": true }' | sudo tee /etc/docker/daemon.json
-              sudo service docker restart
-      displayName: 'Enable Docker Engine experimental '
-
-    - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz &&
-              tar -xvf mesa-21.0.0.tar.xz
-      displayName: 'Download Mesa from CBL Mariner'
-
-    - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
-              mv weston-mirror/ wslg/vendor/weston &&
-              mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
-              mv mesa-21.0.0/ wslg/vendor/mesa &&
-              mv sharedguestalloc/ wslg/vendor/sharedguestalloc
-      displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa)'
-
-    - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
-              --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
-              --platform=linux/arm64 
-              ./wslg 
-              --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
-              --build-arg WSLG_ARCH=aarch64
-      displayName: 'Create system_arm64.tar'
-
-    - task: Go@0
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download system_arm64.vhd'
       inputs:
-        command: 'custom'
-        customCommand: 'run'
-        arguments: 'tar2ext4.go -vhd -i $(Agent.BuildDirectory)/system_arm64.tar -o $(Agent.BuildDirectory)/system_arm64.vhd'
-        workingDirectory: 'hcsshim/cmd/tar2ext4'
-      displayName: 'Create system_arm64.vhd'
+        buildType: 'current'
+        artifactName: 'system_arm64.vhd'
+        targetPath: 'msi/'
+
+    - task: MSBuild@1
+      displayName: 'Build RDP Plugin (ARM64)'
+      inputs:
+        solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
+        platform: 'ARM64'
+        configuration: 'Release'
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish system_arm64.vhd artifact'
-      condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+      displayName: 'Publish WSLDVCPlugin pdb (ARM64)'
       inputs:
-        targetPath: $(Agent.BuildDirectory)/system_arm64.vhd
-        artifact: 'system_arm64.vhd'
+        targetPath: WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb
+        artifact: 'ARM64.WSLDVCPlugin.pdb'
         publishLocation: 'pipeline'
 
-- job: 'Build_Windows_ARM64'
-  displayName: 'Build WSLDCV (ARM64) Plugin / Create ARM64 msi'
+    - script: 'MOVE WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_ARM64.dll'
+      displayName: 'Move plugin to msi (ARM64)'
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish WSLDVCPlugin DLL (ARM64)'
+      inputs:
+        targetPath: msi\WSLDVCPlugin_ARM64.dll
+        artifact: 'ARM64.WSLDVCPlugin.dll'
+        publishLocation: 'pipeline'
+
+    - task: PowerShell@2
+      displayName: 'Update wslg.wxs version'
+      inputs:
+        targetType: filePath
+        filePath: .\updateversion.ps1 
+        arguments: .\msi\wslg.wxs "Wix.Product" "Version" 
+        pwsh: true
+
+    - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_arm64.vhd -dPlatform=arm64 -o obj_arm64\'
+      workingDirectory: msi
+      displayName: 'WiX Candle (arm64)'
+
+    - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_arm64\wslg.wixobj -o bin\wsl_graphics_support_arm64.msi'
+      workingDirectory: msi
+      displayName: 'WiX Light (arm64)'
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish WSLg installer ARM64'
+      inputs:
+        targetPath: msi/bin/wsl_graphics_support_arm64.msi
+        artifact: 'wsl_graphics_support_arm64.msi'
+        publishLocation: 'pipeline'
+
+- stage: Package_NuGet
+  displayName: "NuGet Package (Windows)"
+  jobs:
+  - job: 'Build_Windows_NuGet'
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
   dependsOn: 
-  - 'Build_Ubuntu_ARM64'
-  
-  pool:
-    vmImage: 'windows-2019'
-    demands:
-    - msbuild
-    - visualstudio
-
-  steps:
-  - checkout: self
-
-  - template: devops/common-win.yml
-
-  - task: DownloadPipelineArtifact@2
-    displayName: 'Download system_arm64.vhd'
-    inputs:
-      buildType: 'current'
-      artifactName: 'system_arm64.vhd'
-      targetPath: 'msi/'
-
-  - task: MSBuild@1
-    displayName: 'Build RDP Plugin (ARM64)'
-    inputs:
-      solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
-      platform: 'ARM64'
-      configuration: 'Release'
-
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLDVCPlugin pdb (ARM64)'
-    inputs:
-      targetPath: WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb
-      artifact: 'ARM64.WSLDVCPlugin.pdb'
-      publishLocation: 'pipeline'
-
-  - script: 'MOVE WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.dll msi\WSLDVCPlugin_ARM64.dll'
-    displayName: 'Move plugin to msi (ARM64)'
-
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLDVCPlugin DLL (ARM64)'
-    inputs:
-      targetPath: msi\WSLDVCPlugin_ARM64.dll
-      artifact: 'ARM64.WSLDVCPlugin.dll'
-      publishLocation: 'pipeline'
-
-  - task: PowerShell@2
-    displayName: 'Update wslg.wxs version'
-    inputs:
-      targetType: filePath
-      filePath: .\updateversion.ps1 
-      arguments: .\msi\wslg.wxs "Wix.Product" "Version" 
-      pwsh: true
-
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\candle.exe wslg.wxs -arch arm64 -dVhdFile=system_arm64.vhd -dPlatform=arm64 -o obj_arm64\'
-    workingDirectory: msi
-    displayName: 'WiX Candle (arm64)'
-
-  - script: '$(Agent.BuildDirectory)\wix314-binaries\light.exe obj_arm64\wslg.wixobj -o bin\wsl_graphics_support_arm64.msi'
-    workingDirectory: msi
-    displayName: 'WiX Light (arm64)'
-
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish WSLg installer ARM64'
-    inputs:
-      targetPath: msi/bin/wsl_graphics_support_arm64.msi
-      artifact: 'wsl_graphics_support_arm64.msi'
-      publishLocation: 'pipeline'
-
-- job: 'Build_Windows_NuGet'
-  displayName: 'NuGet Package (Windows)'
-  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
-  dependsOn: 
-  - 'Build_Windows_x64'
-  - 'Build_Windows_ARM64'
+  - 'Build_SystemDistro'
   
   pool:
     vmImage: 'windows-2019'
