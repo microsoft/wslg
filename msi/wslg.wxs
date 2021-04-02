@@ -2,7 +2,8 @@
 <!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
 
 <?define LxssRegKey = "Software\Microsoft\Windows\CurrentVersion\Lxss"?>
-<?define TSCRegKey = "Software\Microsoft\Terminal Server Client\Default\AddIns\WSLDVCPlugin"?>
+<?define TSCRegKey = "Software\Microsoft\Terminal Server Client\Default\OptionalAddIns\WSLDVC"?>
+<?define TSCRegKeyRemove = "Software\Microsoft\Terminal Server Client\Default\AddIns\WSLDVCPlugin"?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*" UpgradeCode="04201F79-6DC8-4B6B-B690-81E7E4A8FB47" Name="Windows Subsystem for Linux GUI App Support"
@@ -39,8 +40,8 @@
         <Condition Message="There is an old version installed, please uninstall it first">
             <![CDATA[ WINDOWSCURRENTBUILDNUMBER > 1]]>
         </Condition>
-        <Condition Message="This application requires build 20240 or later (current version: [WINDOWSCURRENTBUILDNUMBER]) ">
-            <![CDATA[ WINDOWSCURRENTBUILDNUMBER >= 20240]]>
+        <Condition Message="This application requires build 21340 or later (current version: [WINDOWSCURRENTBUILDNUMBER]) ">
+            <![CDATA[ WINDOWSCURRENTBUILDNUMBER >= 21340]]>
         </Condition>
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="WSLRDPFILE" />
@@ -66,13 +67,12 @@
             <Component Id="WSLDVCPLUGIN" Guid="56EB47EF-9EDA-496E-A48C-0DF9BA957AD2">
                 <File Id="WSLDVCPLUGINID" Source="WSLDVCPlugin_$(var.Platform).dll" Name="WSLDVCPlugin.dll"/>
             </Component>
-            <!-- **** TODO: REMOVE THE GLOBAL REGISTRATION WHEN WE HAVE THE OPTION TO PASS THE PLUGIN PATH TO MSTSC ***** -->
             <Component Id="WSLDVCPLUGINREG" Guid="91D94F40-BB48-4F28-881D-5D7C5C0BAB37" Win64="yes">
                 <RegistryKey Root="HKLM" Key="$(var.TSCRegKey)" >
                     <RegistryValue Id="WSLDVCPLUGINREGID" Name="Name" Value="[INSTALLDIR]WSLDVCPlugin.dll" Type="string" />
                 </RegistryKey>
+                <RemoveRegistryKey Id="WSLDVCPLUGINREGREMOVEID" Root="HKLM" Action="removeOnInstall" Key="$(var.TSCRegKeyRemove)"/>
             </Component>
-            <!-- **** ***** -->
             <Component Id="SYSTEMVHD" Guid="83482DCB-62FE-4B1E-83D6-50EF887CD364">
                 <File Id="SYSTEMVHDID" Source="$(var.VhdFile)" Name="system.vhd" />
                 <RemoveRegistryValue Id="RID_WSL_INSTALLING" Root="HKLM" Key="$(var.LxssRegKey)" Name="WslInstalling" />

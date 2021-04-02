@@ -228,6 +228,8 @@ try {
         std::move(remote),
         std::move(serviceId),
         "/silent",
+        "/wslg",
+        "/plugin:WSLDVC",
         "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
     });
 
