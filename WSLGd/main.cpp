@@ -19,6 +19,8 @@ constexpr auto c_shareDocsMount = SHARE_PATH "/doc";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 
+constexpr auto c_sharedMemoryMountPoint = "/mnt/shared_memory";
+
 constexpr auto c_wslgconfigFile = "/mnt/c/ProgramData/Microsoft/WSL/.wslgconfig";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
@@ -44,30 +46,28 @@ std::string ToServiceId(unsigned int port)
 
 void SetupOptionalEnv()
 {
-#ifdef HAVE_WINPR2 
+#ifdef HAVE_WINPR2
     // Set additional environment variables.
     wIniFile* wslgConfigIniFile = IniFile_New();
     if (wslgConfigIniFile) {
         if (IniFile_ReadFile(wslgConfigIniFile, c_wslgconfigFile) > 0) {
             int numKeys = 0;
-            char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile,
-                c_systemDistroEnvSection,
-                &numKeys);
+            char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile, c_systemDistroEnvSection, &numKeys);
             for (int n = 0; keyNames && n < numKeys; n++) {
-                const char *value = IniFile_GetKeyValueString(wslgConfigIniFile,
-                    c_systemDistroEnvSection,
-                    keyNames[n]);
+                const char *value = IniFile_GetKeyValueString(wslgConfigIniFile, c_systemDistroEnvSection, keyNames[n]);
                 if (value) {
                     setenv(keyNames[n], value, true);
                 }
             }
-            if (keyNames)
-                free(keyNames);
+
+            free(keyNames);
         }
+
         IniFile_Free(wslgConfigIniFile);
-        wslgConfigIniFile = NULL;
     }
 #endif // HAVE_WINPR2 
+
+    return;
 }
 
 int main(int Argc, char *Argv[])
@@ -101,6 +101,7 @@ try {
         return 1;
     }
 
+    // Bind mount the versions.txt file which contains version numbers of the various WSLG pieces.
     {
         wil::unique_fd fd(open(c_versionMount, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
         THROW_LAST_ERROR_IF(!fd);
@@ -108,7 +109,7 @@ try {
 
     THROW_LAST_ERROR_IF(mount(c_versionFile, c_versionMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
 
-    THROW_LAST_ERROR_IF(mkdir(c_shareDocsMount, (S_IRUSR | S_IRGRP | S_IROTH)) < 0);
+    std::filesystem::create_directories(c_shareDocsMount);
     THROW_LAST_ERROR_IF(mount(c_shareDocsDir, c_shareDocsMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
 
     // Create a process monitor to track child processes
@@ -126,6 +127,12 @@ try {
     std::filesystem::create_directories(c_xdgRuntimeDir);
     THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0700) < 0);
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
+
+    // Attempt to mount the virtiofs share for shared memory.
+    std::filesystem::create_directories(c_sharedMemoryMountPoint);
+    if (mount("wslg", c_sharedMemoryMountPoint, "virtiofs", 0, "dax") < 0) {
+        LOG_ERROR("Failed to mount wslg shared memory %d.", errno);
+    }
 
     // Create a listening vsock to be used for the RDP connection.
     //
@@ -178,6 +185,7 @@ try {
     if (!weston_shell_env) {
         weston_shell_name = c_rdprail_shell;
         is_rdprail_shell = true;
+
     } else {
         weston_shell_name = weston_shell_env;
         is_rdprail_shell = (weston_shell_name.compare(c_rdprail_shell) == 0);
