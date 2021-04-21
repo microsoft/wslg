@@ -198,7 +198,7 @@ WSLg leverages Weston as the Wayland compositor bridging the Linux and Windows w
 
 To enable rich integration in WSLg, we've also added a small plugin to the RDP backend specific to WSLg. In Weston, the plugin is responsible for attaching to the user distro and searching for installed applications (aka the desktop file). The plugin sends the Windows host a list of all applications found along with their launch commands and icons. On the Windows host, an open source [mstsc plugin](https://github.com/microsoft/wslg/tree/main/WSLDVCPlugin) part of the WSLg project uses that information to create shortcuts for these Linux applications to the Windows Start Menu.
 
-We've also fixed several bugs impacting various applications. Generally, these were problems that impacted Weston in all modes (and not specific to WSLg).
+We've also fixed several bugs impacting various applications. Generally, these were problems that impacted Weston in all modes and were not specific to WSLg.
 
 ## FreeRDP
 Weston currently uses FreeRDP for its RDP Backend. WSLg continues to leverage FreeRDP and we have added support for a new RDP Protocol/Channel to enable VAIL optimized scenario as well as support for the WSLg plugin. We've also fixed various bugs that were impacting interops with mstsc or causing instability.
