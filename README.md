@@ -3,7 +3,7 @@ WSLg is short for *Windows Subsystem for Linux GUI* and the purpose of the proje
 
 WSLg provides an integrated experience for developers, scientists or enthusiasts that prefer or need to run Windows on their PC but also need the ability to run tools or applications which works best, or exclusively, in a Linux environment. While users can accomplish this today using a multiple system setup, with individual PC dedicated to Windows and Linux, virtual machine hosting either Windows or Linux, or an XServer running on Windows and projected into WSL, WSLg provides a more integrated, user friendly and productive alternative.
 
-WSLg strives to make Linux GUI applications feel native and natural to use on Windows. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste accross Windows and Linux applications, WSLg enables a seamless desktop experience and workflow leveraging Windows and Linux applications.
+WSLg strives to make Linux GUI applications feel native and natural to use on Windows. From integration into the Start Menu for launch to appearing in the task bar, alt-tab experience to enabling cut/paste across Windows and Linux applications, WSLg enables a seamless desktop experience and workflow leveraging Windows and Linux applications.
 
 ![WSLg Integrated Desktop](/docs/WSLg_IntegratedDesktop.png)
 
@@ -129,7 +129,7 @@ The user distro is essentially the WSL distribution you are using for your Linux
 All user and system distros for a particular Windows user run within the same WSL virtual machine against a single instance of the Linux kernel. Different Windows users on a PC have their own VM and instance of WSL. Your Linux environment is guaranteed to always be your own and not shared with other Windows users on the same PC.
 
 ## WSLg System Distro
-The system distro is where all of the magic happens. The sytem distro is a containerized Linux environment where the WSLg XServer, Wayland server and Pulse Audio server are running. Communication socket for each of these servers are projected into the user distro so client applications can connect to them. We preconfigure the user distro environment variables DISPLAY, WAYLAND_DISPLAY and PULSE_SERVER to refer these servers by default so WSLg lights up out of the box.
+The system distro is where all of the magic happens. The system distro is a containerized Linux environment where the WSLg XServer, Wayland server and Pulse Audio server are running. Communication socket for each of these servers are projected into the user distro so client applications can connect to them. We preconfigure the user distro environment variables DISPLAY, WAYLAND_DISPLAY and PULSE_SERVER to refer these servers by default so WSLg lights up out of the box.
 
 Users wanting to use different servers than the one provided by WSLg can change these environment variables. User can also choose to turn off the system distro entirely by adding the following entry in their `.wslconfig` file (located at `c:\users\MyUser\.wslconfig`). This will turn off support for GUI applications in WSL.
 
