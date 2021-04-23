@@ -102,6 +102,9 @@ try {
         LOG_ERROR("%s must be set.", c_vmIdEnv);
         return 1;
     }
+        // Create a process monitor to track child processes
+    wslgd::ProcessMonitor monitor(c_userName);
+    auto passwordEntry = monitor.GetUserInfo();
 
     // Bind mount the versions.txt file which contains version numbers of the various WSLG pieces.
     {
@@ -109,14 +112,12 @@ try {
         THROW_LAST_ERROR_IF(!fd);
     }
 
+    THROW_LAST_ERROR_IF(chown(c_versionFile, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
+    THROW_LAST_ERROR_IF(chown(c_versionMount, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
     THROW_LAST_ERROR_IF(mount(c_versionFile, c_versionMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
 
     std::filesystem::create_directories(c_shareDocsMount);
     THROW_LAST_ERROR_IF(mount(c_shareDocsDir, c_shareDocsMount, NULL, MS_BIND | MS_RDONLY, NULL) < 0);
-
-    // Create a process monitor to track child processes
-    wslgd::ProcessMonitor monitor(c_userName);
-    auto passwordEntry = monitor.GetUserInfo();
 
     // Make directories and ensure the correct permissions.
     std::filesystem::create_directories(c_dbusDir);

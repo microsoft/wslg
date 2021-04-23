@@ -282,10 +282,13 @@ RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" = "on" ] ; then \
         rpm -e --nodeps python2-libs;               \
     fi
 
+COPY --from=dev /work/versions.txt /etc/versions.txt
+
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
     mkdir /home/wslg/.config && \
-    chown wslg /home/wslg/.config
+    chown wslg /home/wslg/.config && \
+    chown wslg /etc/versions.txt
 
 # Copy config files.
 COPY config/wsl.conf /etc/wsl.conf
@@ -314,6 +317,5 @@ COPY --from=dev /work/vendor/FreeRDP/LICENSE /usr/share/doc/FreeRDP/LICENSE
 # copy the documentation and licensing information for mesa
 COPY --from=dev /work/vendor/mesa/docs /usr/share/doc/mesa/
 
-COPY --from=dev /work/versions.txt /etc/versions.txt
 
 CMD /usr/bin/WSLGd
