@@ -255,7 +255,6 @@ RUN tdnf    install -y \
             libXcursor \
             libxkbcommon \
             libXrandr \
-            nano \
             pango \
             procps-ng \
             tzdata \
@@ -270,6 +269,7 @@ ARG SYSTEMDISTRO_DEBUG_BUILD
 RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" = "on" ] ; then \
         tdnf install -y \
              gdb \
+             nano \
              vim ; \
     else                                            \
         rpm -e --nodeps python2                     \
