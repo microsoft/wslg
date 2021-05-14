@@ -25,6 +25,7 @@ stages:
   jobs:
   - job: 'Build_Ubuntu_x64'
     displayName: 'Build x64 system distro'
+    timeoutInMinutes: 200
     variables:
       - group: 'Keys'
 
@@ -99,7 +100,7 @@ stages:
       displayName: 'Publish WSLDVCPlugin pdb (x64)'
       inputs:
         targetPath: WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb
-        artifact: 'x64.WSLDVCPlugin.pdb'
+        artifact: 'WSLDVCPlugin.x64.pdb'
         publishLocation: 'pipeline'
 
     - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll package\WSLDVCPlugin_x64.dll'
@@ -109,13 +110,13 @@ stages:
       displayName: 'Publish WSLDVCPlugin DLL (x64)'
       inputs:
         targetPath: package\WSLDVCPlugin_x64.dll
-        artifact: 'x64.WSLDVCPlugin.dll'
+        artifact: 'WSLDVCPlugin.x64.dll'
         publishLocation: 'pipeline'
 
   - job: 'Build_Ubuntu_ARM64'
     displayName: 'Build ARM64 system distro'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-    timeoutInMinutes: 150
+    timeoutInMinutes: 200
     variables:
       - group: 'Keys'
 
@@ -181,10 +182,9 @@ stages:
           publishLocation: 'pipeline'
 
   - job: 'Build_Windows_ARM64'
+    dependsOn: 'Build_Ubuntu_ARM64'
     displayName: 'Build WSLDCV (ARM64) Plugin'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-    dependsOn: 
-    - 'Build_Ubuntu_ARM64'
     
     pool:
       vmImage: 'windows-2019'
@@ -208,7 +208,7 @@ stages:
       displayName: 'Publish WSLDVCPlugin pdb (ARM64)'
       inputs:
         targetPath: WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb
-        artifact: 'ARM64.WSLDVCPlugin.pdb'
+        artifact: 'WSLDVCPlugin.ARM64.pdb'
         publishLocation: 'pipeline'
 
     - script: 'MOVE WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.dll package\WSLDVCPlugin_ARM64.dll'
@@ -218,7 +218,7 @@ stages:
       displayName: 'Publish WSLDVCPlugin DLL (ARM64)'
       inputs:
         targetPath: package\WSLDVCPlugin_ARM64.dll
-        artifact: 'ARM64.WSLDVCPlugin.dll'
+        artifact: 'WSLDVCPlugin.ARM64.dll'
         publishLocation: 'pipeline'
 
 - stage: PublishPackage
@@ -244,7 +244,7 @@ stages:
         displayName: 'Download WSLDVCPlugin DLL (x64)'
         inputs:
           buildType: 'current'
-          artifactName: 'x64.WSLDVCPlugin.dll'
+          artifactName: 'WSLDVCPlugin.x64.dll'
           targetPath: 'package/'
 
       - task: DownloadPipelineArtifact@2
@@ -258,7 +258,7 @@ stages:
         displayName: 'Download WSLDVCPlugin DLL (ARM64)'
         inputs:
           buildType: 'current'
-          artifactName: 'ARM64.WSLDVCPlugin.dll'
+          artifactName: 'WSLDVCPlugin.ARM64.dll'
           targetPath: 'package/'
 
       - task: PowerShell@2
