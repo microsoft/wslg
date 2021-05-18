@@ -69,7 +69,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
 
 4. Inspecting the system distro:
 
-    If the sistem distro isn't working correctly or you need to inspect what is running inside the system distro you can do:
+    If the system distro isn't working correctly or you need to inspect what is running inside the system distro you can do:
 
     ```
     wsl --system [DistroName]
