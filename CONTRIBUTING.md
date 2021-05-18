@@ -85,9 +85,9 @@ You need to restart WSL for this change to take effect. From an elevated command
 
 If the system distro isn't working correctly or you need to inspect what is running inside the system distro you can get a terminal into the system distro by running the following command from an elevated command prompt.
 
-    ```
+```
     wsl --system [DistroName]
-    ```
+```
 There is an instance of the system distro running for every user distro running. `DistroName` refers to the name of the user distro for which you want the paired system distro. If you omit `DistroName`, you will get a terminal into the system distro paired with your default WSL user distro.
 
 Please keep in mind that the system distro is loaded read-only from it's backing VHD. For example, if you need to install tools (say a debugger or an editor) in the system distro, you want to do this in the Dockerfile that builds the system distro so it gets into the private vhd that you are running. You can dynamically install new packages once your have a terminal into the system distro, but any changes you make will be discarded when WSL is restarted.
