@@ -94,7 +94,7 @@ stages:
       inputs:
         targetType: filePath
         workingDirectory: './WSLDVCPlugin'
-        filePath: .\UpdateRCVersion.ps1
+        filePath: .\WSLDVCPlugin\UpdateRCVersion.ps1
         pwsh: true
 
     - task: MSBuild@1
@@ -210,7 +210,7 @@ stages:
       inputs:
         targetType: filePath
         workingDirectory: './WSLDVCPlugin'
-        filePath: .\UpdateRCVersion.ps1
+        filePath: .\WSLDVCPlugin\UpdateRCVersion.ps1
         pwsh: true
 
     - task: MSBuild@1
