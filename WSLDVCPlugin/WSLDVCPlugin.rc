@@ -74,7 +74,7 @@ BEGIN
             VALUE "LegalCopyright", "© Microsoft Corporation. All rights reserved"
             VALUE "OriginalFilename", "WSLDVCPl.dll"
             VALUE "ProductName", "WSL Remote Application List Plug-in"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductVersion", "InformationalVersion"
         END
     END
     BLOCK "VarFileInfo"
