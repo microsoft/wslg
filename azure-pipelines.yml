@@ -89,6 +89,14 @@ stages:
 
     - template: devops/common-win.yml
 
+    - task: PowerShell@2
+      displayName: 'Update WSLDVCPlugin version'
+      inputs:
+        targetType: filePath
+        workingDirectory: './WSLDVCPlugin'
+        filePath: .\WSLDVCPlugin\UpdateRCVersion.ps1
+        pwsh: true
+
     - task: MSBuild@1
       displayName: 'Build RDP Plugin (x64)'
       inputs:
@@ -196,6 +204,14 @@ stages:
     - checkout: self
 
     - template: devops/common-win.yml
+
+    - task: PowerShell@2
+      displayName: 'Update WSLDVCPlugin version'
+      inputs:
+        targetType: filePath
+        workingDirectory: './WSLDVCPlugin'
+        filePath: .\WSLDVCPlugin\UpdateRCVersion.ps1
+        pwsh: true
 
     - task: MSBuild@1
       displayName: 'Build RDP Plugin (ARM64)'
