@@ -80,7 +80,7 @@ try {
     // Open a file for logging errors and set it to stderr for WSLGd as well as any child process.
     {
         wil::unique_fd fd_stdErrLog(open(c_stdErrLogMount, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
-        if (fd_stdErrLog && fd_stdErrLog.get()) {
+        if (fd_stdErrLog && (fd_stdErrLog.get() != STDERR_FILENO)) {
             dup2(fd_stdErrLog.get(), STDERR_FILENO);
         }
     }
