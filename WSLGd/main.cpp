@@ -77,14 +77,11 @@ int main(int Argc, char *Argv[])
 try {
     wil::g_LogExceptionCallback = LogException;
 
-    // Open kmsg for logging errors and set it to stderr.
-    //
-    // N.B. fprintf must be used instead of dprintf because glibc does not correctly
-    //      handle /dev/kmsg.
+    // Open a file for logging errors and set it to stderr for WSLGd as well as any child process.
     {
-        wil::unique_fd logFd(TEMP_FAILURE_RETRY(open("/dev/kmsg", (O_WRONLY | O_CLOEXEC))));
-        if ((logFd) && (logFd.get() != STDERR_FILENO)) {
-            THROW_LAST_ERROR_IF(dup3(logFd.get(), STDERR_FILENO, O_CLOEXEC) < 0);
+        wil::unique_fd fd_stdErrLog(open(c_stdErrLogMount, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
+        if (fd_stdErrLog && fd_stdErrLog.get()) {
+            dup2(fd_stdErrLog.get(), STDERR_FILENO);
         }
     }
 
@@ -188,11 +185,6 @@ try {
     }
 
     SetupOptionalEnv();
-
-    // Redirect stderr to a file.
-    wil::unique_fd fd_stdErrLog(open(c_stdErrLogMount, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
-    THROW_LAST_ERROR_IF(!fd_stdErrLog);
-    THROW_LAST_ERROR_IF(dup2(fd_stdErrLog.get(), STDERR_FILENO) < 0);
 
     // Set shared memory mount point to env when available.
     if (!is_shared_memory_mounted ||
