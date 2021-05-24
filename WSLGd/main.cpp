@@ -18,6 +18,7 @@ constexpr auto c_shareDocsDir = "/usr/share/doc";
 constexpr auto c_shareDocsMount = SHARE_PATH "/doc";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
+constexpr auto c_stdErrLogMount = SHARE_PATH "/stderr.log";
 
 constexpr auto c_sharedMemoryMountPoint = "/mnt/shared_memory";
 constexpr auto c_sharedMemoryMountPointEnv = "WSL2_SHARED_MEMORY_MOUNT_POINT";
@@ -187,6 +188,11 @@ try {
     }
 
     SetupOptionalEnv();
+
+    // Redirect stderr to a file.
+    wil::unique_fd fd_stdErrLog(open(c_stdErrLogMount, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
+    THROW_LAST_ERROR_IF(!fd_stdErrLog);
+    THROW_LAST_ERROR_IF(dup2(fd_stdErrLog.get(), STDERR_FILENO) < 0);
 
     // Set shared memory mount point to env when available.
     if (!is_shared_memory_mounted ||
