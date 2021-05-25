@@ -18,6 +18,7 @@ constexpr auto c_shareDocsDir = "/usr/share/doc";
 constexpr auto c_shareDocsMount = SHARE_PATH "/doc";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
+constexpr auto c_stdErrLogMount = SHARE_PATH "/stderr.log";
 
 constexpr auto c_sharedMemoryMountPoint = "/mnt/shared_memory";
 constexpr auto c_sharedMemoryMountPointEnv = "WSL2_SHARED_MEMORY_MOUNT_POINT";
@@ -76,14 +77,11 @@ int main(int Argc, char *Argv[])
 try {
     wil::g_LogExceptionCallback = LogException;
 
-    // Open kmsg for logging errors and set it to stderr.
-    //
-    // N.B. fprintf must be used instead of dprintf because glibc does not correctly
-    //      handle /dev/kmsg.
+    // Open a file for logging errors and set it to stderr for WSLGd as well as any child process.
     {
-        wil::unique_fd logFd(TEMP_FAILURE_RETRY(open("/dev/kmsg", (O_WRONLY | O_CLOEXEC))));
-        if ((logFd) && (logFd.get() != STDERR_FILENO)) {
-            THROW_LAST_ERROR_IF(dup3(logFd.get(), STDERR_FILENO, O_CLOEXEC) < 0);
+        wil::unique_fd fd_stdErrLog(open(c_stdErrLogMount, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
+        if (fd_stdErrLog && (fd_stdErrLog.get() != STDERR_FILENO)) {
+            dup2(fd_stdErrLog.get(), STDERR_FILENO);
         }
     }
 
