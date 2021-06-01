@@ -546,7 +546,7 @@ public:
             {
                 return hr;
             }
-            assert(m_spFileDBSync->Get());
+            assert(m_spFileDBSync.Get());
         }
 
         if (updateAppList.flags & (RDPAPPLIST_HINT_SYNC | RDPAPPLIST_HINT_SYNC_END))
