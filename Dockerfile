@@ -138,7 +138,7 @@ ENV BUILDTYPE=release
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
-ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2
+ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2:${DESTDIR}${PREFIX}/include
 ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
 ENV LD_LIBRARY_PATH=${LIBRARY_PATH}
@@ -165,6 +165,13 @@ RUN cmake -G Ninja \
         -DWITH_SAMPLE=OFF && \
     ninja -C build -j8 install
 RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
+
+# Build rdpapplist RDP virtual channel plugin
+COPY rdpapplist /work/rdpapplist
+WORKDIR /work/rdpapplist
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE} && \
+    ninja -C build -j8 install
 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
