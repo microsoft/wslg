@@ -232,7 +232,8 @@ ENV CXX=/usr/bin/clang++
 # Build WSLGd Daemon
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
-RUN /usr/bin/meson --prefix=${PREFIX} build && \
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE} && \
     ninja -C build -j8 install
 
 ########################################################################
