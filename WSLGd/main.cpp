@@ -198,10 +198,8 @@ try {
     THROW_LAST_ERROR_IF(setrlimit(RLIMIT_CORE, &limit) < 0);
 
     // create folder to store core files.
-    {
-        std::filesystem::create_directories(c_coreDir);
-        THROW_LAST_ERROR_IF(chmod(c_coreDir, 0777) < 0);
-    }
+    std::filesystem::create_directories(c_coreDir);
+    THROW_LAST_ERROR_IF(chmod(c_coreDir, 0777) < 0);
 
     // update core_pattern.
     {
