@@ -84,9 +84,9 @@ try {
 
     // Open a file for logging errors and set it to stderr for WSLGd as well as any child process.
     {
-        wil::unique_fd fd_stdErrLog(open(c_stdErrLogFile, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
-        if (fd_stdErrLog && (fd_stdErrLog.get() != STDERR_FILENO)) {
-            dup2(fd_stdErrLog.get(), STDERR_FILENO);
+        wil::unique_fd stdErrLogFd(open(c_stdErrLogFile, (O_RDWR | O_CREAT), (S_IRUSR | S_IRGRP | S_IROTH)));
+        if (stdErrLogFd && (stdErrLogFd.get() != STDERR_FILENO)) {
+            dup2(stdErrLogFd.get(), STDERR_FILENO);
         }
     }
 
@@ -192,12 +192,10 @@ try {
     SetupOptionalEnv();
 
     // "ulimits -c unlimited" for core dumps.
-    {
-        struct rlimit limit;
-        limit.rlim_cur = RLIM_INFINITY;
-        limit.rlim_max = RLIM_INFINITY;
-        THROW_LAST_ERROR_IF(setrlimit(RLIMIT_CORE, &limit) < 0);
-    }
+    struct rlimit limit;
+    limit.rlim_cur = RLIM_INFINITY;
+    limit.rlim_max = RLIM_INFINITY;
+    THROW_LAST_ERROR_IF(setrlimit(RLIMIT_CORE, &limit) < 0);
 
     // create folder to store core files.
     {
@@ -207,19 +205,20 @@ try {
 
     // update core_pattern.
     {
-        wil::unique_file file_corePatternFile(fopen(c_corePatternFile, "w"));
-        THROW_LAST_ERROR_IF(!file_corePatternFile.get());
-        // combine folder path and core pattern.
-        std::string corePatternFullPath(c_coreDir);
-        corePatternFullPath += "/";
-        auto corePattern = getenv(c_corePatternEnv);
-        if (corePattern) {
-            corePatternFullPath += corePattern;
-        } else {
-            corePatternFullPath += c_corePatternDefault; // set to default core_pattern.
+        wil::unique_file corePatternFile(fopen(c_corePatternFile, "w"));
+        if (corePatternFile.get()) {
+            // combine folder path and core pattern.
+            std::string corePatternFullPath(c_coreDir);
+            corePatternFullPath += "/";
+            auto corePattern = getenv(c_corePatternEnv);
+            if (corePattern) {
+                corePatternFullPath += corePattern;
+            } else {
+                corePatternFullPath += c_corePatternDefault; // set to default core_pattern.
+            }
+            // write to core_pattern file.
+            THROW_LAST_ERROR_IF(fprintf(corePatternFile.get(), "%s", corePatternFullPath.c_str()) < 0);
         }
-        // write to core_pattern file.
-        THROW_LAST_ERROR_IF(fprintf(file_corePatternFile.get(), "%s", corePatternFullPath.c_str()) < 0);
     }
 
     // Set shared memory mount point to env when available.
