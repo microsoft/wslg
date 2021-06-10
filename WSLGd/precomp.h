@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 #include <sys/capability.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/prctl.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
