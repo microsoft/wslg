@@ -86,7 +86,7 @@ You need to restart WSL for this change to take effect. From an elevated command
 If the system distro isn't working correctly or you need to inspect what is running inside the system distro you can get a terminal into the system distro by running the following command from an elevated command prompt.
 
 ```
-    wsl --system [DistroName]
+    wsl --system -d [DistroName]
 ```
 There is an instance of the system distro running for every user distro running. `DistroName` refers to the name of the user distro for which you want the paired system distro. If you omit `DistroName`, you will get a terminal into the system distro paired with your default WSL user distro.
 
