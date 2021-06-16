@@ -124,6 +124,7 @@ FROM build-env AS dev
 
 ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
+ARG SYSTEMDISTRO_DEBUG_BUILD
 
 WORKDIR /work
 RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
@@ -134,7 +135,8 @@ RUN echo "Mariner:" `cat /etc/os-release | head -2 | tail -1` >> /work/versions.
 # Build runtime dependencies.
 #
 
-ENV BUILDTYPE=release
+ENV BUILDTYPE=${SYSTEMDISTRO_DEBUG_BUILD:+debug}
+ENV BUILDTYPE=${BUILDTYPE:-release}
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
@@ -273,8 +275,7 @@ RUN tdnf    install -y \
             xorg-x11-xtrans-devel
 
 # Install packages to aid in development.
-ARG SYSTEMDISTRO_DEBUG_BUILD
-RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" = "on" ] ; then \
+RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" == "on" ] ; then \
         tdnf install -y \
              gdb \
              nano \
