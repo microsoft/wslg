@@ -275,7 +275,7 @@ RUN tdnf    install -y \
             xorg-x11-xtrans-devel
 
 # Install packages to aid in development.
-RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" == "on" ] ; then \
+RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" == "true" ] ; then \
         tdnf install -y \
              gdb \
              nano \

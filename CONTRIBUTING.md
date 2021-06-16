@@ -94,10 +94,10 @@ Please keep in mind that the system distro is loaded read-only from it's backing
 
 ## Building a debug version
 
-To build a debug version of the system distro, the docker build argument SYSTEMDISTRO_DEBUG_BUILD needs to be set and passed the value of "on". The following command would substitute the docker build command in step 3.2.2 of the "Build Instructions" section.
+To build a debug version of the system distro, the docker build argument SYSTEMDISTRO_DEBUG_BUILD needs to be set and passed the value of "true". The following command would substitute the docker build command in step 3.2.2 of the "Build Instructions" section.
 
 ```
-    sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64 --build-arg SYSTEMDISTRO_DEBUG_BUILD=on
+    sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64 --build-arg SYSTEMDISTRO_DEBUG_BUILD=true
 ```
 The resulting system distro VHD will have useful development packages installed like gdb and will have compiled all runtime dependencies with the "debug" buildtype for Meson, rather than "release".
 
