@@ -55,7 +55,7 @@ The WSLg system distro is built using docker build. We essentially start from a 
     git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git
     ```
     
-    2.1 From the parent directory build and export the docker image:
+    2.2 From the parent directory build and export the docker image:
     ```
     sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64
     sudo docker export `sudo docker create system-distro-x64` > system_x64.tar
@@ -91,6 +91,15 @@ If the system distro isn't working correctly or you need to inspect what is runn
 There is an instance of the system distro running for every user distro running. `DistroName` refers to the name of the user distro for which you want the paired system distro. If you omit `DistroName`, you will get a terminal into the system distro paired with your default WSL user distro.
 
 Please keep in mind that the system distro is loaded read-only from it's backing VHD. For example, if you need to install tools (say a debugger or an editor) in the system distro, you want to do this in the Dockerfile that builds the system distro so it gets into the private vhd that you are running. You can dynamically install new packages once your have a terminal into the system distro, but any changes you make will be discarded when WSL is restarted.
+
+## Building a debug version
+
+To build a debug version of the system distro, the docker build argument SYSTEMDISTRO_DEBUG_BUILD needs to be set and passed the value of "on". The following command would substitute the docker build command in step 3.2.2 of the "Build Instructions" section.
+
+```
+    sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64 --build-arg SYSTEMDISTRO_DEBUG_BUILD=on
+```
+The resulting system distro VHD will have useful development packages installed like gdb and will have compiled all runtime dependencies with the "debug" buildtype for Meson, rather than "release".
 
 # mstsc plugin
 
