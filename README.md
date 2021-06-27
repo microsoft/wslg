@@ -73,7 +73,7 @@ If you want to get started with some GUI apps, you can run the following command
 
 ```powershell
 
-## Update all packages in your distro
+## Update list of available packages
 sudo apt update
 
 ## Gedit
