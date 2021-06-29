@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ProcessMonitor.h"
 
+#define CONFIG_FILE ".wslgconfig"
 #define SHARE_PATH "/mnt/wslg"
 
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
@@ -29,7 +30,8 @@ constexpr auto c_sharedMemoryMountPoint = "/mnt/shared_memory";
 constexpr auto c_sharedMemoryMountPointEnv = "WSL2_SHARED_MEMORY_MOUNT_POINT";
 constexpr auto c_sharedMemoryObDirectoryPathEnv = "WSL2_SHARED_MEMORY_OB_DIRECTORY";
 
-constexpr auto c_wslgconfigFile = "/mnt/c/ProgramData/Microsoft/WSL/.wslgconfig";
+constexpr auto c_installPathEnv = "WSL2_INSTALL_PATH";
+constexpr auto c_userProfileEnv = "WSL2_USER_PROFILE";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
 constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
@@ -52,13 +54,40 @@ std::string ToServiceId(unsigned int port)
     return serviceId;
 }
 
+std::string TranslateWindowsPath(const char * Path)
+{
+    std::string commandLine = "/usr/bin/wslpath -a '";
+    commandLine += Path;
+    commandLine += "'";
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(commandLine.c_str(), "r"), pclose);
+    THROW_LAST_ERROR_IF(!pipe);
+
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+
+    THROW_ERRNO_IF(EINVAL, pclose(pipe.release()) != 0);
+
+    return result;
+}
+
 void SetupOptionalEnv()
 {
 #ifdef HAVE_WINPR2
+    // Get the path to the WSLG config file.
+    std::string configFilePath = "/mnt/c/ProgramData/Microsoft/WSL/" CONFIG_FILE;
+    auto userProfile = getenv(c_userProfileEnv);
+    if (userProfile) {
+        configFilePath = TranslateWindowsPath(userProfile);
+        configFilePath += "/" CONFIG_FILE;
+    }
+
     // Set additional environment variables.
     wIniFile* wslgConfigIniFile = IniFile_New();
     if (wslgConfigIniFile) {
-        if (IniFile_ReadFile(wslgConfigIniFile, c_wslgconfigFile) > 0) {
+        if (IniFile_ReadFile(wslgConfigIniFile, configFilePath.c_str()) > 0) {
             int numKeys = 0;
             char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile, c_systemDistroEnvSection, &numKeys);
             for (int n = 0; keyNames && n < numKeys; n++) {
@@ -104,6 +133,13 @@ try {
     if (!vmId) {
         LOG_ERROR("%s must be set.", c_vmIdEnv);
         return 1;
+    }
+
+    // Query the WSL install path.
+    std::string wslInstallPath = "C:\\ProgramData\\Microsoft\\WSL";
+    auto installPath = getenv(c_installPathEnv);
+    if (installPath) {
+        wslInstallPath = installPath;
     }
 
     // Bind mount the versions.txt file which contains version numbers of the various WSLG pieces.
@@ -277,6 +313,8 @@ try {
         shared_memory_ob_path += "/wslgsharedmemorypath:";
         shared_memory_ob_path += sharedMemoryObDirectoryPath;
     }
+
+    std::string rdpFilePath = wslInstallPath + "\\wslg.rdp";
     monitor.LaunchProcess(std::vector<std::string>{
         "/mnt/c/Windows/System32/mstsc.exe",
         std::move(remote),
@@ -285,7 +323,7 @@ try {
         "/wslg",
         "/plugin:WSLDVC",
         std::move(shared_memory_ob_path),
-        "C:\\ProgramData\\Microsoft\\WSL\\wslg.rdp"
+        std::move(rdpFilePath)
     });
 
     // Launch the system dbus daemon.
