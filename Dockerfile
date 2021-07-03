@@ -330,11 +330,13 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         rpm -e --nodeps python3                  \
         rpm -e --nodeps python2-libs;            \
     else                                         \
-        echo "== Install development aid packages ==" \
-        tdnf install -y \
-             gdb        \
-             nano       \
-             vim;       \
+        echo "== Install development aid packages ==" && \
+        tdnf install -y                          \
+             gdb                                 \
+             nano                                \
+             vim                                 \
+             wayland-debuginfo                   \
+             xorg-x11-server-debuginfo;          \
     fi
 
 # Create wslg user.
