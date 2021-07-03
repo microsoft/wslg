@@ -59,6 +59,16 @@ stages:
       - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
         displayName: 'Create system_x64.tar'
 
+      - script: docker build -f ./wslg/Dockerfile -t system-distro-dev-x64 
+                ./wslg 
+                --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion`
+                --build-arg WSLG_ARCH=x86_64
+                --target dev
+        displayName: 'Create System Distro Dev Docker image Mariner-x64'
+
+      - script: docker cp `docker create system-distro-dev-x64 /bin/bash`:/work/debuginfo/system-distro-debuginfo.tar.gz $(Agent.BuildDirectory)
+        displayName: 'Copy system-distro-debuginfo.tar.gz'
+
       - task: Go@0
         inputs:
           command: 'custom'

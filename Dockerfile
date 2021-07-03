@@ -3,16 +3,16 @@ FROM cblmariner.azurecr.io/base/core:1.0.20210224 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
-RUN echo " Install Git/CA certificates "
-RUN tdnf install -y \
+RUN echo "== Install Git/CA certificates ==" && \
+    tdnf install -y \
         git \
         ca-certificates
 
-RUN echo " Install mariner-repos-ui REPO"
-RUN tdnf install -y mariner-repos-ui
+RUN echo "== Install mariner-repos-ui REPO ==" && \
+    tdnf install -y mariner-repos-ui
 
-RUN echo " Install Core dependencies "
-RUN tdnf install -y \
+RUN echo "== Install Core dependencies ==" && \
+    tdnf install -y \
         alsa-lib \
         alsa-lib-devel  \
         autoconf  \
@@ -86,8 +86,8 @@ RUN tdnf install -y \
         vala-devel  \
         vala-tools
 
-RUN echo " Install UI dependencies "
-RUN tdnf    install -y \
+RUN echo "== Install UI dependencies ==" && \
+    tdnf    install -y \
             libdrm-devel \
             libepoxy-devel \
             libevdev \
@@ -118,7 +118,6 @@ RUN tdnf    install -y \
             xorg-x11-server-devel \
             xorg-x11-util-macros
 
-
 # Create an image with builds of FreeRDP and Weston
 FROM build-env AS dev
 
@@ -136,7 +135,17 @@ RUN echo "Mariner:" `cat /etc/os-release | head -2 | tail -1` >> /work/versions.
 #
 
 ENV BUILDTYPE=${SYSTEMDISTRO_DEBUG_BUILD:+debug}
-ENV BUILDTYPE=${BUILDTYPE:-release}
+ENV BUILDTYPE=${BUILDTYPE:-debugoptimized}
+RUN echo "== System distro build type:" ${BUILDTYPE} " =="
+
+ENV BUILDTYPE_NODEBUGSTRIP=${SYSTEMDISTRO_DEBUG_BUILD:+debug}
+ENV BUILDTYPE_NODEBUGSTRIP=${BUILDTYPE_NODEBUGSTRIP:-release}
+RUN echo "== System distro build type (no debug strip):" ${BUILDTYPE_NODEBUGSTRIP} " =="
+
+# FreeRDP is always built with RelWithDebInfo
+ENV BUILDTYPE_FREERDP=${BUILDTYPE_FREERDP:-RelWithDebInfo}
+RUN echo "== System distro build type (FreeRDP):" ${BUILDTYPE_FREERDP} " =="
+
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
@@ -147,6 +156,10 @@ ENV LD_LIBRARY_PATH=${LIBRARY_PATH}
 ENV CC=/usr/bin/gcc
 ENV CXX=/usr/bin/g++
 
+# Setup DebugInfo folder
+COPY debuginfo /work/debuginfo
+RUN chmod +x /work/debuginfo/gen_debuginfo.sh
+
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
 WORKDIR /work/vendor/FreeRDP
@@ -154,7 +167,7 @@ RUN cmake -G Ninja \
         -B build \
         -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_BUILD_TYPE=${BUILDTYPE_FREERDP} \
         -DWITH_SERVER=ON \
         -DWITH_CHANNEL_GFXREDIR=ON \
         -DWITH_CHANNEL_RDPAPPLIST=ON \
@@ -165,8 +178,14 @@ RUN cmake -G Ninja \
         -DWITH_PROXY=OFF \
         -DWITH_SHADOW=OFF \
         -DWITH_SAMPLE=OFF && \
-    ninja -C build -j8 install
-RUN echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install && \
+    echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
+
+WORKDIR /work/debuginfo
+RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
+        echo "== Strip debug info: FreeRDP ==" && \
+        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/FreeRDP.list /work/build; \
+    fi
 
 # Build rdpapplist RDP virtual channel plugin
 COPY rdpapplist /work/rdpapplist
@@ -174,6 +193,12 @@ WORKDIR /work/rdpapplist
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
     ninja -C build -j8 install
+
+WORKDIR /work/debuginfo
+RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
+        echo "== Strip debug info: rdpapplist ==" && \
+        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/rdpapplist.list /work/build; \
+    fi
 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
@@ -201,42 +226,61 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dresize-pool=false \
         -Dwcap-decode=false \
         -Dtest-junit-xml=false && \
-    ninja -C build -j8 install
-RUN echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install && \
+    echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD` >> /work/versions.txt
+
+WORKDIR /work/debuginfo
+RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
+        echo "== Strip debug info: weston ==" && \
+        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/weston.list /work/build; \
+    fi
 
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
 WORKDIR /work/vendor/pulseaudio
 RUN /usr/bin/meson --prefix=${PREFIX} build \
-        --buildtype=${BUILDTYPE} \
+        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Ddatabase=simple \
         -Dbluez5=false \
         -Dgsettings=disabled \
         -Dtests=false && \
-    ninja -C build -j8 install
-RUN echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install && \
+    echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build mesa with the minimal options we need.
 COPY vendor/mesa /work/vendor/mesa
 WORKDIR /work/vendor/mesa
 RUN /usr/bin/meson --prefix=${PREFIX} build \
-        --buildtype=${BUILDTYPE} \
+        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Dgallium-drivers=swrast,d3d12 \
         -Ddri-drivers= \
         -Dvulkan-drivers= \
         -Dllvm=disabled && \
-    ninja -C build -j8 install
-RUN echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install && \
+    echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
 
+# Build WSLGd Daemon
 ENV CC=/usr/bin/clang
 ENV CXX=/usr/bin/clang++
 
-# Build WSLGd Daemon
 COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
     ninja -C build -j8 install
+
+WORKDIR /work/debuginfo
+RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
+        echo "== Strip debug info: WSLGd ==" && \
+        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/WSLGd.list /work/build; \
+    fi
+
+# Gather debuginfo to a tar file
+WORKDIR /work/debuginfo
+RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
+        echo "== Compress debug info: /work/debuginfo/system-distro-debuginfo.tar.gz ==" && \
+        tar -C /work/build/debuginfo -czf system-distro-debuginfo.tar.gz ./ ; \
+    fi
 
 ########################################################################
 ########################################################################
@@ -245,11 +289,11 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
 
 FROM cblmariner.azurecr.io/base/core:1.0.20210224 AS runtime
 
-RUN echo " Install mariner-repos-ui REPO"
-RUN tdnf install -y mariner-repos-ui
+RUN echo "== Install mariner-repos-ui REPO ==" && \
+    tdnf install -y mariner-repos-ui
 
-RUN echo " Install Core/UI Runtime Dependencies "
-RUN tdnf    install -y \
+RUN echo "== Install Core/UI Runtime Dependencies ==" && \
+    tdnf    install -y \
             dbus \
             dbus-glib \
             freefont \
@@ -274,22 +318,23 @@ RUN tdnf    install -y \
             xorg-x11-server-Xwayland \
             xorg-x11-xtrans-devel
 
-# Install packages to aid in development.
+# Install packages to aid in development, if not remove some packages. 
 ARG SYSTEMDISTRO_DEBUG_BUILD
-RUN if [ "$SYSTEMDISTRO_DEBUG_BUILD" = "true" ] ; then \
+RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
+        rpm -e --nodeps python2                  \
+        rpm -e --nodeps curl                     \
+        rpm -e --nodeps python-xml               \
+        rpm -e --nodeps pkg-config               \
+        rpm -e --nodeps vim                      \
+        rpm -e --nodeps wget                     \
+        rpm -e --nodeps python3                  \
+        rpm -e --nodeps python2-libs;            \
+    else                                         \
+        echo "== Install development aid packages ==" \
         tdnf install -y \
-             gdb \
-             nano \
-             vim ; \
-    else                                            \
-        rpm -e --nodeps python2                     \
-        rpm -e --nodeps curl                        \
-        rpm -e --nodeps python-xml                  \
-        rpm -e --nodeps pkg-config                  \
-        rpm -e --nodeps vim                         \
-        rpm -e --nodeps wget                        \
-        rpm -e --nodeps python3                     \
-        rpm -e --nodeps python2-libs;               \
+             gdb        \
+             nano       \
+             vim;       \
     fi
 
 # Create wslg user.
