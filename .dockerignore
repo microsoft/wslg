@@ -1,3 +1,7 @@
 .git
+.github
+.gitlab
+.gitlab-ci
+.vs
 out
 tmp

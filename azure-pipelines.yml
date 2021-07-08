@@ -59,6 +59,19 @@ stages:
       - script: docker export `docker create system-distro-x64` > $(Agent.BuildDirectory)/system_x64.tar
         displayName: 'Create system_x64.tar'
 
+      - script: docker build -f ./wslg/Dockerfile -t system-distro-dev-x64 
+                ./wslg 
+                --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion`
+                --build-arg WSLG_ARCH=x86_64
+                --target dev
+        displayName: 'Create System Distro Dev Docker image Mariner-x64'
+
+      - script: docker cp `docker create system-distro-dev-x64 /bin/bash`:/work/debuginfo/system-distro-debuginfo.tar.gz $(Agent.BuildDirectory)
+        displayName: 'Copy system-distro-debuginfo.tar.gz'
+
+      - script: mv $(Agent.BuildDirectory)/system-distro-debuginfo.tar.gz $(Agent.BuildDirectory)/system-distro-debuginfo-x64.tar.gz
+        displayName: 'Rename system-distro-debuginfo-x64.tar.gz'
+
       - task: Go@0
         inputs:
           command: 'custom'
@@ -72,6 +85,13 @@ stages:
         inputs:
           targetPath: $(Agent.BuildDirectory)/system_x64.vhd
           artifact: 'system_x64.vhd'
+          publishLocation: 'pipeline'
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish system-distro-debuginfo-x64.tar.gz artifact'
+        inputs:
+          targetPath: $(Agent.BuildDirectory)/system-distro-debuginfo-x64.tar.gz
+          artifact: 'system-distro-debuginfo-x64.tar.gz'
           publishLocation: 'pipeline'
           
   - job: 'Build_Windows_x64'
@@ -187,6 +207,25 @@ stages:
         inputs:
           targetPath: $(Agent.BuildDirectory)/system_arm64.vhd
           artifact: 'system_arm64.vhd'
+          publishLocation: 'pipeline'
+
+      - script: mkdir ./dev &&
+                ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
+                --output type=tar,dest=./dev/dev_build.tar 
+                --target=dev  
+                --platform=linux/arm64  
+                ./wslg  
+                --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
+                --build-arg WSLG_ARCH=aarch64 &&
+                tar -xvf ./dev/dev_build.tar -C ./dev/ &&
+                mv ./dev/work/debuginfo/system-distro-debuginfo.tar.gz $(Agent.BuildDirectory)/system-distro-debuginfo-arm64.tar.gz
+        displayName: 'Copy system-distro-debuginfo-arm64.tar.gz'
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish system-distro-debuginfo-arm64.tar.gz artifact'
+        inputs:
+          targetPath: $(Agent.BuildDirectory)/system-distro-debuginfo-arm64.tar.gz
+          artifact: 'system-distro-debuginfo-arm64.tar.gz'
           publishLocation: 'pipeline'
 
   - job: 'Build_Windows_ARM64'
