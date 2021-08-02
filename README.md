@@ -12,7 +12,7 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
 ## Pre-requisites
 
 - Windows 10 Insider Preview build 21362+
-   - WSLg is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLg, you'll need to join the [Windows Insider Program](https://insider.windows.com/en-us/) and be running a Windows 10 Insider Preview build from the dev channel.
+   - WSLg is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLg, you'll need to join the [Windows Insider Program](https://insider.windows.com/en-us/) and be running a Windows 10 Insider Preview build from the beta or dev channels.
 
 - It recommended to run WSLg on a system with virtual GPU (vGPU) enabled for WSL so you can benefit from hardware accelerated OpenGL rendering. You can find preview driver supporting WSL from each of our partners below.
 
