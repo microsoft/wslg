@@ -6,6 +6,10 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform)\system.img">
+      <Link>system.img</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform)\system.vhd">
       <Link>system.vhd</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
