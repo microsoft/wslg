@@ -294,6 +294,13 @@ stages:
           buildType: 'current'
           artifactName: 'system_x64.vhd'
           targetPath: 'package/'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download system_x64.img'
+        inputs:
+          buildType: 'current'
+          artifactName: 'system_x64.img'
+          targetPath: 'package/'
           
       - task: DownloadPipelineArtifact@2
         displayName: 'Download WSLDVCPlugin DLL (x64)'
@@ -308,7 +315,14 @@ stages:
           buildType: 'current'
           artifactName: 'system_arm64.vhd'
           targetPath: 'package/'
-          
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download system_arm64.img'
+        inputs:
+          buildType: 'current'
+          artifactName: 'system_arm64.img'
+          targetPath: 'package/'
+
       - task: DownloadPipelineArtifact@2
         displayName: 'Download WSLDVCPlugin DLL (ARM64)'
         inputs:
