@@ -12,3 +12,4 @@ usr/lib/weston/rdprail-shell.so
 usr/lib/weston/systemd-notify.so
 usr/libexec/weston-desktop-shell
 usr/libexec/weston-keyboard
+usr/libexec/weston-rdprail-shell
