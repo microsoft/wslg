@@ -67,6 +67,10 @@ std::string TranslateWindowsPath(const char * Path)
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         result += buffer.data();
     }
+    /* trim '\n' from wslpath output */
+    while (result.back() == '\n') {
+        result.pop_back();
+    }
 
     THROW_ERRNO_IF(EINVAL, pclose(pipe.release()) != 0);
 
