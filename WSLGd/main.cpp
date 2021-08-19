@@ -64,8 +64,13 @@ std::string TranslateWindowsPath(const char * Path)
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(commandLine.c_str(), "r"), pclose);
     THROW_LAST_ERROR_IF(!pipe);
 
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    /* read single line from wslpath output */
+    if (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         result += buffer.data();
+    }
+    /* trim '\n' from wslpath output */
+    while (result.back() == '\n') {
+        result.pop_back();
     }
 
     THROW_ERRNO_IF(EINVAL, pclose(pipe.release()) != 0);
