@@ -10,10 +10,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
       <Link>system.img</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform)\system.vhd">
-      <Link>system.vhd</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform)\WSLDVCPlugin.dll">
       <Link>WSLDVCPlugin.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
