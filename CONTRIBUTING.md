@@ -76,7 +76,11 @@ You can tell WSL to load a private version of WSLg by adding the folowing option
 
 ```
     [wsl2]
-    systemDistro=C:\\Users\\MyUser\\system.vhd
+    ;Do not place VHD under user profile folder for now.
+    ;The issue is tracked by https://github.com/microsoft/wslg/issues/427.
+    ;systemDistro=C:\\Users\\MyUser\\system.vhd
+    systemDistro=C:\\tmp\\system.vhd
+
 ```    
     
 You need to restart WSL for this change to take effect. From an elevated command prompt execute `wsl --shutdown`. When WSL is launched again, Windows will load your private vhd as the system distro. 
