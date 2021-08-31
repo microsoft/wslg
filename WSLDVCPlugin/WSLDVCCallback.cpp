@@ -173,6 +173,12 @@ public:
         ReadUINT32(iconData->iconFormat, cur, len);
         ReadUINT32(iconData->iconBitsLength, cur, len);
 
+        if (iconData->iconBitsLength + (UINT32)sizeof(ICON_HEADER) < iconData->iconBitsLength ||
+            iconData->iconBitsLength + (UINT32)sizeof(ICON_HEADER) + (UINT32)sizeof(BITMAPINFOHEADER) < iconData->iconBitsLength)
+        {
+            return E_FAIL;
+        }
+        
         iconData->iconFileSize = sizeof(ICON_HEADER) + sizeof(BITMAPINFOHEADER) + iconData->iconBitsLength;
         iconData->iconFileData = (BYTE*)LocalAlloc(LPTR, iconData->iconFileSize);
         if (!iconData->iconFileData)
