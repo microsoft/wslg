@@ -72,11 +72,11 @@ The WSLg system distro is built using docker build. We essentially start from a 
 
 ## Installing a private version of the WSLg system distro
 
-You can tell WSL to load a private version of WSLg by adding the folowing option in your `.wslconfig` file (located in *c:\users\MyUser\.wslconfig*).
+You can tell WSL to load a private version of WSLg by adding the folowing option in your `.wslconfig` file (located in `C:\Users\MyUser\.wslconfig`).
 
 ```
     [wsl2]
-    systemDistro=C:\\Users\\MyUser\\system.vhd
+    systemDistro=C:\\Files\\system.vhd
 ```    
     
 You need to restart WSL for this change to take effect. From an elevated command prompt execute `wsl --shutdown`. When WSL is launched again, Windows will load your private vhd as the system distro. 
