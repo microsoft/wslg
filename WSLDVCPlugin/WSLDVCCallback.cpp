@@ -5,6 +5,7 @@
 #include "rdpapplist.h"
 #include "WSLDVCCallback.h"
 #include "WSLDVCFileDB.h"
+#include <intsafe.h>
 
 LPCWSTR c_WSL_exe = L"%windir%\\system32\\wsl.exe";
 LPCWSTR c_WSLg_exe = L"%windir%\\system32\\wslg.exe";
@@ -173,13 +174,10 @@ public:
         ReadUINT32(iconData->iconFormat, cur, len);
         ReadUINT32(iconData->iconBitsLength, cur, len);
 
-        if (iconData->iconBitsLength + (UINT32)sizeof(ICON_HEADER) < iconData->iconBitsLength ||
-            iconData->iconBitsLength + (UINT32)sizeof(ICON_HEADER) + (UINT32)sizeof(BITMAPINFOHEADER) < iconData->iconBitsLength)
-        {
-            return E_FAIL;
+        if (UIntAdd(sizeof(ICON_HEADER) + sizeof(BITMAPINFOHEADER), iconData->iconBitsLength, &iconData->iconFileSize) != S_OK) {
+	        return E_FAIL;
         }
         
-        iconData->iconFileSize = sizeof(ICON_HEADER) + sizeof(BITMAPINFOHEADER) + iconData->iconBitsLength;
         iconData->iconFileData = (BYTE*)LocalAlloc(LPTR, iconData->iconFileSize);
         if (!iconData->iconFileData)
         {
