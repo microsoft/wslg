@@ -6,6 +6,7 @@
 
 #define CONFIG_FILE ".wslgconfig"
 #define SHARE_PATH "/mnt/wslg"
+#define MSRDC_EXE "msrdc.exe"
 
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
 constexpr auto c_userName = "wslg";
@@ -33,6 +34,8 @@ constexpr auto c_sharedMemoryObDirectoryPathEnv = "WSL2_SHARED_MEMORY_OB_DIRECTO
 constexpr auto c_installPathEnv = "WSL2_INSTALL_PATH";
 constexpr auto c_userProfileEnv = "WSL2_USER_PROFILE";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
+
+constexpr auto c_mstsc_fullpath = "/mnt/c/Windows/System32/mstsc.exe";
 
 constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
 constexpr auto c_westonRdprailShell = "rdprail-shell";
@@ -140,9 +143,11 @@ try {
     }
 
     // Query the WSL install path.
+    bool isWslInstallPathEnvPresent = false;
     std::string wslInstallPath = "C:\\ProgramData\\Microsoft\\WSL";
     auto installPath = getenv(c_installPathEnv);
     if (installPath) {
+        isWslInstallPathEnvPresent = true;
         wslInstallPath = installPath;
     }
 
@@ -174,7 +179,7 @@ try {
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
 
     // Attempt to mount the virtiofs share for shared memory.
-    bool is_shared_memory_mounted = false; 
+    bool isSharedMemoryMounted = false; 
     auto sharedMemoryObDirectoryPath = getenv(c_sharedMemoryObDirectoryPathEnv);
     if (sharedMemoryObDirectoryPath) {
         std::filesystem::create_directories(c_sharedMemoryMountPoint);
@@ -182,7 +187,7 @@ try {
             LOG_ERROR("Failed to mount wslg shared memory %s.", strerror(errno));
         } else {
             THROW_LAST_ERROR_IF(chmod(c_sharedMemoryMountPoint, 0777) < 0);
-            is_shared_memory_mounted = true;
+            isSharedMemoryMounted = true;
         }
     } else {
         LOG_ERROR("shared memory ob directory path is not set.");
@@ -260,38 +265,38 @@ try {
     }
 
     // Set shared memory mount point to env when available.
-    if (!is_shared_memory_mounted ||
+    if (!isSharedMemoryMounted ||
         (setenv(c_sharedMemoryMountPointEnv, c_sharedMemoryMountPoint, true) < 0)) {
         // shared memory is not available, env must be cleared if it's set.
         THROW_LAST_ERROR_IF(unsetenv(c_sharedMemoryMountPointEnv) < 0);
-        is_shared_memory_mounted = false;
+        isSharedMemoryMounted = false;
     }
 
     // Check if weston shell override is specified.
     // Otherwise, default shell is 'rdprail-shell'.
-    bool is_rdprail_shell;
-    std::string weston_shell_name;
-    auto weston_shell_env = getenv(c_westonShellOverrideEnv);
-    if (!weston_shell_env) {
-        weston_shell_name = c_westonRdprailShell;
-        is_rdprail_shell = true;
+    bool isRdprailShell;
+    std::string westonShellName;
+    auto westonShellEnv = getenv(c_westonShellOverrideEnv);
+    if (!westonShellEnv) {
+        westonShellName = c_westonRdprailShell;
+        isRdprailShell = true;
     } else {
-        weston_shell_name = weston_shell_env;
-        is_rdprail_shell = (weston_shell_name.compare(c_westonRdprailShell) == 0);
+        westonShellName = westonShellEnv;
+        isRdprailShell = (westonShellName.compare(c_westonRdprailShell) == 0);
     }
 
     // Construct shell option string.
-    std::string weston_shell_option("--shell=");
-    weston_shell_option += weston_shell_name;
-    weston_shell_option += ".so";
+    std::string westonShellOption("--shell=");
+    westonShellOption += westonShellName;
+    westonShellOption += ".so";
 
     // Construct logger option string.
     // By default, enable standard log and rdp-backend.
-    std::string weston_logger_option("--logger-scopes=log,rdp-backend");
+    std::string westonLoggerOption("--logger-scopes=log,rdp-backend");
     // If rdprail-shell is used, enable logger for that.
-    if (is_rdprail_shell) {
-        weston_logger_option += ",";
-        weston_logger_option += c_westonRdprailShell;
+    if (isRdprailShell) {
+        westonLoggerOption += ",";
+        westonLoggerOption += c_westonRdprailShell;
     }
 
     // Launch weston.
@@ -300,33 +305,42 @@ try {
         "/usr/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
-        std::move(weston_shell_option),
-        std::move(weston_logger_option),
+        std::move(westonShellOption),
+        std::move(westonLoggerOption),
         "--log=" SHARE_PATH "/weston.log"
         },
         std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
     );
 
-    // Launch the mstsc client.
+    // Launch the mstsc/msrdc client.
     std::string remote("/v:");
     remote += vmId;
     std::string serviceId("/hvsocketserviceid:");
     serviceId += ToServiceId(address.svm_port);
-    std::string shared_memory_ob_path("");
-    if (is_shared_memory_mounted) {
-        shared_memory_ob_path += "/wslgsharedmemorypath:";
-        shared_memory_ob_path += sharedMemoryObDirectoryPath;
+    std::string sharedMemoryObPath("");
+    if (isSharedMemoryMounted) {
+        sharedMemoryObPath += "/wslgsharedmemorypath:";
+        sharedMemoryObPath += sharedMemoryObDirectoryPath;
     }
 
+    std::string rdpClientExePath = c_mstsc_fullpath;
+    if (isWslInstallPathEnvPresent) {
+        struct stat buffer;
+        std::string msrdcExePath = TranslateWindowsPath(wslInstallPath.c_str());
+        msrdcExePath += "/" MSRDC_EXE;
+        if (stat(msrdcExePath.c_str(), &buffer) == 0) {
+            rdpClientExePath = msrdcExePath;
+        }
+    }
     std::string rdpFilePath = wslInstallPath + "\\wslg.rdp";
     monitor.LaunchProcess(std::vector<std::string>{
-        "/mnt/c/Windows/System32/mstsc.exe",
+        std::move(rdpClientExePath),
         std::move(remote),
         std::move(serviceId),
         "/silent",
         "/wslg",
         "/plugin:WSLDVC",
-        std::move(shared_memory_ob_path),
+        std::move(sharedMemoryObPath),
         std::move(rdpFilePath)
     });
 
