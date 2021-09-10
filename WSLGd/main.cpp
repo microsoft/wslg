@@ -6,6 +6,7 @@
 
 #define CONFIG_FILE ".wslgconfig"
 #define SHARE_PATH "/mnt/wslg"
+#define MSRDC_EXE "msrdc.exe"
 
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
 constexpr auto c_userName = "wslg";
@@ -33,6 +34,8 @@ constexpr auto c_sharedMemoryObDirectoryPathEnv = "WSL2_SHARED_MEMORY_OB_DIRECTO
 constexpr auto c_installPathEnv = "WSL2_INSTALL_PATH";
 constexpr auto c_userProfileEnv = "WSL2_USER_PROFILE";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
+
+constexpr auto c_mstsc_fullpath = "/mnt/c/Windows/System32/mstsc.exe";
 
 constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
 constexpr auto c_westonRdprailShell = "rdprail-shell";
@@ -140,9 +143,11 @@ try {
     }
 
     // Query the WSL install path.
+    bool is_wsl_install_path_env_present = false;
     std::string wslInstallPath = "C:\\ProgramData\\Microsoft\\WSL";
     auto installPath = getenv(c_installPathEnv);
     if (installPath) {
+        is_wsl_install_path_env_present = true;
         wslInstallPath = installPath;
     }
 
@@ -307,7 +312,7 @@ try {
         std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
     );
 
-    // Launch the mstsc client.
+    // Launch the mstsc/msrdc client.
     std::string remote("/v:");
     remote += vmId;
     std::string serviceId("/hvsocketserviceid:");
@@ -318,9 +323,18 @@ try {
         shared_memory_ob_path += sharedMemoryObDirectoryPath;
     }
 
+    std::string rdpClientExePath = c_mstsc_fullpath;
+    if (is_wsl_install_path_env_present) {
+        struct stat buffer;
+        std::string msrdcExePath = TranslateWindowsPath(wslInstallPath.c_str());
+        msrdcExePath += "/" MSRDC_EXE;
+        if (stat(msrdcExePath.c_str(), &buffer) == 0) {
+            rdpClientExePath = msrdcExePath;
+        }
+    }
     std::string rdpFilePath = wslInstallPath + "\\wslg.rdp";
     monitor.LaunchProcess(std::vector<std::string>{
-        "/mnt/c/Windows/System32/mstsc.exe",
+        std::move(rdpClientExePath),
         std::move(remote),
         std::move(serviceId),
         "/silent",
