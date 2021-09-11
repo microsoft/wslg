@@ -26,7 +26,7 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
 
 From a command prompt with administrator privileges, run the command `wsl --install -d Ubuntu`, then reboot when prompted.
 
-After reboot the installation will continue. You'll be asked to enter a username and password. These will be your Linux credential, they can be anything you want and don't have to match your Windows credentials.
+After reboot the installation will continue. You'll be asked to enter a username and password. These will be your Linux credentials, they can be anything you want and don't have to match your Windows credentials.
 
 Voila! WSL and WSLg are installed and ready to be used!
 
