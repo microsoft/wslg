@@ -17,7 +17,7 @@ or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any addi
 
 The heart of WSLg is what we call the WSL system distro. This is where the Weston compositor, XWayland and the PulseAudio server are running. The system distro runs these components and projects their communication sockets into the user distro. Every user distro is paired with a unique instance of the system distro. There is a single version of the system distro on disk which is instantiated in memory when a user distro is launched.
 
-The system distro is essentially a Linux container packaged and distributed as a vhd. The system distro is accessible to the user, but is mounted read-only. Any changes made by the user to the system distro while it is running are discarded when WSL is restarted. Although a user can log into the system distro, it is not meant to be used as a general purpose user distro. The reason behind this choice is due to the way we service WSLg. When updating WSLg we simply replace the existing system distro with a new one. If the user had data embeded into the system distro vhd, this data would be lost.
+The system distro is essentially a Linux container packaged and distributed as a vhd. The system distro is accessible to the user, but is mounted read-only. Any changes made by the user to the system distro while it is running are discarded when WSL is restarted. Although a user can log into the system distro, it is not meant to be used as a general purpose user distro. The reason behind this choice is due to the way we service WSLg. When updating WSLg we simply replace the existing system distro with a new one. If the user had data embedded into the system distro vhd, this data would be lost.
 
 For folks who want to tinker with or customize their system distro, we give the ability to run a private version of the system distro. When running a private version of WSLg, Windows will load and run your private and ignore the Microsoft published one. If you update your WSL setup (`wsl --update`), the Microsoft published WSLg vhd will be updated, but you will continue to be running your private. You can switch between the Microsoft pulished WSLg system distro and a private one at any time although it does require restarting WSL (`wsl --shutdown`).
 
@@ -72,7 +72,7 @@ The WSLg system distro is built using docker build. We essentially start from a 
 
 ## Installing a private version of the WSLg system distro
 
-You can tell WSL to load a private version of WSLg by adding the folowing option in your `.wslconfig` file (located in `C:\Users\MyUser\.wslconfig`).
+You can tell WSL to load a private version of WSLg by adding the following option in your `.wslconfig` file (located in `C:\Users\MyUser\.wslconfig`).
 
 ```
     [wsl2]

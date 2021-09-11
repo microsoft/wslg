@@ -94,7 +94,7 @@ function Get-Current-Commit-Hash ()
 	return ([string](git log -1 --pretty=%h)).Trim()
 }
 
-function Get-VersionInfo($type, $separetor)
+function Get-VersionInfo($type, $separator)
 {
 	if ($type -eq "hash")
 	{
@@ -110,7 +110,7 @@ function Get-VersionInfo($type, $separetor)
 
 	if ($build -ne "")
 	{
-		$version = $version + $separetor + $build
+		$version = $version + $separator + $build
 	}
 
 	return $version
