@@ -54,7 +54,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     wsl --shutdown
     ```
     
-    3.2 By default the system distro is located at `C:\ProgramData\Miscrosoft\WSL\system.vhd`
+    3.2 By default the system distro is located at `C:\ProgramData\Microsoft\WSL\system.vhd`
     
     If you want to use the system distro from a different path you can change the .wslconf
 
@@ -75,7 +75,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     wsl --system [DistroName]
     ```
 
-    For instance you chould check if weston and pulse audio are running inside the system distro using `ps -ax | grep weston` or `ps -ax | grep pulse`
+    For instance you should check if weston and pulse audio are running inside the system distro using `ps -ax | grep weston` or `ps -ax | grep pulse`
     You should see something like this:
     ```bash
     root@DESKTOP-7LJ03SK:/mnt/d# ps -ax | grep weston

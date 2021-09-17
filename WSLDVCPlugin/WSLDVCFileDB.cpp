@@ -112,10 +112,10 @@ public:
             if (p.first->getLinkFilePath().compare(linkFilePath) != 0 ||
                 p.first->getIconFilePath().compare(iconFilePath) != 0)
             {
-                DebugPrint(L"\tKey: %s is already exists and has differnt path data\n", key);
+                DebugPrint(L"\tKey: %s is already exists and has different path data\n", key);
                 DebugPrint(L"\tlinkFilePath: %s\n", p.first->getLinkFilePath().c_str());
                 DebugPrint(L"\ticonFilePath: %s\n", p.first->getIconFilePath().c_str());
-                // TODO: implement update exising by erase and add.         
+                // TODO: implement update existing by erase and add.         
                 // DebugAssert(false);
                 return E_FAIL;
             }
