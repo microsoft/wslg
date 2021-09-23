@@ -21,14 +21,14 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
 
    - [NVIDIA GPU driver for WSL](https://developer.nvidia.com/cuda/wsl)
      
-   
+---
 ## Install instructions (Fresh Install - no prior WSL installation)
 
 From a command prompt with administrator privileges, run the command `wsl --install -d Ubuntu`, then reboot when prompted.
 
 After reboot the installation will continue. You'll be asked to enter a username and password. These will be your Linux credentials, they can be anything you want and don't have to match your Windows credentials.
 
-Voilà! WSL and WSLg are installed and ready to be used!
+**Voilà! WSL and WSLg** are installed and ready to be used!
 
 ## Install instructions (Existing WSL install)
 
@@ -66,7 +66,7 @@ If you have installed the `Ubuntu` Linux distro per these instructions, you'll f
 If you would like to explore additional Linux distributions built for WSL, you can use the `wsl --list --online` command from an elevated command prompt to enumerate the list of available distributions for your system. You can have multiple Linux distributions installed within WSL and they will happily coexist side-by-side, so don't be scared to experiment and try things out.
 
 Congrats you are done and ready to use GUI apps! 
-
+---
 ## Install and run GUI apps
 
 If you want to get started with some GUI apps, you can run the following commands from your Linux terminal to download and install some popular applications. If you are using a different distribution than Ubuntu, it may be using a different package manager. 
