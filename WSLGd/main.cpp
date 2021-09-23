@@ -35,7 +35,7 @@ constexpr auto c_installPathEnv = "WSL2_INSTALL_PATH";
 constexpr auto c_userProfileEnv = "WSL2_USER_PROFILE";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
-constexpr auto c_mstsc_fullpath = "/mnt/c/Windows/System32/mstsc.exe";
+constexpr auto c_mstscFullPath = "/mnt/c/Windows/System32/mstsc.exe";
 
 constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
 constexpr auto c_westonRdprailShell = "rdprail-shell";
@@ -323,15 +323,15 @@ try {
         sharedMemoryObPath += sharedMemoryObDirectoryPath;
     }
 
-    std::string rdpClientExePath = c_mstsc_fullpath;
+    std::string rdpClientExePath = c_mstscFullPath;
     if (isWslInstallPathEnvPresent) {
-        struct stat buffer;
         std::string msrdcExePath = TranslateWindowsPath(wslInstallPath.c_str());
         msrdcExePath += "/" MSRDC_EXE;
-        if (stat(msrdcExePath.c_str(), &buffer) == 0) {
-            rdpClientExePath = msrdcExePath;
+        if (access(msrdcExePath.c_str(), X_OK) == 0) {
+            rdpClientExePath = std::move(msrdcExePath);
         }
     }
+
     std::string rdpFilePath = wslInstallPath + "\\wslg.rdp";
     monitor.LaunchProcess(std::vector<std::string>{
         std::move(rdpClientExePath),
