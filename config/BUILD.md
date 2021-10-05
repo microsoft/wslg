@@ -52,13 +52,14 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     
     3.2 By default the system distro is located at `C:\ProgramData\Microsoft\WSL\system.vhd`
     
-    If you want to use the system distro from a different path you can change the .wslconf
+    If you want to use the system distro from a different path you can change the .wslconfig.
 
     * Add an entry to your `%USERPROFILE%\.wslconfig`
 
     ```
     [wsl2]
     systemDistro=C:\\tmp\\system.vhd
+    ```
     
     3.3 After update the system distro you should be able to launch any user distro and WSL will automatically launch the system distro along with the user distro.
     
