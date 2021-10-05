@@ -13,15 +13,11 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
 1. Clone the FreeRDP ,Weston and PulseAudio side by side this repo repositories and checkout the "working" branch from each:
 
     ```bash
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/FreeRDP vendor/FreeRDP -b working
+    git clone https://github.com/microsoft/FreeRDP-mirror vendor/FreeRDP -b working
 
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/weston vendor/weston -b working
+    git clone https://github.com/microsoft/weston-mirror.git vendor/weston -b working
 
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/pulseaudio vendor/pulseaudio -b working
-    
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/wayland vendor/wayland -b working
-
-    git clone https://microsoft.visualstudio.com/DefaultCollection/DxgkLinux/_git/sharedguestalloc vendor/sharedguestalloc
+    git clone https://github.com/microsoft/pulseaudio-mirror.git vendor/pulseaudio -b working
     ```
 
 2. Create the VHD:
@@ -62,7 +58,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
 
     ```
     [wsl2]
-    systemDistro=C:\\Users\\MyUser\\system.vhd
+    systemDistro=C:\\tmp\\system.vhd
     
     3.3 After update the system distro you should be able to launch any user distro and WSL will automatically launch the system distro along with the user distro.
     
