@@ -20,20 +20,28 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     git clone https://github.com/microsoft/pulseaudio-mirror.git vendor/pulseaudio -b working
     ```
 
-2. Create the VHD:
+2. Download the mesa source code.
 
-    2.1 From the parent directory where you cloned `wslg` clone `hcsshim` which contains `tar2ext4` and will be used to create the system distro vhd
+    ```
+    wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz
+    tar -xf mesa-21.0.0.tar.xz -C vendor
+    mv vendor/mesa-21.0.0 vendor/mesa
+    ```
+
+3. Create the VHD:
+
+    3.1 From the parent directory where you cloned `wslg` clone `hcsshim` which contains `tar2ext4` and will be used to create the system distro vhd
     ```
     git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git
     ```
     
-    2.1 From the parent directory build and export the docker image:
+    3.1 From the parent directory build and export the docker image:
     ```
     sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64
     sudo docker export `sudo docker create system-distro-x64` > system_x64.tar
     ```
     
-    2.3 Create the system distro vhd using `tar2ext4`
+    3.3 Create the system distro vhd using `tar2ext4`
     
     ```bash
     cd hcsshim/cmd/tar2ext4
@@ -42,15 +50,15 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     
     This will create system distro image `system.vhd`
 
-3. Change the system distro:
+4. Change the system distro:
 
-    3.1 Before replace the system distro you will need to shutdown WSL
+    4.1 Before replace the system distro you will need to shutdown WSL
     
     ```
     wsl --shutdown
     ```
     
-    3.2 By default the system distro is located at `C:\ProgramData\Microsoft\WSL\system.vhd`
+    4.2 By default the system distro is located at `C:\ProgramData\Microsoft\WSL\system.vhd`
     
     If you want to use the system distro from a different path you can change the .wslconfig.
 
@@ -61,10 +69,10 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     systemDistro=C:\\tmp\\system.vhd
     ```
     
-    3.3 After update the system distro you should be able to launch any user distro and WSL will automatically launch the system distro along with the user distro.
+    4.3 After update the system distro you should be able to launch any user distro and WSL will automatically launch the system distro along with the user distro.
     
 
-4. Inspecting the system distro:
+5. Inspecting the system distro:
 
     If the system distro isn't working correctly or you need to inspect what is running inside the system distro you can do:
 
@@ -74,6 +82,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
 
     For instance you should check if weston and pulse audio are running inside the system distro using `ps -ax | grep weston` or `ps -ax | grep pulse`
     You should see something like this:
+    
     ```bash
     root@DESKTOP-7LJ03SK:/mnt/d# ps -ax | grep weston
    11 ?        Sl     6:51 /usr/local/bin/weston --backend=rdp-backend.so --xwayland --shell=rdprail-shell.so --log=/mnt/wslg/weston.log
