@@ -11,8 +11,8 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
 
 ## Pre-requisites
 
-- Windows 10 Insider Preview build 21362+
-   - WSLg is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLg, you'll need to join the [Windows Insider Program](https://insider.windows.com/en-us/) and be running a Windows 10 Insider Preview build from the beta or dev channels.
+- Windows 11 (build 22000.*) or Windows 11 Insider Preview (builds 21362+)
+   - WSLg is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLg, you'll need to join the [Windows Insider Program](https://insider.windows.com/en-us/) and be running a Windows 11 Insider Preview build from the beta or dev channels.
 
 - It is recommended to run WSLg on a system with virtual GPU (vGPU) enabled for WSL so that you can benefit from hardware accelerated OpenGL rendering. You can find preview drivers supporting WSL from each of our partners below.
 
@@ -24,7 +24,7 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
    
 ## Install instructions (Fresh Install - no prior WSL installation)
 
-From a command prompt with administrator privileges, run the command `wsl --install -d Ubuntu`, then reboot when prompted.
+From a command prompt with administrator privileges, run the command `wsl --install -d Ubuntu`, then reboot if prompted.
 
 After reboot the installation will continue. You'll be asked to enter a username and password. These will be your Linux credentials, they can be anything you want and don't have to match your Windows credentials.
 
