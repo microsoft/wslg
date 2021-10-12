@@ -20,8 +20,6 @@
 #ifndef FREERDP_CHANNEL_RDPAPPLIST_SERVER_MAIN_H
 #define FREERDP_CHANNEL_RDPAPPLIST_SERVER_MAIN_H
 
-#include <freerdp/server/gfxredir.h>
-
 struct _rdpapplist_server_private
 {
 	BOOL isReady;

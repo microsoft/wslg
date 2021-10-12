@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "rdpapplist_main.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,8 +33,9 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/log.h>
 
-#include "rdpapplist_server.h"
 #include "rdpapplist_common.h"
+#include "rdpapplist_server.h"
+#include "rdpapplist_main.h"
 
 #define TAG CHANNELS_TAG("rdpapplist.server")
 
