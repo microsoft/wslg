@@ -1,6 +1,9 @@
-dep_frdp_server = dependency('freerdp-server2', version: '>= 2.0.0', required: false)
+dep_frdp_server = dependency('freerdp-server3', version: '>= 3.0.0', required: false)
 if not dep_frdp_server.found()
-    error('librapapplist-server requires freerdp2-server2 which was not found.')
+    dep_frdp_server = dependency('freerdp-server2', version: '>= 2.0.0', required: false)
+    if not dep_frdp_server.found()
+        error('librapapplist-server requires freerdp-server2 or 3 which was not found.')
+    endif
 endif
 
 deps_librdpapplist_server = [

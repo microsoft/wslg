@@ -20,14 +20,20 @@ install_inc_dir_rdpapplist = join_paths(dir_inc, name_rdpapplist)
 config_h.set_quoted('RDPAPPLIST_INCLUDEDIR',
      install_inc_dir_rdpapplist)
 
-dep_frdp = dependency('freerdp2', version: '>= 2.0.0', required: false)
+dep_frdp = dependency('freerdp3', version: '>= 3.0.0', required: false)
 if not dep_frdp.found()
-    error('rdpapplist requires freerdp2 which was not found.')
+    dep_frdp = dependency('freerdp2', version: '>= 2.0.0', required: false)
+    if not dep_frdp.found()
+        error('rdpapplist requires freerdp2 or 3 which was not found.')
+    endif
 endif
 
-dep_winpr = dependency('winpr2', version: '>= 2.0.0', required: false)
+dep_winpr = dependency('winpr3', version: '>= 3.0.0', required: false)
 if not dep_winpr.found()
-    error('rdpapplist requires winpr2 which was not found.')
+    dep_winpr = dependency('winpr2', version: '>= 2.0.0', required: false)
+    if not dep_frdp.found()
+        error('rdpapplist requires winpr2 or 3 which was not found.')
+    endif
 endif
 
 configure_file(output: 'rdpapplist_config.h',
