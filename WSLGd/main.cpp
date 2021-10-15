@@ -82,7 +82,7 @@ std::string TranslateWindowsPath(const char * Path)
 
 void SetupOptionalEnv()
 {
-#ifdef HAVE_WINPR2
+#if HAVE_WINPR
     // Get the path to the WSLG config file.
     std::string configFilePath = "/mnt/c/ProgramData/Microsoft/WSL/" CONFIG_FILE;
     auto userProfile = getenv(c_userProfileEnv);
@@ -109,7 +109,7 @@ void SetupOptionalEnv()
 
         IniFile_Free(wslgConfigIniFile);
     }
-#endif // HAVE_WINPR2 
+#endif // HAVE_WINPR
 
     return;
 }

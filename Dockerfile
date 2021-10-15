@@ -124,6 +124,7 @@ FROM build-env AS dev
 ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
 ARG SYSTEMDISTRO_DEBUG_BUILD
+ARG FREERDP_VERSION=2
 
 WORKDIR /work
 RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
@@ -149,7 +150,7 @@ RUN echo "== System distro build type (FreeRDP):" ${BUILDTYPE_FREERDP} " =="
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
-ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp2:${DESTDIR}${PREFIX}/include/winpr2:${DESTDIR}${PREFIX}/include
+ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp${FREERDP_VERSION}:${DESTDIR}${PREFIX}/include/winpr${FREERDP_VERSION}:${DESTDIR}${PREFIX}/include
 ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
 ENV LD_LIBRARY_PATH=${LIBRARY_PATH}
@@ -184,7 +185,7 @@ RUN cmake -G Ninja \
 WORKDIR /work/debuginfo
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         echo "== Strip debug info: FreeRDP ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/FreeRDP.list /work/build; \
+        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/FreeRDP${FREERDP_VERSION}.list /work/build; \
     fi
 
 # Build rdpapplist RDP virtual channel plugin
