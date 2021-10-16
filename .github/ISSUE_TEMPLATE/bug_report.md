@@ -27,7 +27,7 @@ Collect WSL logs if needed by following these instructions: https://github.com/M
 
 You can access the wslg logs using explorer at: `\\wsl$\<Distro-Name>\mnt\wslg` (e.g.: `\\wsl$\Ubuntu-20.04\mnt\wslg`)
 
-* `puseaudio.log`
+* `pulseaudio.log`
 * `weston.log`
 * `versions.txt`
 
