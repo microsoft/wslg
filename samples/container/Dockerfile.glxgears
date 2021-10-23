@@ -1,0 +1,9 @@
+FROM ubuntu:20.04 as runtime
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt upgrade && \
+   apt install -y mesa-utils
+
+ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib
+CMD /usr/bin/glxgears
