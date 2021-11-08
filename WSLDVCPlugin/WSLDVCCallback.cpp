@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 #include "pch.h"
+#include <safeint.h>
 #include "utils.h"
 #include "rdpapplist.h"
 #include "WSLDVCCallback.h"
@@ -152,6 +153,7 @@ public:
         )
     {
         const BYTE* cur;
+        HRESULT hr;
         UINT64 len;
         ICON_HEADER* pIconHeader;
         BITMAPINFOHEADER* pIconBitmapInfo;
@@ -173,11 +175,15 @@ public:
         ReadUINT32(iconData->iconFormat, cur, len);
         ReadUINT32(iconData->iconBitsLength, cur, len);
 
-        iconData->iconFileSize = sizeof(ICON_HEADER) + sizeof(BITMAPINFOHEADER) + iconData->iconBitsLength;
+        hr = UIntAdd(sizeof(ICON_HEADER) + sizeof(BITMAPINFOHEADER), iconData->iconBitsLength, &iconData->iconFileSize);
+        if (FAILED(hr)) {
+            return hr;
+        }
+
         iconData->iconFileData = (BYTE*)LocalAlloc(LPTR, iconData->iconFileSize);
         if (!iconData->iconFileData)
         {
-            return E_FAIL;
+            return E_OUTOFMEMORY;
         }
 
         pIconHeader = (ICON_HEADER*)iconData->iconFileData;
