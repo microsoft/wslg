@@ -285,6 +285,10 @@ try {
         isRdprailShell = (westonShellName.compare(c_westonRdprailShell) == 0);
     }
 
+    // Construct socket option string.
+    std::string westonSocketOption("--socket=");
+    westonSocketOption += getenv("WAYLAND_DISPLAY");
+
     // Construct shell option string.
     std::string westonShellOption("--shell=");
     westonShellOption += westonShellName;
@@ -305,6 +309,7 @@ try {
         "/usr/bin/weston",
         "--backend=rdp-backend.so",
         "--xwayland",
+        std::move(westonSocketOption),
         std::move(westonShellOption),
         std::move(westonLoggerOption),
         "--log=" SHARE_PATH "/weston.log"
