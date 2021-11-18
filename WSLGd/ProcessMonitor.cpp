@@ -3,6 +3,15 @@
 #include "ProcessMonitor.h"
 #include "common.h"
 
+#ifndef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(expression) \
+    (__extension__ \
+        ({ long int __result; \
+            do __result = (long int) (expression); \
+            while (__result == -1L && errno == EINTR); \
+            __result; }))
+#endif
+
 wslgd::ProcessMonitor::ProcessMonitor(const char* userName)
 {
     THROW_ERRNO_IF(ENOENT, !(m_user = getpwnam(userName)));
