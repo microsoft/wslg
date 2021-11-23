@@ -27,6 +27,7 @@ RUN echo "== Install Core dependencies ==" && \
         dbus-devel  \
         dbus-glib  \
         dbus-glib-devel  \
+        dhclient \
         diffutils  \
         elfutils-devel  \
         file-libs  \
