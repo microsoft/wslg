@@ -27,7 +27,6 @@ RUN echo "== Install Core dependencies ==" && \
         dbus-devel  \
         dbus-glib  \
         dbus-glib-devel  \
-        dhcp-client \
         diffutils  \
         elfutils-devel  \
         file-libs  \
@@ -42,7 +41,6 @@ RUN echo "== Install Core dependencies ==" && \
         gobject-introspection-devel  \
         harfbuzz  \
         harfbuzz-devel  \
-        iproute \
         kernel-headers  \
         intltool \
         libatomic_ops  \
@@ -299,6 +297,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
             dbus \
             dbus-glib \
+            dhcp-client \
             freefont \
             libinput \
             libjpeg-turbo \
@@ -312,6 +311,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             libXcursor \
             libxkbcommon \
             libXrandr \
+            iproute \
             pango \
             procps-ng \
             tzdata \
