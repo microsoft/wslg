@@ -27,7 +27,7 @@ RUN echo "== Install Core dependencies ==" && \
         dbus-devel  \
         dbus-glib  \
         dbus-glib-devel  \
-        dhclient \
+        dhcp-client \
         diffutils  \
         elfutils-devel  \
         file-libs  \
@@ -42,6 +42,7 @@ RUN echo "== Install Core dependencies ==" && \
         gobject-introspection-devel  \
         harfbuzz  \
         harfbuzz-devel  \
+        iproute \
         kernel-headers  \
         intltool \
         libatomic_ops  \
