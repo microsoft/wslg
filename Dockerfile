@@ -297,6 +297,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
             dbus \
             dbus-glib \
+            dhcp-client \
             freefont \
             libinput \
             libjpeg-turbo \
@@ -310,6 +311,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             libXcursor \
             libxkbcommon \
             libXrandr \
+            iproute \
             pango \
             procps-ng \
             tzdata \
