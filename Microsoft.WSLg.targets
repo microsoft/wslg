@@ -18,6 +18,10 @@ Copyright (C) Microsoft Corporation. All rights reserved.
       <Link>WSLDVCPlugin.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform)\WSLDVCPlugin.pdb">
+      <Link>WSLDVCPlugin.pdb</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="$(MSBuildThisFileDirectory)native\bin\wslg.rdp">
       <Link>wslg.rdp</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

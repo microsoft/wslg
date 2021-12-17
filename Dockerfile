@@ -279,8 +279,8 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 # Gather debuginfo to a tar file
 WORKDIR /work/debuginfo
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Compress debug info: /work/debuginfo/system-distro-debuginfo.tar.gz ==" && \
-        tar -C /work/build/debuginfo -czf system-distro-debuginfo.tar.gz ./ ; \
+        echo "== Compress debug info: /work/debuginfo/system-debuginfo.tar.gz ==" && \
+        tar -C /work/build/debuginfo -czf system-debuginfo.tar.gz ./ ; \
     fi
 
 ########################################################################
