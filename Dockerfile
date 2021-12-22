@@ -340,6 +340,9 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
              xorg-x11-server-debuginfo;          \
     fi
 
+# Clear the tdnf cache to make the image smaller
+RUN tdnf clean all
+
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
     mkdir /home/wslg/.config && \
