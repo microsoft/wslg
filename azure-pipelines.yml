@@ -66,11 +66,8 @@ stages:
                 --target dev
         displayName: 'Create System Distro Dev Docker image Mariner-x64'
 
-      - script: docker cp `docker create system-distro-dev-x64 /bin/bash`:/work/debuginfo/system-distro-debuginfo.tar.gz $(Agent.BuildDirectory)
-        displayName: 'Copy system-distro-debuginfo.tar.gz'
-
-      - script: mv $(Agent.BuildDirectory)/system-distro-debuginfo.tar.gz $(Agent.BuildDirectory)/system-distro-debuginfo-x64.tar.gz
-        displayName: 'Rename system-distro-debuginfo-x64.tar.gz'
+      - script: docker cp `docker create system-distro-dev-x64 /bin/bash`:/work/debuginfo/system-debuginfo.tar.gz $(Agent.BuildDirectory)/system-debuginfo_x64.tar.gz
+        displayName: 'Copy system-debuginfo_x64.tar.gz'
 
       - task: Go@0
         inputs:
@@ -103,10 +100,10 @@ stages:
           publishLocation: 'pipeline'
 
       - task: PublishPipelineArtifact@1
-        displayName: 'Publish system-distro-debuginfo-x64.tar.gz artifact'
+        displayName: 'Publish system-debuginfo_x64.tar.gz artifact'
         inputs:
-          targetPath: $(Agent.BuildDirectory)/system-distro-debuginfo-x64.tar.gz
-          artifact: 'system-distro-debuginfo-x64.tar.gz'
+          targetPath: $(Agent.BuildDirectory)/system-debuginfo_x64.tar.gz
+          artifact: 'system-debuginfo_x64.tar.gz'
           publishLocation: 'pipeline'
           
   - job: 'Build_Windows_x64'
@@ -139,15 +136,18 @@ stages:
         platform: 'x64'
         configuration: 'Release'
 
+    - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb package\WSLDVCPlugin_x64.pdb'
+      displayName: 'Move plugin PDB to package (x64)'
+
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish WSLDVCPlugin pdb (x64)'
+      displayName: 'Publish WSLDVCPlugin PDB (x64)'
       inputs:
-        targetPath: WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb
+        targetPath: package\WSLDVCPlugin_x64.pdb
         artifact: 'WSLDVCPlugin.x64.pdb'
         publishLocation: 'pipeline'
 
     - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll package\WSLDVCPlugin_x64.dll'
-      displayName: 'Move plugin to package (x64)'
+      displayName: 'Move plugin DLL to package (x64)'
 
     - task: PublishPipelineArtifact@1
       displayName: 'Publish WSLDVCPlugin DLL (x64)'
@@ -249,14 +249,14 @@ stages:
                 --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
                 --build-arg WSLG_ARCH=aarch64 &&
                 tar -xvf ./dev/dev_build.tar -C ./dev/ &&
-                mv ./dev/work/debuginfo/system-distro-debuginfo.tar.gz $(Agent.BuildDirectory)/system-distro-debuginfo-arm64.tar.gz
-        displayName: 'Copy system-distro-debuginfo-arm64.tar.gz'
+                mv ./dev/work/debuginfo/system-debuginfo.tar.gz $(Agent.BuildDirectory)/system-debuginfo_arm64.tar.gz
+        displayName: 'Copy system-debuginfo_arm64.tar.gz'
 
       - task: PublishPipelineArtifact@1
-        displayName: 'Publish system-distro-debuginfo-arm64.tar.gz artifact'
+        displayName: 'Publish system-debuginfo_arm64.tar.gz artifact'
         inputs:
-          targetPath: $(Agent.BuildDirectory)/system-distro-debuginfo-arm64.tar.gz
-          artifact: 'system-distro-debuginfo-arm64.tar.gz'
+          targetPath: $(Agent.BuildDirectory)/system-debuginfo_arm64.tar.gz
+          artifact: 'system-debuginfo_arm64.tar.gz'
           publishLocation: 'pipeline'
 
   - job: 'Build_Windows_ARM64'
@@ -290,10 +290,13 @@ stages:
         platform: 'ARM64'
         configuration: 'Release'
 
+    - script: 'MOVE WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb package\WSLDVCPlugin_ARM64.pdb'
+      displayName: 'Move plugin PDB to package (ARM64)'
+
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish WSLDVCPlugin pdb (ARM64)'
+      displayName: 'Publish WSLDVCPlugin PDB (ARM64)'
       inputs:
-        targetPath: WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb
+        targetPath: package\WSLDVCPlugin_ARM64.pdb
         artifact: 'WSLDVCPlugin.ARM64.pdb'
         publishLocation: 'pipeline'
 
@@ -332,12 +335,26 @@ stages:
           buildType: 'current'
           artifactName: 'system_x64.img'
           targetPath: 'package/'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download system-debuginfo_x64.tar.gz'
+        inputs:
+          buildType: 'current'
+          artifactName: 'system-debuginfo_x64.tar.gz'
+          targetPath: 'package/'
           
       - task: DownloadPipelineArtifact@2
         displayName: 'Download WSLDVCPlugin DLL (x64)'
         inputs:
           buildType: 'current'
           artifactName: 'WSLDVCPlugin.x64.dll'
+          targetPath: 'package/'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download WSLDVCPlugin PDB (x64)'
+        inputs:
+          buildType: 'current'
+          artifactName: 'WSLDVCPlugin.x64.pdb'
           targetPath: 'package/'
 
       - task: DownloadPipelineArtifact@2
@@ -355,10 +372,24 @@ stages:
           targetPath: 'package/'
 
       - task: DownloadPipelineArtifact@2
+        displayName: 'Download system-debuginfo_arm64.tar.gz'
+        inputs:
+          buildType: 'current'
+          artifactName: 'system-debuginfo_arm64.tar.gz'
+          targetPath: 'package/'
+
+      - task: DownloadPipelineArtifact@2
         displayName: 'Download WSLDVCPlugin DLL (ARM64)'
         inputs:
           buildType: 'current'
           artifactName: 'WSLDVCPlugin.ARM64.dll'
+          targetPath: 'package/'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download WSLDVCPlugin PDB (ARM64)'
+        inputs:
+          buildType: 'current'
+          artifactName: 'WSLDVCPlugin.ARM64.pdb'
           targetPath: 'package/'
 
       - task: PowerShell@2

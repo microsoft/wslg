@@ -279,8 +279,8 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 # Gather debuginfo to a tar file
 WORKDIR /work/debuginfo
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Compress debug info: /work/debuginfo/system-distro-debuginfo.tar.gz ==" && \
-        tar -C /work/build/debuginfo -czf system-distro-debuginfo.tar.gz ./ ; \
+        echo "== Compress debug info: /work/debuginfo/system-debuginfo.tar.gz ==" && \
+        tar -C /work/build/debuginfo -czf system-debuginfo.tar.gz ./ ; \
     fi
 
 ########################################################################
@@ -324,14 +324,11 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
 # Install packages to aid in development, if not remove some packages. 
 ARG SYSTEMDISTRO_DEBUG_BUILD
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        rpm -e --nodeps python2                  \
         rpm -e --nodeps curl                     \
-        rpm -e --nodeps python-xml               \
         rpm -e --nodeps pkg-config               \
         rpm -e --nodeps vim                      \
         rpm -e --nodeps wget                     \
-        rpm -e --nodeps python3                  \
-        rpm -e --nodeps python2-libs;            \
+        rpm -e --nodeps python3;                 \
     else                                         \
         echo "== Install development aid packages ==" && \
         tdnf install -y                          \
