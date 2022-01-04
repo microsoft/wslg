@@ -344,7 +344,7 @@ try {
         std::move(serviceId),
         "/silent",
         "/wslg",
-        "/plugin:WSLDVC",
+        isWslInstallPathEnvPresent ? "/plugin:WSLDVC_PACKAGE" : "/plugin:WSLDVC",
         std::move(sharedMemoryObPath),
         std::move(rdpFilePath)
     });
