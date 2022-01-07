@@ -329,7 +329,9 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         rpm -e --nodeps pkg-config               \
         rpm -e --nodeps vim                      \
         rpm -e --nodeps wget                     \
-        rpm -e --nodeps python3;                 \
+        rpm -e --nodeps python3                  \
+        rpm -e --nodeps python3-libs             \
+        rpm -e --nodeps systemd;                  \
     else                                         \
         echo "== Install development aid packages ==" && \
         tdnf install -y                          \
@@ -342,6 +344,10 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 
 # Clear the tdnf cache to make the image smaller
 RUN tdnf clean all
+
+# Remove extra doc
+
+RUN rm -rf /usr/lib/python3.7 /usr/share/gtk-doc
 
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
