@@ -330,8 +330,7 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         rpm -e --nodeps vim                      \
         rpm -e --nodeps wget                     \
         rpm -e --nodeps python3                  \
-        rpm -e --nodeps python3-libs             \
-        rpm -e --nodeps systemd;                 \
+        rpm -e --nodeps python3-libs;            \
     else                                         \
         echo "== Install development aid packages ==" && \
         tdnf install -y                          \
