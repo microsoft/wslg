@@ -61,7 +61,7 @@ You'll need to restart WSL for the changes to take effect. You can restart WSL b
 
 ## First Launch
 
-If you have installed the `Ubuntu` Linux distro per these instructions, you'll find an `Ubuntu` icon in your start menu, launch it. This will launch the WSL 2 VM, launch the Ubuntu WSL distro in that VM and give you a terminal to interact with it. Voila! You're running Linux on Windows! 
+If you have installed the `Ubuntu` Linux distro per these instructions, you'll find an `Ubuntu` icon in your start menu, launch it. This will launch the WSL 2 VM, launch the Ubuntu WSL distro in that VM and give you a terminal to interact with it. Voilà! You're running Linux on Windows! 
 
 If you would like to explore additional Linux distributions built for WSL, you can use the `wsl --list --online` command from an elevated command prompt to enumerate the list of available distributions for your system. You can have multiple Linux distributions installed within WSL and they will happily coexist side-by-side, so don't be scared to experiment and try things out.
 
