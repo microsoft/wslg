@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM cblmariner.azurecr.io/base/core:1.0.20220226 AS build-env
+FROM mcr.microsoft.com/cbl-mariner/base/core:1.0.20220226 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -289,7 +289,7 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 
 ## Create the distro image with just what's needed at runtime
 
-FROM cblmariner.azurecr.io/base/core:1.0.20210224 AS runtime
+FROM mcr.microsoft.com/cbl-mariner/base/core:1.0.20220226 AS runtime
 
 RUN echo "== Install mariner-repos-ui REPO ==" && \
     tdnf install -y mariner-repos-ui
