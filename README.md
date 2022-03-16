@@ -103,8 +103,8 @@ cd /tmp
 sudo curl -L -o "./teams.deb" "https://teams.microsoft.com/downloads/desktopurl?env=production&plat=linux&arch=x64&download=true&linuxArchiveType=deb"
 sudo apt install ./teams.deb -y
 
-## Microsoft Edge Browser
-sudo curl https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-dev/microsoft-edge-dev_93.0.946.1-1_amd64.deb -o /tmp/edge.deb
+## Microsoft Edge Dev Browser
+sudo curl https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-dev/microsoft-edge-dev_101.0.1193.0-1_amd64.deb -o /tmp/edge.deb
 sudo apt install /tmp/edge.deb -y
 ```
 
