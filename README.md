@@ -16,7 +16,7 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
 - It is recommended to run WSLg on a system with virtual GPU (vGPU) enabled for WSL so that you can benefit from hardware accelerated OpenGL rendering. You can find drivers supporting WSL from each of our partners below.
 
    - [AMD GPU driver for WSL](https://www.amd.com/support)
-   - [Intel GPU driver for WSL](https://downloadcenter.intel.com/download/30579/Intel-Graphics-Windows-DCH-Drivers)
+   - [Intel GPU driver for WSL](https://downloadcenter.intel.com)
    - [NVIDIA GPU driver for WSL](https://www.nvidia.com/Download/index.aspx)
    
 ## Install instructions (Fresh Install - no prior WSL installation)
