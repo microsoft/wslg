@@ -12,7 +12,7 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
 ## Pre-requisites
 
 - Windows 11 (build 22000.*) or Windows 11 Insider Preview (builds 21362+)
-   - WSLg is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLg, you'll need to join the [Windows Insider Program](https://insider.windows.com/en-us/) and be running a Windows 11 Insider Preview build from the beta or dev channels.
+   - WSLg is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLg, you'll need to install the [Windows Subsystem for Linux **Preview** from the Microsoft Store](https://aka.ms/wslstorepage).
 
 - It is recommended to run WSLg on a system with virtual GPU (vGPU) enabled for WSL so that you can benefit from hardware accelerated OpenGL rendering. You can find preview drivers supporting WSL from each of our partners below.
 
