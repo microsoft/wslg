@@ -161,6 +161,30 @@ ENV CXX=/usr/bin/g++
 COPY debuginfo /work/debuginfo
 RUN chmod +x /work/debuginfo/gen_debuginfo.sh
 
+# Build mesa with the minimal options we need.
+COPY vendor/mesa /work/vendor/mesa
+WORKDIR /work/vendor/mesa
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
+        -Dgallium-drivers=swrast,d3d12 \
+        -Ddri-drivers= \
+        -Dvulkan-drivers= \
+        -Dllvm=disabled && \
+    ninja -C build -j8 install && \
+    echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
+
+# Build PulseAudio
+COPY vendor/pulseaudio /work/vendor/pulseaudio
+WORKDIR /work/vendor/pulseaudio
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
+        -Ddatabase=simple \
+        -Dbluez5=false \
+        -Dgsettings=disabled \
+        -Dtests=false && \
+    ninja -C build -j8 install && \
+    echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
+
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
 WORKDIR /work/vendor/FreeRDP
@@ -236,30 +260,6 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         echo "== Strip debug info: weston ==" && \
         /work/debuginfo/gen_debuginfo.sh /work/debuginfo/weston.list /work/build; \
     fi
-
-# Build PulseAudio
-COPY vendor/pulseaudio /work/vendor/pulseaudio
-WORKDIR /work/vendor/pulseaudio
-RUN /usr/bin/meson --prefix=${PREFIX} build \
-        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
-        -Ddatabase=simple \
-        -Dbluez5=false \
-        -Dgsettings=disabled \
-        -Dtests=false && \
-    ninja -C build -j8 install && \
-    echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
-
-# Build mesa with the minimal options we need.
-COPY vendor/mesa /work/vendor/mesa
-WORKDIR /work/vendor/mesa
-RUN /usr/bin/meson --prefix=${PREFIX} build \
-        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
-        -Dgallium-drivers=swrast,d3d12 \
-        -Ddri-drivers= \
-        -Dvulkan-drivers= \
-        -Dllvm=disabled && \
-    ninja -C build -j8 install && \
-    echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build WSLGd Daemon
 ENV CC=/usr/bin/clang
