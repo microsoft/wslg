@@ -13,7 +13,6 @@ constexpr auto c_userName = "wslg";
 constexpr auto c_vmIdEnv = "WSL2_VM_ID";
 
 constexpr auto c_dbusDir = "/var/run/dbus";
-constexpr auto c_launchPulse = "/home/wslg/launch_pulse.sh";
 constexpr auto c_versionFile = "/etc/versions.txt";
 constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
 constexpr auto c_shareDocsDir = "/usr/share/doc";
@@ -80,7 +79,7 @@ std::string TranslateWindowsPath(const char * Path)
     return result;
 }
 
-bool GetEnvBool(char *EnvName, bool DefaultValue)
+bool GetEnvBool(const char *EnvName, bool DefaultValue)
 {
 	char *s;
 
