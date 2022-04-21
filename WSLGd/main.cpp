@@ -80,6 +80,25 @@ std::string TranslateWindowsPath(const char * Path)
     return result;
 }
 
+bool GetEnvBool(char *EnvName, bool DefaultValue)
+{
+	char *s;
+
+	s = getenv(EnvName);
+	if (s) {
+		if (strcmp(s, "true") == 0)
+			return true;
+		else if (strcmp(s, "false") == 0)
+			return false;
+		else if (strcmp(s, "1") == 0)
+			return true;
+		else if (strcmp(s, "0") == 0)
+			return false;
+	}
+
+	return DefaultValue;
+}
+
 void SetupOptionalEnv()
 {
 #if HAVE_WINPR
@@ -329,7 +348,8 @@ try {
     }
 
     std::string rdpClientExePath = c_mstscFullPath;
-    if (isWslInstallPathEnvPresent) {
+    bool isUseMstsc = GetEnvBool("WSLG_USE_MSTSC", false);
+    if (!isUseMstsc && isWslInstallPathEnvPresent) {
         std::string msrdcExePath = TranslateWindowsPath(wslInstallPath.c_str());
         msrdcExePath += "/" MSRDC_EXE;
         if (access(msrdcExePath.c_str(), X_OK) == 0) {
