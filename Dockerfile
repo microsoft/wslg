@@ -296,6 +296,7 @@ RUN echo "== Install mariner-repos-ui REPO ==" && \
 
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
+            chrony \
             dbus \
             dbus-glib \
             dhcp-client \
