@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM mcr.microsoft.com/cbl-mariner/base/core:1.0.20220226 AS build-env
+FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20220426 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -7,9 +7,6 @@ RUN echo "== Install Git/CA certificates ==" && \
     tdnf install -y \
         git \
         ca-certificates
-
-RUN echo "== Install mariner-repos-ui REPO ==" && \
-    tdnf install -y mariner-repos-ui
 
 RUN echo "== Install Core dependencies ==" && \
     tdnf install -y \
@@ -20,6 +17,8 @@ RUN echo "== Install Core dependencies ==" && \
         binutils  \
         bison  \
         build-essential  \
+        cairo \
+        cairo-devel \
         clang  \
         clang-devel  \
         cmake  \
@@ -75,12 +74,12 @@ RUN echo "== Install Core dependencies ==" && \
         patch  \
         perl-XML-Parser \
         polkit-devel  \
-        python2-devel \
+        python3-devel \
         python3-mako  \
+        sed \
         sqlite-devel \
         systemd-devel  \
-        UI-cairo \
-        UI-cairo-devel \
+        tar \
         unzip  \
         vala  \
         vala-devel  \
@@ -289,13 +288,11 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 
 ## Create the distro image with just what's needed at runtime
 
-FROM mcr.microsoft.com/cbl-mariner/base/core:1.0.20220226 AS runtime
-
-RUN echo "== Install mariner-repos-ui REPO ==" && \
-    tdnf install -y mariner-repos-ui
+FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20220426 AS runtime
 
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
+            cairo \
             chrony \
             dbus \
             dbus-glib \
@@ -316,8 +313,9 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             iproute \
             pango \
             procps-ng \
+            rpm \
+            sed \
             tzdata \
-            UI-cairo \
             wayland-protocols-devel \
             xcursor-themes \
             xorg-x11-server-Xwayland \
@@ -327,17 +325,16 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
 ARG SYSTEMDISTRO_DEBUG_BUILD
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         rpm -e --nodeps curl                     \
-        rpm -e --nodeps pkg-config               \
-        rpm -e --nodeps vim                      \
-        rpm -e --nodeps wget                     \
         rpm -e --nodeps python3                  \
         rpm -e --nodeps python3-libs;            \
     else                                         \
         echo "== Install development aid packages ==" && \
         tdnf install -y                          \
              gdb                                 \
+             mariner-repos-debug                 \
              nano                                \
-             vim                                 \
+             vim                              && \
+        tdnf install -y                          \
              wayland-debuginfo                   \
              xorg-x11-server-debuginfo;          \
     fi
