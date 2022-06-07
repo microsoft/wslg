@@ -149,7 +149,7 @@ RUN echo "== System distro build type (FreeRDP):" ${BUILDTYPE_FREERDP} " =="
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
 ENV PKG_CONFIG_PATH=${DESTDIR}${PREFIX}/lib/pkgconfig:${DESTDIR}${PREFIX}/lib/${WSLG_ARCH}-linux-gnu/pkgconfig:${DESTDIR}${PREFIX}/share/pkgconfig
-ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp${FREERDP_VERSION}:${DESTDIR}${PREFIX}/include/winpr${FREERDP_VERSION}:${DESTDIR}${PREFIX}/include
+ENV C_INCLUDE_PATH=${DESTDIR}${PREFIX}/include/freerdp${FREERDP_VERSION}:${DESTDIR}${PREFIX}/include/winpr${FREERDP_VERSION}:${DESTDIR}${PREFIX}/include/wsl/stubs:${DESTDIR}${PREFIX}/include
 ENV CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
 ENV LD_LIBRARY_PATH=${LIBRARY_PATH}
@@ -159,6 +159,15 @@ ENV CXX=/usr/bin/g++
 # Setup DebugInfo folder
 COPY debuginfo /work/debuginfo
 RUN chmod +x /work/debuginfo/gen_debuginfo.sh
+
+# Build DirectX-Headers
+COPY vendor/DirectX-Headers-1.0 /work/vendor/DirectX-Headers-1.0
+WORKDIR /work/vendor/DirectX-Headers-1.0
+RUN /usr/bin/meson --prefix=${PREFIX} build \
+        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
+        -Dbuild-test=false && \
+    ninja -C build -j8 install && \
+    echo 'mesa:' `git --git-dir=/work/vendor/DirectX-Headers-1.0/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build mesa with the minimal options we need.
 COPY vendor/mesa /work/vendor/mesa
