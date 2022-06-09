@@ -89,6 +89,50 @@ CreateShellLink(LPCWSTR lpszPathLink,
 
 _Use_decl_annotations_
 HRESULT
+GetIconFileFromShellLink(
+    UINT32 iconPathSize, 
+    LPWSTR iconPath,
+    LPCWSTR lnkPath)
+{
+    HRESULT hr;
+    IShellLink* psl;
+
+    DebugPrint(L"GetIconFileFromShellLink:\n");
+    DebugPrint(L"\tPath Link: %s\n", lnkPath);
+
+    assert(iconPathSize);
+    assert(iconPath);
+    *iconPath = L'\0';
+
+    hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
+    if (SUCCEEDED(hr))
+    {
+        IPersistFile* ppf;
+        hr = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf);
+        if (SUCCEEDED(hr))
+        {
+            hr = ppf->Load(lnkPath, STGM_READ);
+            if (SUCCEEDED(hr))
+            {
+                int dummy = 0;
+                hr = psl->GetIconLocation(iconPath, iconPathSize, &dummy);
+            }
+            ppf->Release();
+        }
+        psl->Release();
+    }
+
+    DebugPrint(L"\tresult: %x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        DebugPrint(L"\ticonPath: %s\n", iconPath);
+    }
+
+    return hr;
+}
+
+_Use_decl_annotations_
+HRESULT
 CreateIconFile(BYTE* pBuffer,
     UINT32 cbSize,
     LPCWSTR lpszIconFile)

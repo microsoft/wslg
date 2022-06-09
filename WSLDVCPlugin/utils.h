@@ -29,6 +29,12 @@ CreateShellLink(_In_z_ LPCWSTR lpszPathLink,
     _In_opt_z_ LPCWSTR lpszPathIcon);
 
 HRESULT
+GetIconFileFromShellLink(
+    UINT32 iconPathSize, 
+    _Out_writes_z_(iconPathSize) LPWSTR iconPath,
+    _In_z_ LPCWSTR lnkPath);
+
+HRESULT
 CreateIconFile(_In_reads_bytes_(cbSize) BYTE* pBuffer,
     UINT32 cbSize,
     _In_z_ LPCWSTR lpszIconFile);

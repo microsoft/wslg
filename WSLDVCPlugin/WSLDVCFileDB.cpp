@@ -80,6 +80,29 @@ public:
     }
 
     STDMETHODIMP
+        OnLnkFileAdded(_In_z_ LPCWSTR lnkFile)
+    {
+        WCHAR iconFile[MAX_PATH] = {};
+
+        {
+            fileEntry fileEntry(lnkFile, L"", L"");
+            m_fileEntries.insert(fileEntry);
+        }
+
+        if (SUCCEEDED(GetIconFileFromShellLink(ARRAYSIZE(iconFile), iconFile, lnkFile)))
+        {
+            fileEntry fileEntry(iconFile, L"", L"");
+            m_fileEntries.insert(fileEntry);
+        }
+
+        DebugPrint(L"OnLnkFileAdded():\n");
+        DebugPrint(L"\tlnkFile: %s\n", lnkFile);
+        DebugPrint(L"\ticonFile: %s\n", iconFile);
+
+        return S_OK;
+    }
+
+    STDMETHODIMP
         OnFileAdded(_In_z_ LPCWSTR key, _In_opt_z_ LPCWSTR linkFilePath, _In_opt_z_ LPCWSTR iconFilePath)
     {
         HRESULT hr = S_OK;
@@ -288,8 +311,12 @@ protected:
             }
             else
             {
-                //DebugPrint(L"\t\tfile: %s\n", sub.c_str());
-                OnFileAdded(sub.c_str(), nullptr, nullptr);
+                LPCWSTR ext = PathFindExtensionW(data.cFileName);
+                if (wcscmp(ext, L".lnk") == 0)
+                {
+                     //DebugPrint(L"\t\tlnk file: %s\n", sub.c_str());
+                     OnLnkFileAdded(sub.c_str());
+                }
             }
         } while (FindNextFile(hFind, &data));
         FindClose(hFind);
