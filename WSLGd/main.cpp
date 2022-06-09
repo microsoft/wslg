@@ -356,6 +356,14 @@ try {
         }
     }
 
+    std::string wslDvcPlugin;
+    if (GetEnvBool("WSLG_USE_WSLDVC_PRIVATE", false))
+        wslDvcPlugin = "/plugin:WSLDVC_PRIVATE";
+    else if (isWslInstallPathEnvPresent)
+        wslDvcPlugin = "/plugin:WSLDVC_PACKAGE";
+    else
+        wslDvcPlugin = "/plugin:WSLDVC";
+
     std::string rdpFilePath = wslInstallPath + "\\wslg.rdp";
     monitor.LaunchProcess(std::vector<std::string>{
         std::move(rdpClientExePath),
@@ -363,7 +371,7 @@ try {
         std::move(serviceId),
         "/silent",
         "/wslg",
-        isWslInstallPathEnvPresent ? "/plugin:WSLDVC_PACKAGE" : "/plugin:WSLDVC",
+        std::move(wslDvcPlugin),
         std::move(sharedMemoryObPath),
         std::move(rdpFilePath)
     });

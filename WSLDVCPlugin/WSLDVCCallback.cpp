@@ -576,6 +576,14 @@ public:
             {
                 return E_FAIL;
             }
+            if (!CreateDirectoryW(iconPath, NULL))
+            {
+                if (ERROR_ALREADY_EXISTS != GetLastError())
+                {
+                    DebugPrint(L"Failed to create %s\n", iconPath);
+                    return E_FAIL;
+                }
+            }
             if (updateAppList.appGroupLength)
             {
                 if ((wcscat_s(iconPath, ARRAYSIZE(iconPath), L"\\") != 0) ||
@@ -603,6 +611,14 @@ public:
         if (wcscpy_s(linkPath, ARRAYSIZE(linkPath), m_appMenuPath) != 0)
         {
             return E_FAIL;
+        }
+        if (!CreateDirectoryW(linkPath, NULL))
+        {
+            if (ERROR_ALREADY_EXISTS != GetLastError())
+            {
+                DebugPrint(L"Failed to create %s\n", linkPath);
+                return E_FAIL;
+            }
         }
         if (updateAppList.appGroupLength)
         {
