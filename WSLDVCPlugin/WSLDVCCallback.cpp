@@ -362,71 +362,17 @@ public:
             return E_FAIL;
         }
 
+        hr = BuildMenuPath(ARRAYSIZE(m_appMenuPath), m_appMenuPath, m_appProvider, true);
+        if (FAILED(hr))
         {
-            PWSTR appMenuPath = NULL; // free by CoTaskMemFree. 
-            SHGetKnownFolderPath(FOLDERID_StartMenu, 0, NULL, &appMenuPath);
-            if (!appMenuPath)
-            {
-                DebugPrint(L"SHGetKnownFolderPath(FOLDERID_StartMenu) failed\n");
-                return E_FAIL;
-            }
-            int ret = swprintf_s(m_appMenuPath, ARRAYSIZE(m_appMenuPath), L"%s\\Programs\\%s", appMenuPath, m_appProvider);
-            CoTaskMemFree(appMenuPath);
-            if (ret < 0)
-            {
-                DebugPrint(L"swprintf_s for appMenuPath failed");
-                return E_FAIL;
-            }
-        }
-
-        if (!CreateDirectoryW(m_appMenuPath, NULL))
-        {
-            if (ERROR_ALREADY_EXISTS != GetLastError())
-            {
-                DebugPrint(L"Failed to create %s\n", m_appMenuPath);
-                return E_FAIL;
-            }
+            return hr;
         }
         DebugPrint(L"AppMenuPath: %s\n", m_appMenuPath);
 
-        UINT64 lenTempPath;
-        lenTempPath = GetTempPathW(MAX_PATH, m_iconPath);
-        if (!lenTempPath)
+        hr = BuildIconPath(ARRAYSIZE(m_iconPath), m_iconPath, m_appProvider, true);
+        if (FAILED(hr))
         {
-            DebugPrint(L"GetTempPathW failed\n");
-            return E_FAIL;
-        }
-
-        if (lenTempPath + 10 +
-            (m_serverCaps.appListProviderNameLength / sizeof(WCHAR)) > ARRAYSIZE(m_iconPath))
-        {
-            DebugPrint(L"provider name length check failed, length %d\n", m_serverCaps.appListProviderNameLength);
-            return E_FAIL;
-        }
-
-        if (wcscat_s(m_iconPath, ARRAYSIZE(m_iconPath), L"WSLDVCPlugin\\") != 0)
-        {
-            return E_FAIL;
-        }
-        if (!CreateDirectoryW(m_iconPath, NULL))
-        {
-            if (ERROR_ALREADY_EXISTS != GetLastError())
-            {
-                DebugPrint(L"Failed to create %s\n", m_iconPath);
-                return E_FAIL;
-            }
-        }
-        if (wcscat_s(m_iconPath, ARRAYSIZE(m_iconPath), m_appProvider) != 0)
-        {
-            return E_FAIL;
-        }
-        if (!CreateDirectoryW(m_iconPath, NULL))
-        {
-            if (ERROR_ALREADY_EXISTS != GetLastError())
-            {
-                DebugPrint(L"Failed to create %s\n", m_iconPath);
-                return E_FAIL;
-            }
+            return hr;
         }
         DebugPrint(L"IconPath: %s\n", m_iconPath);
 

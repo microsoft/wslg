@@ -17,6 +17,9 @@ void DebugPrint(const wchar_t* format, ...);
 // Set to 1 to enable digital signature check.
 #define ENABLE_WSL_SIGNATURE_CHECK 0
 
+BOOL
+IsDirectoryPresent(_In_z_ LPCWSTR lpszPath);
+
 HRESULT
 CreateShellLink(_In_z_ LPCWSTR lpszPathLink,
     _In_z_ LPCWSTR lpszPathObj, 
@@ -33,6 +36,20 @@ CreateIconFile(_In_reads_bytes_(cbSize) BYTE* pBuffer,
 BOOL
 GetLocaleName(_Out_writes_z_(localeNameSize) char* localeName,
     int localeNameSize);
+
+HRESULT
+BuildMenuPath(
+    UINT32 appMenuPathSize,
+    _Out_writes_z_(appMenuPathSize) LPWSTR appMenuPath,
+    _In_z_ LPCWSTR appProvider,
+    bool isCreateDir);
+
+HRESULT
+BuildIconPath(
+    UINT32 iconPathSize,
+    _Out_writes_z_(iconPathSize) LPWSTR iconPath,
+    _In_z_ LPCWSTR appProvider,
+    bool isCreateDir);
 
 #if ENABLE_WSL_SIGNATURE_CHECK
 BOOL
