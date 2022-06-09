@@ -18,6 +18,15 @@ void DebugPrint(const wchar_t* format, ...)
 #endif // DBG_MESSAGE
 
 _Use_decl_annotations_
+BOOL IsDirectoryPresent(LPCWSTR lpszPath)
+{
+    DWORD dwAttrib = GetFileAttributes(lpszPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
+           (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+_Use_decl_annotations_
 HRESULT
 CreateShellLink(LPCWSTR lpszPathLink,
     LPCWSTR lpszPathObj,

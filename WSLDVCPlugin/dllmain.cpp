@@ -70,10 +70,10 @@ extern "C"
 
         ComPtr<IWSLDVCFileDB> spFileDB;
 
-        hr = WSLDVCFileDB_CreateInstance(NULL, &spFileDB);
-        if (FAILED(hr))
+        if (!appProvider)
         {
-            return hr;
+            DebugPrint(L"appProvider parameter is required\n");
+            return E_INVALIDARG;
         }
 
         hr = BuildMenuPath(ARRAYSIZE(appMenuPath), appMenuPath, appProvider, false);
@@ -83,6 +83,12 @@ extern "C"
         }
         DebugPrint(L"AppMenuPath: %s\n", appMenuPath);
 
+        if (!IsDirectoryPresent(appMenuPath))
+        {
+            DebugPrint(L"%s is not present\n", appMenuPath);
+            return S_OK; // no program menu exists for given provider, simply exit.
+        }
+
         hr = BuildIconPath(ARRAYSIZE(iconPath), iconPath, appProvider, false);
         if (FAILED(hr))
         {
@@ -90,8 +96,16 @@ extern "C"
         }
         DebugPrint(L"IconPath: %s\n", iconPath);
 
+        hr = WSLDVCFileDB_CreateInstance(NULL, &spFileDB);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"failed to instance WSLDVCFileDB\n");
+            return hr;
+        }
+
         spFileDB->addAllFilesAsFileIdAt(appMenuPath);
         spFileDB->addAllFilesAsFileIdAt(iconPath);
+
         spFileDB->deleteAllFileIdFiles();
         spFileDB->OnClose();
         spFileDB = nullptr;
