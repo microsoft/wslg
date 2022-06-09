@@ -34,6 +34,20 @@ BOOL
 GetLocaleName(_Out_writes_z_(localeNameSize) char* localeName,
     int localeNameSize);
 
+HRESULT
+BuildMenuPath(
+    UINT32 appMenuPathSize,
+    _Out_writes_z_(appMenuPathSize) LPWSTR appMenuPath,
+    _In_z_ LPCWSTR appProvider,
+    bool isCreateDir);
+
+HRESULT
+BuildIconPath(
+    UINT32 iconPathSize,
+    _Out_writes_z_(iconPathSize) LPWSTR iconPath,
+    _In_z_ LPCWSTR appProvider,
+    bool isCreateDir);
+
 #if ENABLE_WSL_SIGNATURE_CHECK
 BOOL
 IsFileTrusted(_In_z_ LPCWSTR pwszFile);

@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 #include "pch.h"
-#include <cchannel.h>
+#include "utils.h"
 #include "WSLDVCPlugin.h"
+#include "WSLDVCFileDB.h"
+#include <cchannel.h>
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -55,5 +57,45 @@ extern "C"
 
         return hr;
     }
-}
 
+    __declspec(dllexport) HRESULT WINAPI
+        RemoveAppProvider(
+            _In_z_ LPCWSTR appProvider
+        )
+    {
+        HRESULT hr;
+
+        WCHAR appMenuPath[MAX_PATH] = {};
+        WCHAR iconPath[MAX_PATH] = {};
+
+        ComPtr<IWSLDVCFileDB> spFileDB;
+
+        hr = WSLDVCFileDB_CreateInstance(NULL, &spFileDB);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        hr = BuildMenuPath(ARRAYSIZE(appMenuPath), appMenuPath, appProvider, false);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+        DebugPrint(L"AppMenuPath: %s\n", appMenuPath);
+
+        hr = BuildIconPath(ARRAYSIZE(iconPath), iconPath, appProvider, false);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+        DebugPrint(L"IconPath: %s\n", iconPath);
+
+        spFileDB->addAllFilesAsFileIdAt(appMenuPath);
+        spFileDB->addAllFilesAsFileIdAt(iconPath);
+        spFileDB->deleteAllFileIdFiles();
+        spFileDB->OnClose();
+        spFileDB = nullptr;
+
+        return hr;
+    }
+}
