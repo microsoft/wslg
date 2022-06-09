@@ -306,6 +306,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             dbus \
             dbus-glib \
             dhcp-client \
+            e2fsprogs \
             freefont \
             libinput \
             libjpeg-turbo \
