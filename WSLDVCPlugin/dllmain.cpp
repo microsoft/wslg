@@ -64,10 +64,7 @@ extern "C"
         )
     {
         HRESULT hr;
-
         WCHAR appMenuPath[MAX_PATH] = {};
-        WCHAR iconPath[MAX_PATH] = {};
-
         ComPtr<IWSLDVCFileDB> spFileDB;
 
         if (!appProvider)
@@ -89,13 +86,6 @@ extern "C"
             return S_OK; // no program menu exists for given provider, simply exit.
         }
 
-        hr = BuildIconPath(ARRAYSIZE(iconPath), iconPath, appProvider, false);
-        if (FAILED(hr))
-        {
-            return hr;
-        }
-        DebugPrint(L"IconPath: %s\n", iconPath);
-
         hr = WSLDVCFileDB_CreateInstance(NULL, &spFileDB);
         if (FAILED(hr))
         {
@@ -104,8 +94,6 @@ extern "C"
         }
 
         spFileDB->addAllFilesAsFileIdAt(appMenuPath);
-        spFileDB->addAllFilesAsFileIdAt(iconPath);
-
         spFileDB->deleteAllFileIdFiles();
         spFileDB->OnClose();
         spFileDB = nullptr;
