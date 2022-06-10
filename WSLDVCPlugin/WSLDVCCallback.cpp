@@ -302,10 +302,10 @@ public:
             return hr;
         }
 
-        // Add all files under menu and icon path at sync start.
+        // Add all files under menu path at sync start.
+        // This will also adds icon file pointed by .lnk file.
         // Any files not reported during sync, will be removed at end.
         m_spFileDBSync->addAllFilesAsFileIdAt(m_appMenuPath);
-        m_spFileDBSync->addAllFilesAsFileIdAt(m_iconPath);
 
         return S_OK;
     }
