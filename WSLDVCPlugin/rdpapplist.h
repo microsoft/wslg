@@ -138,11 +138,12 @@ typedef struct _RDPAPPLIST_DELETE_APPLIST_PROVIDER_PDU
 // ReadSTRING(dest, source, RemainingSource, required)
 #define ReadSTRING(o, p, r, required) \
     ReadUINT16(o ## Length, p, r); \
-    if (o ## Length > sizeof(o)) { \
+    if (o ## Length + sizeof(WCHAR) > sizeof(o)) { \
         DebugPrint(L"Failed to read " LSTR(#o) L"\n"); \
         goto Error_Read; \
     } if (o ## Length) { \
         ReadBYTES(o, p, o ## Length, r); \
+        o[o ## Length] = L'\0'; \
     } else if (required) { \
         DebugPrint(LSTR(#o) L" is required\n"); \
         goto Error_Read; \

@@ -516,6 +516,18 @@ public:
             return E_FAIL;
         }
 
+        if (wcsstr(updateAppList.appId, L"..") != NULL)
+        {
+            DebugPrint(L"app id can't contain \"..\" %s\n", updateAppList.appDesc);
+            return E_FAIL;
+        }
+
+        if (wcsstr(updateAppList.appDesc, L"..") != NULL)
+        {
+            DebugPrint(L"app desc can't contain \"..\" %s\n", updateAppList.appDesc);
+            return E_FAIL;
+        }
+
         if (updateAppList.flags & RDPAPPLIST_FIELD_ICON)
         {
             if (wcscpy_s(iconPath, ARRAYSIZE(iconPath), m_iconPath) != 0)
@@ -592,10 +604,15 @@ public:
             return E_FAIL;
         }
 
-        if (swprintf_s(exeArgs, ARRAYSIZE(exeArgs), L"%s -d %s %s",
-                       updateAppList.appWorkingDirLength ? updateAppList.appWorkingDir : L"~", 
+        // build wsl.exe/wslg.exe command line.
+        // -d : distro.
+        // --cd : current directory.
+        // -- : executable path with arguments.
+        if ((swprintf_s(exeArgs, ARRAYSIZE(exeArgs), L"-d %s --cd %s -- %s",
                        m_appProvider, 
-                       updateAppList.appExecPath) < 0)
+                       updateAppList.appWorkingDirLength ? updateAppList.appWorkingDir : L"~",
+                       updateAppList.appExecPath) < 0) ||
+            (exeArgs[0] == L'\0'))
         {
             return E_FAIL;
         }
