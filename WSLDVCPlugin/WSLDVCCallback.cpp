@@ -356,9 +356,11 @@ public:
         }
 
         memcpy(m_appProvider, m_serverCaps.appListProviderName, m_serverCaps.appListProviderNameLength);
-        if (wcsstr(m_appProvider, L"..") != NULL)
+        if ((wcsstr(m_appProvider, L"..") != NULL) ||
+            (wcsstr(m_appProvider, L"\"") != NULL) ||
+            (wcsstr(m_appProvider, L" ") != NULL))
         {
-            DebugPrint(L"group name can't contain \"..\" %s\n", m_appProvider);
+            DebugPrint(L"provider name can't contain '..', '\"' or space, %s\n", m_appProvider);
             return E_FAIL;
         }
 
@@ -510,21 +512,27 @@ public:
             }
         }
 
-        if (updateAppList.appGroupLength && (wcsstr(updateAppList.appGroup, L"..") != NULL))
+        if (updateAppList.appGroupLength)
         {
-            DebugPrint(L"group name can't contain \"..\" %s\n", updateAppList.appGroup);
+            if ((wcsstr(updateAppList.appGroup, L"..") != NULL) ||
+                (wcsstr(updateAppList.appGroup, L"\"") != NULL))
+            {
+                DebugPrint(L"group name can't contain '..' or '\".', %s\n", updateAppList.appGroup);
+                return E_FAIL;
+            }
+        }
+
+        if ((wcsstr(updateAppList.appId, L"..") != NULL) ||
+            (wcsstr(updateAppList.appId, L"\"") != NULL))
+        {
+            DebugPrint(L"app id can't contain '..' or '\"', %s\n", updateAppList.appDesc);
             return E_FAIL;
         }
 
-        if (wcsstr(updateAppList.appId, L"..") != NULL)
+        if ((wcsstr(updateAppList.appDesc, L"..") != NULL) ||
+            (wcsstr(updateAppList.appDesc, L"\"") != NULL))
         {
-            DebugPrint(L"app id can't contain \"..\" %s\n", updateAppList.appDesc);
-            return E_FAIL;
-        }
-
-        if (wcsstr(updateAppList.appDesc, L"..") != NULL)
-        {
-            DebugPrint(L"app desc can't contain \"..\" %s\n", updateAppList.appDesc);
+            DebugPrint(L"app desc can't contain '..' or '\"', %s\n", updateAppList.appDesc);
             return E_FAIL;
         }
 
@@ -605,10 +613,12 @@ public:
         }
 
         // build wsl.exe/wslg.exe command line.
-        // -d : distro.
-        // --cd : current directory.
-        // -- : executable path with arguments.
-        if ((swprintf_s(exeArgs, ARRAYSIZE(exeArgs), L"-d %s --cd %s -- %s",
+        // -d : distro name, space is not allowed in distro name,
+        //      thus wrapping by double-quoto is not accepted by wsl.exe/wslg.exe
+        // --cd : current directory, wrap by double-quote.
+        // -- : executable path with arguments. All string after '--' will be treated as Linux command line,
+        //      thus wrapping by double-quoto is not accepted by wsl.exe/wslg.exe
+        if ((swprintf_s(exeArgs, ARRAYSIZE(exeArgs), L"-d %s --cd \"%s\" -- %s",
                        m_appProvider, 
                        updateAppList.appWorkingDirLength ? updateAppList.appWorkingDir : L"~",
                        updateAppList.appExecPath) < 0) ||
