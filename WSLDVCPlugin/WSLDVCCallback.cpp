@@ -517,7 +517,7 @@ public:
             if ((wcsstr(updateAppList.appGroup, L"..") != NULL) ||
                 (wcsstr(updateAppList.appGroup, L"\"") != NULL))
             {
-                DebugPrint(L"group name can't contain '..' or '\".', %s\n", updateAppList.appGroup);
+                DebugPrint(L"group name can't contain '..' or '\"', %s\n", updateAppList.appGroup);
                 return E_FAIL;
             }
         }
@@ -525,7 +525,7 @@ public:
         if ((wcsstr(updateAppList.appId, L"..") != NULL) ||
             (wcsstr(updateAppList.appId, L"\"") != NULL))
         {
-            DebugPrint(L"app id can't contain '..' or '\"', %s\n", updateAppList.appDesc);
+            DebugPrint(L"app id can't contain '..' or '\"', %s\n", updateAppList.appId);
             return E_FAIL;
         }
 
@@ -533,6 +533,15 @@ public:
             (wcsstr(updateAppList.appDesc, L"\"") != NULL))
         {
             DebugPrint(L"app desc can't contain '..' or '\"', %s\n", updateAppList.appDesc);
+            return E_FAIL;
+        }
+
+        // Double quote (") is valid file/path char in Linux, but currently wsl.exe/wslg.exe
+        // can't handle to give the path contains " with --cd options, thus until this get fixed,
+        // block the path contains ".
+        if ((wcsstr(updateAppList.appWorkingDir, L"\"") != NULL))
+        {
+            DebugPrint(L"app working dir can't contain '\"', %s\n", updateAppList.appWorkingDir);
             return E_FAIL;
         }
 
