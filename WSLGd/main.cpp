@@ -227,29 +227,30 @@ try {
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
 
     // Set required environment variables.
-    struct envVar{ const char* name; const char* value; };
+    struct envVar{ const char* name; const char* value; bool override; };
     envVar variables[] = {
-        {"HOME", passwordEntry->pw_dir},
-        {"USER", passwordEntry->pw_name},
-        {"LOGNAME", passwordEntry->pw_name},
-        {"SHELL", passwordEntry->pw_shell},
-        {"PATH", "/usr/sbin:/usr/bin:/sbin:/bin:/usr/games"},
-        {"XDG_RUNTIME_DIR", c_xdgRuntimeDir},
-        {"WAYLAND_DISPLAY", "wayland-0"},
-        {"DISPLAY", ":0"},
-        {"XCURSOR_PATH", "/usr/share/icons"},
-        {"XCURSOR_THEME", "whiteglass"},
-        {"XCURSOR_SIZE", "16"},
-        {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink"},
-        {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource"},
-        {"USE_VSOCK", socketFdString.c_str()},
-        {"WSL2_DEFAULT_APP_ICON", "/usr/share/icons/wsl/linux.png"},
-        {"WSL2_DEFAULT_APP_OVERLAY_ICON", "/usr/share/icons/wsl/linux.png"},
-        {"WESTON_DISABLE_ABSTRACT_FD", "1"}
+        {"HOME", passwordEntry->pw_dir, true},
+        {"USER", passwordEntry->pw_name, true},
+        {"LOGNAME", passwordEntry->pw_name, true},
+        {"SHELL", passwordEntry->pw_shell, true},
+        {"PATH", "/usr/sbin:/usr/bin:/sbin:/bin:/usr/games", true},
+        {"XDG_RUNTIME_DIR", c_xdgRuntimeDir, false},
+        {"WAYLAND_DISPLAY", "wayland-0", false},
+        {"DISPLAY", ":0", false},
+        {"XCURSOR_PATH", "/usr/share/icons", false},
+        {"XCURSOR_THEME", "whiteglass", false},
+        {"XCURSOR_SIZE", "16", false},
+        {"PULSE_SERVER", SHARE_PATH "/PulseServer", false},
+        {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink", false},
+        {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource", false},
+        {"USE_VSOCK", socketFdString.c_str(), true},
+        {"WSL2_DEFAULT_APP_ICON", "/usr/share/icons/wsl/linux.png", false},
+        {"WSL2_DEFAULT_APP_OVERLAY_ICON", "/usr/share/icons/wsl/linux.png", false},
+        {"WESTON_DISABLE_ABSTRACT_FD", "1", true}
     };
 
     for (auto &var : variables) {
-        THROW_LAST_ERROR_IF(setenv(var.name, var.value, true) < 0);
+        THROW_LAST_ERROR_IF(setenv(var.name, var.value, var.override) < 0);
     }
 
     SetupOptionalEnv();
