@@ -122,6 +122,5 @@ load-module module-filter-apply
 ### WSLG specific ###
 ### Enable X11 bell with default bell sound from Windows.
 load-sample x11-bell /mnt/c/Windows/Media/Windows Default.wav
-# load-sample x11-bell /mnt/c/Windows/Media/ding.wav
 load-module module-x11-bell sample=x11-bell
 
