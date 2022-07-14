@@ -1,0 +1,7 @@
+
+### WSLG specific ###
+### Load Windows's default sound from Windows volume.
+load-sample x11-bell /mnt/c/Windows/Media/Windows Default.wav
+### Enable X11 bell by loading module-x11-bell.
+load-module module-x11-bell sample=x11-bell
+

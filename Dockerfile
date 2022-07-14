@@ -360,18 +360,22 @@ RUN useradd -u 1000 --create-home wslg && \
     mkdir /home/wslg/.config && \
     chown wslg /home/wslg/.config
 
+# Copy config files.
+COPY config/wsl.conf /etc/wsl.conf
+COPY config/weston.ini /home/wslg/.config/weston.ini
+COPY config/local.conf /etc/fonts/local.conf
+
+# Copy default icon file.
+COPY resources/linux.png /usr/share/icons/wsl/linux.png
+
 # Copy the built artifacts from the build stage.
 COPY --from=dev /work/build/usr/ /usr/
 COPY --from=dev /work/build/etc/ /etc/
 
-# Copy config files.
-COPY config/wsl.conf /etc/wsl.conf
-COPY config/local.conf /etc/fonts/local.conf
-COPY config/default.pa /etc/pulse/default.pa
-COPY config/weston.ini /home/wslg/.config/weston.ini
-
-# Copy default icon file.
-COPY resources/linux.png /usr/share/icons/wsl/linux.png
+# Append WSLg setttings to pulseaudio.
+COPY config/default_wslg.pa /etc/pulse/default_wslg.pa
+RUN cat /etc/pulse/default_wslg.pa >> /etc/pulse/default.pa
+RUN rm /etc/pulse/default_wslg.pa
 
 # Copy the licensing information for PulseAudio
 COPY --from=dev /work/vendor/pulseaudio/GPL \

@@ -411,6 +411,8 @@ try {
         std::vector<cap_value_t>{CAP_SETGID, CAP_SETUID}
     );
 
+    sleep(3);
+
     // Launch pulseaudio and the associated dbus daemon.
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/bin/sh",
