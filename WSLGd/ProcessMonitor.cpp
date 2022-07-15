@@ -13,7 +13,12 @@ passwd* wslgd::ProcessMonitor::GetUserInfo() const
     return m_user;
 }
 
-int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::vector<cap_value_t>&& capabilities)
+extern char **environ;
+
+int wslgd::ProcessMonitor::LaunchProcess(
+    std::vector<std::string>&& argv,
+    std::vector<cap_value_t>&& capabilities,
+    std::vector<std::string>&& env)
 {
     int childPid;
     THROW_LAST_ERROR_IF((childPid = fork()) < 0);
@@ -31,6 +36,17 @@ int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::v
         if (!capabilities.empty()) {
             THROW_LAST_ERROR_IF(prctl(PR_SET_KEEPCAPS, 1) < 0);
         }
+
+        // Construct a null-terminated environment array.
+        std::vector<const char*> environments;
+        for (char **c = environ; *c; c++) {
+            environments.push_back(*c);
+        }
+        for (auto &s : env) {
+            environments.push_back(s.c_str());
+        }
+
+        environments.push_back(nullptr);
 
         // Set user settings.
         THROW_LAST_ERROR_IF(setgid(m_user->pw_gid) < 0);
@@ -53,7 +69,7 @@ int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::v
         }
 
         // Run the process as the specified user.
-        THROW_LAST_ERROR_IF(execvp(arguments[0], const_cast<char *const *>(arguments.data())) < 0);
+        THROW_LAST_ERROR_IF(execvpe(arguments[0], const_cast<char *const *>(arguments.data()), const_cast<char *const *>(environments.data())) < 0);
     }
     CATCH_LOG();
 
@@ -62,7 +78,7 @@ int wslgd::ProcessMonitor::LaunchProcess(std::vector<std::string>&& argv, std::v
         _exit(1);
     }
 
-    m_children[childPid] = ProcessInfo{std::move(argv), std::move(capabilities)};
+    m_children[childPid] = ProcessInfo{std::move(argv), std::move(capabilities), std::move(env)};
     return childPid;
 }
 
