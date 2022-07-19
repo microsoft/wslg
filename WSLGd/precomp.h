@@ -6,6 +6,7 @@
 #include <sys/prctl.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/signalfd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
