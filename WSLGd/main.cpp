@@ -46,6 +46,15 @@ void LogException(const char *message, const char *exceptionDescription) noexcep
     return;
 }
 
+bool IsNumeric(char *str)
+{
+    char* p;
+    if (!str)
+        return false;
+    strtol(str, &p, 10);
+    return *p == 0;
+}
+
 std::string ToServiceId(unsigned int port)
 {
     int size;
@@ -82,21 +91,21 @@ std::string TranslateWindowsPath(const char * Path)
 
 bool GetEnvBool(const char *EnvName, bool DefaultValue)
 {
-	char *s;
+    char *s;
 
-	s = getenv(EnvName);
-	if (s) {
-		if (strcmp(s, "true") == 0)
-			return true;
-		else if (strcmp(s, "false") == 0)
-			return false;
-		else if (strcmp(s, "1") == 0)
-			return true;
-		else if (strcmp(s, "0") == 0)
-			return false;
-	}
+    s = getenv(EnvName);
+    if (s) {
+        if (strcmp(s, "true") == 0)
+            return true;
+        else if (strcmp(s, "false") == 0)
+            return false;
+        else if (strcmp(s, "1") == 0)
+            return true;
+        else if (strcmp(s, "0") == 0)
+            return false;
+    }
 
-	return DefaultValue;
+    return DefaultValue;
 }
 
 void SetupOptionalEnv()
@@ -292,6 +301,10 @@ try {
         isSharedMemoryMounted = false;
     }
 
+    // Construct socket option string.
+    std::string westonSocketOption("--socket=");
+    westonSocketOption += getenv("WAYLAND_DISPLAY");
+
     // Check if weston shell override is specified.
     // Otherwise, default shell is 'rdprail-shell'.
     bool isRdprailShell;
@@ -304,10 +317,6 @@ try {
         westonShellName = westonShellEnv;
         isRdprailShell = (westonShellName.compare(c_westonRdprailShell) == 0);
     }
-
-    // Construct socket option string.
-    std::string westonSocketOption("--socket=");
-    westonSocketOption += getenv("WAYLAND_DISPLAY");
 
     // Construct shell option string.
     std::string westonShellOption("--shell=");
@@ -323,47 +332,32 @@ try {
         westonLoggerOption += c_westonRdprailShell;
     }
 
+    // Construct weston option string.
+    std::string westonArgs;
+    char *gdbServerPort = getenv("WSLG_WESTON_GDBSERVER_PORT");
+    if ((access(GDBSERVER_PATH, X_OK) == 0) && IsNumeric(gdbServerPort)) {
+        westonArgs += GDBSERVER_PATH;
+        westonArgs += " :";
+        westonArgs += gdbServerPort;
+        westonArgs += " ";
+    }
+    westonArgs += "/usr/bin/weston ";
+    westonArgs += "--backend=rdp-backend.so --xwayland --log=" SHARE_PATH "/weston.log ";
+    westonArgs += westonSocketOption;
+    westonArgs += " ";
+    westonArgs += westonShellOption;
+    westonArgs += " ";
+    westonArgs += westonLoggerOption;
+
     // Launch weston.
     // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
-    if ((access(GDBSERVER_PATH, X_OK) == 0) && getenv("WSLG_WESTON_GDBSERVER_PORT")) {
-        // Run weston under gdbserver
-        constexpr auto c_westonArgsTemplate = GDBSERVER_PATH " :%s %s %s %s %s";
-        int size;
-        THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, c_westonArgsTemplate,
-            getenv("WSLG_WESTON_GDBSERVER_PORT"),
-            "/usr/bin/weston --backend=rdp-backend.so --xwayland --log=" SHARE_PATH "/weston.log",
-            westonSocketOption.c_str(),
-            westonShellOption.c_str(),
-            westonLoggerOption.c_str())) < 0);
-
-        std::string westonArgs(size + 1, '\0');
-        THROW_LAST_ERROR_IF(snprintf(&westonArgs[0], westonArgs.size(), c_westonArgsTemplate,
-            getenv("WSLG_WESTON_GDBSERVER_PORT"),
-            "/usr/bin/weston --backend=rdp-backend.so --xwayland --log=" SHARE_PATH "/weston.log",
-            westonSocketOption.c_str(),
-            westonShellOption.c_str(),
-            westonLoggerOption.c_str()) < 0);
-
-        monitor.LaunchProcess(std::vector<std::string>{
+    monitor.LaunchProcess(std::vector<std::string>{
             "/usr/bin/sh",
             "-c",
             std::move(westonArgs)
             },
             std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
         );
-    } else {
-        monitor.LaunchProcess(std::vector<std::string>{
-            "/usr/bin/weston",
-            "--backend=rdp-backend.so",
-            "--xwayland",
-            std::move(westonSocketOption),
-            std::move(westonShellOption),
-            std::move(westonLoggerOption),
-            "--log=" SHARE_PATH "/weston.log"
-            },
-            std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
-        );
-    }
 
     // Launch the mstsc/msrdc client.
     std::string remote("/v:");
