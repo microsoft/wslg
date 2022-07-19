@@ -349,6 +349,7 @@ try {
     westonArgs += " ";
     westonArgs += westonLoggerOption;
 
+    // Launch weston.
     // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
     monitor.LaunchProcess(std::vector<std::string>{
             "/usr/bin/sh",
@@ -358,7 +359,6 @@ try {
             std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
         );
 
-    // Launch weston.
     // Launch the mstsc/msrdc client.
     std::string remote("/v:");
     remote += vmId;
