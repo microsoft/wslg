@@ -7,6 +7,7 @@
 #define CONFIG_FILE ".wslgconfig"
 #define SHARE_PATH "/mnt/wslg"
 #define MSRDC_EXE "msrdc.exe"
+#define GDBSERVER_PATH "/usr/bin/gdbserver"
 
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
 constexpr auto c_userName = "wslg";
@@ -324,17 +325,45 @@ try {
 
     // Launch weston.
     // N.B. Additional capabilities are needed to setns to the mount namespace of the user distro.
-    monitor.LaunchProcess(std::vector<std::string>{
-        "/usr/bin/weston",
-        "--backend=rdp-backend.so",
-        "--xwayland",
-        std::move(westonSocketOption),
-        std::move(westonShellOption),
-        std::move(westonLoggerOption),
-        "--log=" SHARE_PATH "/weston.log"
-        },
-        std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
-    );
+    if ((access(GDBSERVER_PATH, X_OK) == 0) && getenv("WSLG_WESTON_GDBSERVER_PORT")) {
+        // Run weston under gdbserver
+        constexpr auto c_westonArgsTemplate = GDBSERVER_PATH " :%s %s %s %s %s";
+        int size;
+        THROW_LAST_ERROR_IF((size = snprintf(nullptr, 0, c_westonArgsTemplate,
+            getenv("WSLG_WESTON_GDBSERVER_PORT"),
+            "/usr/bin/weston --backend=rdp-backend.so --xwayland --log=" SHARE_PATH "/weston.log",
+            westonSocketOption.c_str(),
+            westonShellOption.c_str(),
+            westonLoggerOption.c_str())) < 0);
+
+        std::string westonArgs(size + 1, '\0');
+        THROW_LAST_ERROR_IF(snprintf(&westonArgs[0], westonArgs.size(), c_westonArgsTemplate,
+            getenv("WSLG_WESTON_GDBSERVER_PORT"),
+            "/usr/bin/weston --backend=rdp-backend.so --xwayland --log=" SHARE_PATH "/weston.log",
+            westonSocketOption.c_str(),
+            westonShellOption.c_str(),
+            westonLoggerOption.c_str()) < 0);
+
+        monitor.LaunchProcess(std::vector<std::string>{
+            "/usr/bin/sh",
+            "-c",
+            std::move(westonArgs)
+            },
+            std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
+        );
+    } else {
+        monitor.LaunchProcess(std::vector<std::string>{
+            "/usr/bin/weston",
+            "--backend=rdp-backend.so",
+            "--xwayland",
+            std::move(westonSocketOption),
+            std::move(westonShellOption),
+            std::move(westonLoggerOption),
+            "--log=" SHARE_PATH "/weston.log"
+            },
+            std::vector<cap_value_t>{CAP_SYS_ADMIN, CAP_SYS_CHROOT, CAP_SYS_PTRACE}
+        );
+    }
 
     // Launch the mstsc/msrdc client.
     std::string remote("/v:");
