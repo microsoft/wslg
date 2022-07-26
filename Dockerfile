@@ -248,6 +248,8 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dbackend-fbdev=false \
         -Dcolor-management-colord=false \
         -Dscreenshare=false \
+        -Dsystemd=false \
+        -Dwslgd=true \
         -Dremoting=false \
         -Dpipewire=false \
         -Dshell-fullscreen=false \
@@ -371,6 +373,11 @@ COPY resources/linux.png /usr/share/icons/wsl/linux.png
 # Copy the built artifacts from the build stage.
 COPY --from=dev /work/build/usr/ /usr/
 COPY --from=dev /work/build/etc/ /etc/
+
+# Append WSLg setttings to pulseaudio.
+COPY config/default_wslg.pa /etc/pulse/default_wslg.pa
+RUN cat /etc/pulse/default_wslg.pa >> /etc/pulse/default.pa
+RUN rm /etc/pulse/default_wslg.pa
 
 # Copy the licensing information for PulseAudio
 COPY --from=dev /work/vendor/pulseaudio/GPL \
