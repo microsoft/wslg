@@ -53,7 +53,6 @@ RUN echo "== Install Core dependencies ==" && \
         libltdl  \
         libltdl-devel  \
         libpng-devel  \
-        librsvg2-devel \
         libtiff  \
         libtiff-devel  \
         libusb  \
@@ -315,7 +314,6 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             libjpeg-turbo \
             libltdl \
             libpng \
-            librsvg2 \
             libsndfile \
             libwayland-client \
             libwayland-server \
