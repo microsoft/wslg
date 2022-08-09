@@ -366,6 +366,7 @@ RUN useradd -u 1000 --create-home wslg && \
 COPY config/wsl.conf /etc/wsl.conf
 COPY config/weston.ini /home/wslg/.config/weston.ini
 COPY config/local.conf /etc/fonts/local.conf
+COPY config/xorg.conf /etc/X11/xorg.conf
 
 # Copy default icon file.
 COPY resources/linux.png /usr/share/icons/wsl/linux.png
