@@ -19,6 +19,7 @@ configure_file(output: 'config.h', configuration: config_h)
 executable('WSLGd',
            'main.cpp',
            'ProcessMonitor.cpp',
+           'FontMonitor.cpp',
            dependencies: dep_winpr,
            link_args: '-lcap',
            install : true)

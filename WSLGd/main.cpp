@@ -3,6 +3,7 @@
 #include "precomp.h"
 #include "common.h"
 #include "ProcessMonitor.h"
+#include "FontMonitor.h"
 
 #define CONFIG_FILE ".wslgconfig"
 #define SHARE_PATH "/mnt/wslg"
@@ -222,6 +223,9 @@ try {
     wslgd::ProcessMonitor monitor(c_userName);
     auto passwordEntry = monitor.GetUserInfo();
 
+    // Create a font folder monitor
+    wslgd::FontMonitor fontMonitor;
+
     // Make directories and ensure the correct permissions.
     std::filesystem::create_directories(c_dbusDir);
     THROW_LAST_ERROR_IF(chown(c_dbusDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
@@ -401,6 +405,9 @@ try {
     // Wait weston to be ready before starting RDP client, pulseaudio server.
     WaitForReadyNotify(notifyFd.get());
     unlink(WESTON_NOTIFY_SOCKET);
+
+    // Start font monitoring.
+    fontMonitor.Start(); 
 
     // Launch the mstsc/msrdc client.
     std::string remote("/v:");
