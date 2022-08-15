@@ -406,8 +406,9 @@ try {
     WaitForReadyNotify(notifyFd.get());
     unlink(WESTON_NOTIFY_SOCKET);
 
-    // Start font monitoring.
-    fontMonitor.Start(); 
+    // Start font monitoring if user distro's X11 fonts to be shared with system distro.
+    if (GetEnvBool("WSLG_USE_USER_DISTRO_XFONTS", true))
+        fontMonitor.Start(); 
 
     // Launch the mstsc/msrdc client.
     std::string remote("/v:");

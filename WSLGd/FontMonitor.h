@@ -48,11 +48,9 @@ namespace wslgd
         void HandleFontsDirEvent(struct inotify_event *event);
 
         int GetFd() const { return m_fd; }
-        int GetWd() const { return m_wd; }
 
     private:
         int m_fd = -1; /* from inotify_init() */
-        int m_wd = -1; /* from inotify_add_watch() for root folder */
         std::map<std::string, std::unique_ptr<FontFolder>> m_fontMonitorFolders{};
         pthread_t m_fontMonitorThread = 0;
     };
