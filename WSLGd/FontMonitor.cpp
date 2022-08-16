@@ -43,29 +43,32 @@ wslgd::FontFolder::~FontFolder()
     }
 }
 
-void wslgd::FontFolder::ModifyX11FontPath(bool toAdd)
+void wslgd::FontFolder::ModifyX11FontPath(bool isAdd)
 {
-    int sys_ret;
     try {
-        /* update X server font path, add or remove. */
-        {
+        int sys_ret = -1;
+
+        if (m_isPathAdded != isAdd) {
+            /* update X server font path, add or remove. */
             std::string cmd(c_xset);
-            if (toAdd)
-               cmd += " +fp ";
+            if (isAdd)
+                cmd += " +fp ";
             else
-               cmd += " -fp ";
+                cmd += " -fp ";
             cmd += m_path;
             sys_ret = system(cmd.c_str());
             LOG_INFO("FontMonitor: execuate %s, returns 0x%x", cmd.c_str(), sys_ret);
         }
-        /* let X server reread font database */
-        {
+
+        if (sys_ret == 0) {
+            m_isPathAdded = isAdd;
+
+            /* let X server reread font database */
             std::string cmd(c_xset);
             cmd += " fp rehash";
             sys_ret = system(cmd.c_str());
             LOG_INFO("FontMonitor: execuate %s, returns 0x%x", cmd.c_str(), sys_ret);
         }
-        m_isPathAdded = toAdd;
     }
     CATCH_LOG();
 }
