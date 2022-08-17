@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report issues on WSL in general
+    url: https://github.com/microsoft/WSL/issues/new/choose
+    about: Please report issues not related to WSLg
