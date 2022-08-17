@@ -41,22 +41,6 @@ body:
       3.
   validations:
     required: true
-- type: markdown
-  attributes:
-    value: |
-      Below you can attach logs of WSL.
-      
-      **Log file instructions:**
-    
-      Collect WSL logs if needed by following these instructions: https://github.com/Microsoft/WSL/blob/master/CONTRIBUTING.md#8-detailed-logs
-      
-      * Attach WSLg logs from  `/mnt/wslg`
-
-      You can access the wslg logs using explorer at: `\\wsl$\<Distro-Name>\mnt\wslg` (e.g.: `\\wsl$\Ubuntu-20.04\mnt\wslg`)
-
-      * `pulseaudio.log`
-      * `weston.log`
-      * `stderr.log`
 - type: textarea
   id: logs
   attributes:
