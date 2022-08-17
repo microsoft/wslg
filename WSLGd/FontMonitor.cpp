@@ -3,7 +3,8 @@
 #include "FontMonitor.h"
 #include "common.h"
 
-#define USER_DISTRO_MOUNT_FONTPATH "/mnt/wslg/fonts/"
+#define USER_DISTRO_MOUNT_PATH "/mnt/wslg/distro"
+#define USER_DISTRO_FONTPATH USER_DISTRO_MOUNT_PATH "/usr/share/fonts/"
 
 constexpr auto c_fontsdir = "fonts.dir";
 constexpr auto c_xset = "/usr/bin/xset";
@@ -98,9 +99,9 @@ void wslgd::FontMonitor::AddMonitorFolder(const char *path)
             if (fontFolder.get()->GetWd() >= 0) {
                 m_fontMonitorFolders.insert(std::make_pair(std::move(monitorPath), std::move(fontFolder)));
                 // If this is mount path, only track under X11 folder if it's already exist.
-                if (strcmp(path, USER_DISTRO_MOUNT_FONTPATH) == 0) {
-                    if (std::filesystem::exists(USER_DISTRO_MOUNT_FONTPATH "X11/")) {
-                        AddMonitorFolder(USER_DISTRO_MOUNT_FONTPATH "X11/");
+                if (strcmp(path, USER_DISTRO_FONTPATH) == 0) {
+                    if (std::filesystem::exists(USER_DISTRO_FONTPATH "X11/")) {
+                        AddMonitorFolder(USER_DISTRO_FONTPATH "X11/");
                     }
                 } else {
                     // Otherwise, add all existing subfolders to track.
@@ -138,7 +139,7 @@ void wslgd::FontMonitor::HandleFolderEvent(struct inotify_event *event)
                 if (event->mask & (IN_CREATE|IN_MOVED_TO)) {
                     bool addMonitorFolder = true;
                     std::string fullPath(it->second->GetPath());
-                    if (fullPath.compare(USER_DISTRO_MOUNT_FONTPATH) == 0) {
+                    if (fullPath.compare(USER_DISTRO_FONTPATH) == 0) {
                         /* Immediately under mount folder, only monitor "X11" and its subfolder */
                         addMonitorFolder = (strcmp(event->name, "X11") == 0);
                     }
@@ -233,12 +234,14 @@ int wslgd::FontMonitor::Start()
         // xset must be installed.
         THROW_LAST_ERROR_IF(access(c_xset, X_OK) < 0);
 
-        // if mount folder is not exist, bail out.
-        THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_MOUNT_FONTPATH));
+        // if user distro mount folder does not exist, bail out.
+        THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_MOUNT_PATH));
+        // and check fonts path inside user distro.
+        THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_FONTPATH));
 
         // start monitoring on mounted font folder.
         THROW_LAST_ERROR_IF((m_fd = inotify_init()) < 0);
-        AddMonitorFolder(USER_DISTRO_MOUNT_FONTPATH);
+        AddMonitorFolder(USER_DISTRO_FONTPATH);
 
         // Create font folder monitor thread.
         THROW_LAST_ERROR_IF(pthread_create(&m_fontMonitorThread, NULL, FontMonitorThread, (void*)this) < 0);
@@ -264,7 +267,7 @@ void wslgd::FontMonitor::Stop()
         m_fontMonitorThread = 0;
     }
 
-    RemoveMonitorFolder(USER_DISTRO_MOUNT_FONTPATH);
+    RemoveMonitorFolder(USER_DISTRO_FONTPATH);
     m_fontMonitorFolders.clear();
 
     if (m_fd >= 0) {
