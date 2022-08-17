@@ -1,7 +1,6 @@
 name: "Bug report"
 description: " Report a bug in WSLg"
 labels: "bug"
-issue_body: true
 body:
 - type: input
   id: build-number
