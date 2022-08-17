@@ -35,12 +35,54 @@ body:
   id: reproduce-steps
   attributes:
     label: "Steps to reproduce:"
-    description: ""
     placeholder: |
       1.
       2.
       3.
-    value: |
-      
   validations:
     required: true
+- type: markdown
+  attributes:
+    value: |
+      Below you can attach logs of WSL.
+      
+      **Log file instructions:**
+    
+      Collect WSL logs if needed by following these instructions: https://github.com/Microsoft/WSL/blob/master/CONTRIBUTING.md#8-detailed-logs
+      
+      * Attach WSLg logs from  `/mnt/wslg`
+
+      You can access the wslg logs using explorer at: `\\wsl$\<Distro-Name>\mnt\wslg` (e.g.: `\\wsl$\Ubuntu-20.04\mnt\wslg`)
+
+      * `pulseaudio.log`
+      * `weston.log`
+      * `stderr.log`
+- type: textarea
+  id: logs
+  attributes:
+    label: "WSL logs:"
+    placeholder: |
+      Drag and drop files into this input field to upload them.
+  validations:
+    required: false 
+- type: textarea
+  id: dumps
+  attributes:
+    label: "WSL dumps"
+    description: "Attach any dump files from `/mnt/wslg/dumps`, such as core.weston, if exists."
+  validations:
+    required: false
+- type: textarea
+  id: expected-behavior
+  attributes:
+    label: "Expected behavior:"
+    description: "A description of what you're expecting, possibly containing screenshots or reference material"
+  validations:
+    required: false
+- type: textarea
+  id: actual-behavior
+  attributes:
+    label: "Actual behavior"
+    description: "What's actually happening?"
+  validations:
+    required: true    
