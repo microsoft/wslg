@@ -17,11 +17,30 @@ body:
     description: "On Debian or Ubuntu run `lsb_release -r` in WSL"
     placeholder: "20.04"
   validations:
-    required: false
+    required: true
 - type: textarea
   id: wsl-version
   attributes:
     label: "Your WSL versions:"
     description: "run `wsl --version` on Windows command prompt"
+  validations:
+    required: true
+- type: markdown
+  attributes:
+    value: |
+      **(Optional) Verifiy using the latest release of WSL/WSLg**:
+      
+      It is always good idea to verify the issue is still reproducible on the latest WSL/WSLg release whenever possible. WSL/WSLg can be updated from https://aka.ms/wslstorepage, or when Microsoft Store is not accessible from your environment, by downloading the latest release package (.msixbundle) from https://github.com/microsoft/WSL/releases.
+- type: textarea
+  id: reproduce-steps
+  attributes:
+    label: "Steps to reproduce:"
+    description: ""
+    placeholder: |
+      1.
+      2.
+      3.
+    value: |
+      
   validations:
     required: true
