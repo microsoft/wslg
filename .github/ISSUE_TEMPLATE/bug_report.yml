@@ -68,7 +68,7 @@ body:
 - type: textarea
   id: dumps
   attributes:
-    label: "WSL dumps"
+    label: "WSL dumps:"
     description: "Attach any dump files from `/mnt/wslg/dumps`, such as core.weston, if exists."
   validations:
     required: false
@@ -82,7 +82,7 @@ body:
 - type: textarea
   id: actual-behavior
   attributes:
-    label: "Actual behavior"
+    label: "Actual behavior:"
     description: "What's actually happening?"
   validations:
     required: true    
