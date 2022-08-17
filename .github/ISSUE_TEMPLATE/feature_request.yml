@@ -1,7 +1,6 @@
 name: "Feature request"
 description: "Suggest a feature for WSLg"
 labels: "enhancement"
-issue_body: false
 body:
 - type: textarea
   attributes:
