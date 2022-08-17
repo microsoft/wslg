@@ -1,0 +1,36 @@
+name: "Bug report"
+description: " Report a bug in WSLg"
+title: ""
+labels: "bug"
+assignees: ""
+issue_body: true
+body:
+- type: input
+  id: build-number
+  attributes:
+    label: "Windows build number:"
+    description: "run `[Environment]::OSVersion` for powershell, or `ver` for cmd"
+    placeholder: "22000.100"
+    value: ""
+  validations:
+    required: true
+- type: input
+  id: distribution_version
+  attributes:
+    label: "Your Distribution version:"
+    description: "[On Debian or Ubuntu run `lsb_release -r` in WSL]"
+    placeholder: "20.04"
+    value: ""
+  validations:
+    required: false
+- type: textarea
+  id: wsl-version
+  attributes:
+    label: "Your WSL versions:"
+    description: "run `wsl --version` on Windows command prompt"
+    placeholder: |
+      
+    value: |
+      
+  validations:
+    required: true
