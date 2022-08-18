@@ -7,8 +7,13 @@
 #include "WSLDVCCallback.h"
 #include "WSLDVCFileDB.h"
 
+#ifdef WSLG_INBOX
 LPCWSTR c_WSL_exe = L"%windir%\\system32\\wsl.exe";
 LPCWSTR c_WSLg_exe = L"%windir%\\system32\\wslg.exe";
+#else
+LPCWSTR c_WSLg_exe = L"%localappdata%\\Microsoft\\WindowsApps\\MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe\\wslg.exe";
+#endif // WSLG_INBOX
+
 LPCWSTR c_Working_dir = L"%windir%\\system32";
 
 //
@@ -385,6 +390,7 @@ public:
         }
         DebugPrint(L"WSLg.exe: %s\n", m_expandedPathObj);
 
+#ifdef WSLG_INBOX
         if (!PathFileExistsW(m_expandedPathObj) || !IsFileTrusted(m_expandedPathObj))
         {
             if (ExpandEnvironmentStringsW(c_WSL_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
@@ -400,6 +406,7 @@ public:
                 return E_FAIL;
             }
         }
+#endif // WSLG_INBOX
 
         if (ExpandEnvironmentStringsW(c_Working_dir, m_expandedWorkingDir, ARRAYSIZE(m_expandedWorkingDir)) == 0)
         {
