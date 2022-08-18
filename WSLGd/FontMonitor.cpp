@@ -73,6 +73,7 @@ void wslgd::FontFolder::ModifyX11FontPath(bool isAdd)
                 m_isPathAdded = isAdd;
 
                 /* let X server reread font database */
+                sleep(2); /* workaround for optional fonts.alias, wait 2 sec to run rehash */
                 std::string cmd(c_xset);
                 cmd += " fp rehash";
                 ExecuteShellCommand(cmd.c_str());
