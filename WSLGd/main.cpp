@@ -32,6 +32,7 @@ constexpr auto c_sharedMemoryMountPoint = "/mnt/shared_memory";
 constexpr auto c_sharedMemoryMountPointEnv = "WSL2_SHARED_MEMORY_MOUNT_POINT";
 constexpr auto c_sharedMemoryObDirectoryPathEnv = "WSL2_SHARED_MEMORY_OB_DIRECTORY";
 
+constexpr auto c_executionAliasPathEnv = "WSL2_EXECUTION_ALIAS_PATH";
 constexpr auto c_installPathEnv = "WSL2_INSTALL_PATH";
 constexpr auto c_userProfileEnv = "WSL2_USER_PROFILE";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
@@ -205,6 +206,12 @@ try {
     if (installPath) {
         isWslInstallPathEnvPresent = true;
         wslInstallPath = installPath;
+    }
+
+    std::string wslExecutionAliasPath;
+    auto executionAliasPath = getenv(c_executionAliasPathEnv);
+    if (executionAliasPath) {
+        wslExecutionAliasPath = executionAliasPath;
     }
 
     // Bind mount the versions.txt file which contains version numbers of the various WSLG pieces.
@@ -415,8 +422,8 @@ try {
 
     std::string rdpClientExePath = c_mstscFullPath;
     bool isUseMstsc = GetEnvBool("WSLG_USE_MSTSC", false);
-    if (!isUseMstsc && isWslInstallPathEnvPresent) {
-        std::string msrdcExePath = TranslateWindowsPath(wslInstallPath.c_str());
+    if (!isUseMstsc && !wslExecutionAliasPath.empty()) {
+        std::string msrdcExePath = TranslateWindowsPath(wslExecutionAliasPath.c_str());
         msrdcExePath += "/" MSRDC_EXE;
         if (access(msrdcExePath.c_str(), X_OK) == 0) {
             rdpClientExePath = std::move(msrdcExePath);
