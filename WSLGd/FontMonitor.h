@@ -13,14 +13,16 @@ namespace wslgd
 
         void ModifyX11FontPath(bool add);
 
-        int GetFd() const { return m_fd; }
+        static bool ExecuteShellCommand(const char *cmd);
+
+        int GetFd() const { return m_fd.get(); }
         int GetWd() const { return m_wd; }
 
         bool IsPathAdded() const { return m_isPathAdded; }
         const char *GetPath() const { return m_path.c_str(); }
 
     private:
-        int m_fd = -1; /* from FontMonitor's inotify_init() */
+        wil::unique_fd m_fd; /* from FontMonitor's inotify_init() */
         int m_wd = -1; /* from inotify_add_watch() for this folder */
         std::string m_path; /* this folder path */
         bool m_isPathAdded = false; /* whether font path is added to X11 font path */
@@ -47,10 +49,10 @@ namespace wslgd
         void HandleFolderEvent(struct inotify_event *event);
         void HandleFontsDirEvent(struct inotify_event *event);
 
-        int GetFd() const { return m_fd; }
+        int GetFd() const { return m_fd.get(); }
 
     private:
-        int m_fd = -1; /* from inotify_init() */
+        wil::unique_fd m_fd; /* from inotify_init() */
         std::map<std::string, std::unique_ptr<FontFolder>> m_fontMonitorFolders{};
         pthread_t m_fontMonitorThread = 0;
     };

@@ -13,7 +13,7 @@ wslgd::FontFolder::FontFolder(int fd, const char *path)
 {
     LOG_INFO("FontMonitor: start monitoring %s", path);
 
-    m_fd = fd;
+    m_fd.reset(fd);
     m_path = path;
 
     /* check if folder is already ready to be added to font path */
@@ -24,7 +24,7 @@ wslgd::FontFolder::FontFolder(int fd, const char *path)
             ModifyX11FontPath(true);
         }
         /* add watch for install or uninstall of fonts on this folder */
-        THROW_LAST_ERROR_IF((m_wd = inotify_add_watch(m_fd, path, IN_CREATE|IN_CLOSE_WRITE|IN_DELETE|IN_MOVED_TO|IN_MOVED_FROM)) < 0);
+        THROW_LAST_ERROR_IF((m_wd = inotify_add_watch(m_fd.get(), path, IN_CREATE|IN_CLOSE_WRITE|IN_DELETE|IN_MOVED_TO|IN_MOVED_FROM)) < 0);
     }
     CATCH_LOG();
 }
@@ -33,22 +33,34 @@ wslgd::FontFolder::~FontFolder()
 {
     LOG_INFO("FontMonitor: stop monitoring %s", m_path.c_str());
 
-    if (m_isPathAdded) {
-        ModifyX11FontPath(false);
-    }
+    ModifyX11FontPath(false);
 
     /* if still under watch, remove it */
     if (m_wd >= 0) {
-        inotify_rm_watch(m_fd, m_wd);
+        inotify_rm_watch(m_fd.get(), m_wd);
         m_wd = -1;
     }
+
+    m_fd.release(); /* do not close */
+}
+
+bool wslgd::FontFolder::ExecuteShellCommand(const char *cmd)
+{
+    bool success = false;
+    try {
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+        THROW_LAST_ERROR_IF(!pipe);
+        THROW_ERRNO_IF(EINVAL, pclose(pipe.release()) != 0);
+        success = true;
+    }
+    CATCH_LOG();
+    LOG_INFO("FontMonitor: execuate %s, %s", cmd, success ? "success" : "fail");
+    return success;
 }
 
 void wslgd::FontFolder::ModifyX11FontPath(bool isAdd)
 {
     try {
-        int sys_ret = -1;
-
         if (m_isPathAdded != isAdd) {
             /* update X server font path, add or remove. */
             std::string cmd(c_xset);
@@ -57,18 +69,14 @@ void wslgd::FontFolder::ModifyX11FontPath(bool isAdd)
             else
                 cmd += " -fp ";
             cmd += m_path;
-            sys_ret = system(cmd.c_str());
-            LOG_INFO("FontMonitor: execuate %s, returns 0x%x", cmd.c_str(), sys_ret);
-        }
+            if (ExecuteShellCommand(cmd.c_str())) {
+                m_isPathAdded = isAdd;
 
-        if (sys_ret == 0) {
-            m_isPathAdded = isAdd;
-
-            /* let X server reread font database */
-            std::string cmd(c_xset);
-            cmd += " fp rehash";
-            sys_ret = system(cmd.c_str());
-            LOG_INFO("FontMonitor: execuate %s, returns 0x%x", cmd.c_str(), sys_ret);
+                /* let X server reread font database */
+                std::string cmd(c_xset);
+                cmd += " fp rehash";
+                ExecuteShellCommand(cmd.c_str());
+            }
         }
     }
     CATCH_LOG();
@@ -95,7 +103,7 @@ void wslgd::FontMonitor::AddMonitorFolder(const char *path)
         std::string monitorPath(path);
         // checkf if path is tracked already.
         if (m_fontMonitorFolders.find(monitorPath) == m_fontMonitorFolders.end()) {
-            std::unique_ptr<FontFolder> fontFolder(new FontFolder(m_fd, path));
+            std::unique_ptr<FontFolder> fontFolder(new FontFolder(m_fd.get(), path));
             if (fontFolder.get()->GetWd() >= 0) {
                 m_fontMonitorFolders.insert(std::make_pair(std::move(monitorPath), std::move(fontFolder)));
                 // If this is mount path, only track under X11 folder if it's already exist.
@@ -228,7 +236,6 @@ int wslgd::FontMonitor::Start()
 
     assert(m_fontMonitorFolders.empty());
     assert(!m_fontMonitorThread);
-    assert(m_fd == -1);
 
     try {
         // xset must be installed.
@@ -240,7 +247,9 @@ int wslgd::FontMonitor::Start()
         THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_FONTPATH));
 
         // start monitoring on mounted font folder.
-        THROW_LAST_ERROR_IF((m_fd = inotify_init()) < 0);
+        wil::unique_fd fd(inotify_init());
+        THROW_LAST_ERROR_IF(!fd);
+        m_fd.reset(fd.release());
         AddMonitorFolder(USER_DISTRO_FONTPATH);
 
         // Create font folder monitor thread.
@@ -270,10 +279,7 @@ void wslgd::FontMonitor::Stop()
     RemoveMonitorFolder(USER_DISTRO_FONTPATH);
     m_fontMonitorFolders.clear();
 
-    if (m_fd >= 0) {
-        close(m_fd);
-        m_fd = -1;
-    }
+    m_fd.reset();
 
     LOG_INFO("FontMonitor: monitoring stopped.");
 }
