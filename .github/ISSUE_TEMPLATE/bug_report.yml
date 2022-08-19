@@ -1,0 +1,82 @@
+name: "Bug report"
+description: " Report a bug in WSLg"
+labels: "bug"
+body:
+- type: input
+  id: build-number
+  attributes:
+    label: "Windows build number:"
+    description: "run `[Environment]::OSVersion` for powershell, or `ver` for cmd"
+    placeholder: "22000.100"
+  validations:
+    required: true
+- type: input
+  id: distribution_version
+  attributes:
+    label: "Your Distribution version:"
+    description: "On Debian or Ubuntu run `lsb_release -r` in WSL"
+    placeholder: "20.04"
+  validations:
+    required: true
+- type: textarea
+  id: wsl-version
+  attributes:
+    label: "Your WSL versions:"
+    description: "run `wsl --version` on Windows command prompt"
+  validations:
+    required: true
+- type: markdown
+  attributes:
+    value: |
+      **(Optional) Verifiy using the latest release of WSL/WSLg**:
+      
+      It is always good idea to verify the issue is still reproducible on the latest WSL/WSLg release whenever possible. WSL/WSLg can be updated from https://aka.ms/wslstorepage, or when Microsoft Store is not accessible from your environment, by downloading the latest release package (.msixbundle) from https://github.com/microsoft/WSL/releases.
+- type: textarea
+  id: reproduce-steps
+  attributes:
+    label: "Steps to reproduce:"
+    placeholder: |
+      1.
+      2.
+      3.
+  validations:
+    required: true
+- type: textarea
+  id: logs
+  attributes:
+    description: |
+      Collect WSL logs if needed by following these instructions: https://github.com/Microsoft/WSL/blob/master/CONTRIBUTING.md#8-detailed-logs
+      
+      * Attach WSLg logs from  `/mnt/wslg`
+
+      You can access the wslg logs using explorer at: `\\wsl$\<Distro-Name>\mnt\wslg` (e.g.: `\\wsl$\Ubuntu-20.04\mnt\wslg`)
+
+      * `pulseaudio.log`
+      * `weston.log`
+      * `stderr.log`
+    label: "WSL logs:"
+    placeholder: |
+      Drag and drop files into this input field to upload them.
+  validations:
+    required: false 
+- type: textarea
+  id: dumps
+  attributes:
+    label: "WSL dumps:"
+    description: "Attach any dump files from `/mnt/wslg/dumps`, such as core.weston, if exists."
+  validations:
+    required: false
+- type: textarea
+  id: expected-behavior
+  attributes:
+    label: "Expected behavior:"
+    description: "A description of what you're expecting, possibly containing screenshots or reference material"
+  validations:
+    required: false
+- type: textarea
+  id: actual-behavior
+  attributes:
+    label: "Actual behavior:"
+    description: "What's actually happening?"
+  validations:
+    required: true    
