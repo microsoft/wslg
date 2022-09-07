@@ -13,7 +13,7 @@ namespace wslgd
 
         void ModifyX11FontPath(bool add);
 
-        static bool ExecuteShellCommand(const char *cmd);
+        static void ExecuteShellCommand(const char *cmd);
 
         int GetFd() const { return m_fd.get(); }
         int GetWd() const { return m_wd; }

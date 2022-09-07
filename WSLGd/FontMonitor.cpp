@@ -44,40 +44,40 @@ wslgd::FontFolder::~FontFolder()
     m_fd.release(); /* do not close */
 }
 
-bool wslgd::FontFolder::ExecuteShellCommand(const char *cmd)
+void wslgd::FontFolder::ExecuteShellCommand(const char *cmd)
 {
     bool success = false;
     try {
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
         THROW_LAST_ERROR_IF(!pipe);
-        THROW_ERRNO_IF(EINVAL, pclose(pipe.release()) != 0);
+        THROW_LAST_ERROR_IF(pclose(pipe.release()) != 0);
         success = true;
     }
     CATCH_LOG();
     LOG_INFO("FontMonitor: execuate %s, %s", cmd, success ? "success" : "fail");
-    return success;
 }
 
 void wslgd::FontFolder::ModifyX11FontPath(bool isAdd)
 {
     try {
-        if (m_isPathAdded != isAdd) {
-            /* update X server font path, add or remove. */
+        /* update X server font path, add or remove. */
+        {
             std::string cmd(c_xset);
             if (isAdd)
                 cmd += " +fp ";
             else
                 cmd += " -fp ";
             cmd += m_path;
-            if (ExecuteShellCommand(cmd.c_str())) {
-                m_isPathAdded = isAdd;
+            ExecuteShellCommand(cmd.c_str());
+            m_isPathAdded = isAdd;
+        }
 
-                /* let X server reread font database */
-                sleep(2); /* workaround for optional fonts.alias, wait 2 sec to run rehash */
-                std::string cmd(c_xset);
-                cmd += " fp rehash";
-                ExecuteShellCommand(cmd.c_str());
-            }
+        /* let X server reread font database */
+        {
+            std::string cmd(c_xset);
+            cmd += " fp rehash";
+            sleep(2); /* workaround for optional fonts.alias, wait 2 sec to run rehash */
+            ExecuteShellCommand(cmd.c_str());
         }
     }
     CATCH_LOG();
