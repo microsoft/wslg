@@ -4,7 +4,7 @@
 #include "common.h"
 
 #define USER_DISTRO_MOUNT_PATH "/mnt/wslg/distro"
-#define USER_DISTRO_FONTPATH USER_DISTRO_MOUNT_PATH "/usr/share/fonts/"
+#define USER_DISTRO_FONTPATH USER_DISTRO_MOUNT_PATH "/usr/share/fonts"
 
 constexpr auto c_fontsdir = "fonts.dir";
 constexpr auto c_xset = "/usr/bin/xset";
@@ -13,16 +13,17 @@ wslgd::FontFolder::FontFolder(int fd, const char *path)
 {
     LOG_INFO("FontMonitor: start monitoring %s", path);
 
-    m_fd.reset(fd);
     m_path = path;
 
     /* check if folder is already ready to be added to font path */
     try {
-        std::string fonts_dir(path);
-        fonts_dir += c_fontsdir;
+        std::filesystem::path fonts_dir(path);
+        fonts_dir /= c_fontsdir;
         if (access(fonts_dir.c_str(), R_OK) == 0) {
             ModifyX11FontPath(true);
         }
+        m_fd.reset(dup(fd));
+        THROW_LAST_ERROR_IF(!m_fd);
         /* add watch for install or uninstall of fonts on this folder */
         THROW_LAST_ERROR_IF((m_wd = inotify_add_watch(m_fd.get(), path, IN_CREATE|IN_CLOSE_WRITE|IN_DELETE|IN_MOVED_TO|IN_MOVED_FROM)) < 0);
     }
@@ -40,8 +41,6 @@ wslgd::FontFolder::~FontFolder()
         inotify_rm_watch(m_fd.get(), m_wd);
         m_wd = -1;
     }
-
-    m_fd.release(); /* do not close */
 }
 
 void wslgd::FontFolder::ExecuteShellCommand(const char *cmd)
@@ -109,16 +108,14 @@ void wslgd::FontMonitor::AddMonitorFolder(const char *path)
                 m_fontMonitorFolders.insert(std::make_pair(std::move(monitorPath), std::move(fontFolder)));
                 // If this is mount path, only track under X11 folder if it's already exist.
                 if (strcmp(path, USER_DISTRO_FONTPATH) == 0) {
-                    if (std::filesystem::exists(USER_DISTRO_FONTPATH "X11/")) {
-                        AddMonitorFolder(USER_DISTRO_FONTPATH "X11/");
+                    if (std::filesystem::exists(USER_DISTRO_FONTPATH "/X11")) {
+                        AddMonitorFolder(USER_DISTRO_FONTPATH "/X11");
                     }
                 } else {
                     // Otherwise, add all existing subfolders to track.
                     for (auto& dir_entry : std::filesystem::directory_iterator{path}) {
                         if (dir_entry.is_directory()) {
-                            std::string dirEntry(dir_entry.path().c_str());
-                            dirEntry += "/";
-                            AddMonitorFolder(dirEntry.c_str());
+                            AddMonitorFolder(dir_entry.path().c_str());
                         }
                     }
                 }
@@ -132,6 +129,8 @@ void wslgd::FontMonitor::AddMonitorFolder(const char *path)
 
 void wslgd::FontMonitor::RemoveMonitorFolder(const char *path)
 {
+    LOG_INFO("FontMonitor: removing monitoring %s", path);
+
     try {
         std::string monitorPath(path);
         m_fontMonitorFolders.erase(monitorPath);
@@ -147,20 +146,18 @@ void wslgd::FontMonitor::HandleFolderEvent(struct inotify_event *event)
             if (event->wd == it->second->GetWd()) {
                 if (event->mask & (IN_CREATE|IN_MOVED_TO)) {
                     bool addMonitorFolder = true;
-                    std::string fullPath(it->second->GetPath());
+                    std::filesystem::path fullPath(it->second->GetPath());
                     if (fullPath.compare(USER_DISTRO_FONTPATH) == 0) {
                         /* Immediately under mount folder, only monitor "X11" and its subfolder */
                         addMonitorFolder = (strcmp(event->name, "X11") == 0);
                     }
                     if (addMonitorFolder) {
-                        fullPath += event->name;
-                        fullPath += "/";
+                        fullPath /= event->name;
                         AddMonitorFolder(fullPath.c_str());
                     }
                 } else if (event->mask & (IN_DELETE|IN_MOVED_FROM)) {
-                    std::string fullPath(it->second->GetPath());
-                    fullPath += event->name;
-                    fullPath += "/";
+                    std::filesystem::path fullPath(it->second->GetPath());
+                    fullPath /= event->name;
                     RemoveMonitorFolder(fullPath.c_str());
                 }
                 break;
@@ -177,9 +174,8 @@ void wslgd::FontMonitor::HandleFontsDirEvent(struct inotify_event *event)
         for (it = m_fontMonitorFolders.begin(); it != m_fontMonitorFolders.end(); it++) {
             if (event->wd == it->second->GetWd()) {
                 if (event->mask & (IN_CREATE|IN_CLOSE_WRITE|IN_MOVED_TO)) {
-                    std::string fonts_dir(it->second->GetPath());
-                    fonts_dir += "/";
-                    fonts_dir += event->name;
+                    std::filesystem::path fonts_dir(it->second->GetPath());
+                    fonts_dir /= event->name;
                     THROW_LAST_ERROR_IF(access(fonts_dir.c_str(), R_OK) != 0);
                     it->second->ModifyX11FontPath(true);
                 } else if (event->mask & (IN_DELETE|IN_MOVED_FROM)) {
