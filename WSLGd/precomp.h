@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/inotify.h>
+#include <assert.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -21,12 +23,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <linux/vm_sockets.h>
 #include <filesystem>
 #include <map>
 #include <new>
-#include <vector>
-#include <map>
 #include <vector>
 #include "config.h"
 #include "lxwil.h"

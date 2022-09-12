@@ -331,6 +331,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             wayland-protocols-devel \
             xcursor-themes \
             xorg-x11-server-Xwayland \
+            xorg-x11-server-utils \
             xorg-x11-xtrans-devel
 
 # Install packages to aid in development, if not remove some packages. 
