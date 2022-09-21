@@ -43,6 +43,9 @@ constexpr auto c_mstscFullPath = "/mnt/c/Windows/System32/mstsc.exe";
 constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
 constexpr auto c_westonRdprailShell = "rdprail-shell";
 
+constexpr auto c_rdpFileOverrideEnv = "WSL2_RDP_CONFIG_OVERRIDE";
+constexpr auto c_rdpFile = "wslg.rdp";
+
 void LogException(const char *message, const char *exceptionDescription) noexcept
 {
     fprintf(stderr, "<3>WSLGd: %s %s", message ? message : "Exception:", exceptionDescription);
@@ -446,7 +449,20 @@ try {
     else
         wslDvcPlugin = "/plugin:WSLDVC";
 
-    std::string rdpFilePath = wslInstallPath + "\\wslg.rdp";
+    std::filesystem::path rdpFilePath(wslInstallPath);
+    auto rdpFile = getenv(c_rdpFileOverrideEnv);
+    if (rdpFile) {
+        if (strstr(rdpFile, "..\\")) {
+            LOG_ERROR("RDP file must be placed under WSL install path (%s)", rdpFile);
+            rdpFile = nullptr;
+        }
+    }
+    if (rdpFile) {
+        rdpFilePath /= rdpFile;
+    } else {
+        rdpFilePath /= c_rdpFile;
+    }
+
     monitor.LaunchProcess(std::vector<std::string>{
         std::move(rdpClientExePath),
         std::move(remote),

@@ -32,5 +32,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <file src="package/WSLDVCPlugin_ARM64.pdb" target="build/native/bin/arm64/WSLDVCPlugin.pdb" />
 
     <file src="package/wslg.rdp" target="build/native/bin/wslg.rdp" />
+    <file src="package/wslg_desktop.rdp" target="build/native/bin/wslg_desktop.rdp" />
   </files>
 </package>
