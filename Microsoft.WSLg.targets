@@ -22,5 +22,9 @@ Copyright (C) Microsoft Corporation. All rights reserved.
       <Link>wslg.rdp</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)native\bin\wslg_desktop.rdp">
+      <Link>wslg_desktop.rdp</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
