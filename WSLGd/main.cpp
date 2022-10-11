@@ -348,7 +348,6 @@ try {
     std::string westonSocketOption("--socket=");
     westonSocketOption += getenv("WAYLAND_DISPLAY");
 
-
     // Check if weston shell override is specified.
     // Otherwise, default shell is 'rdprail-shell'.
     bool isRdprailShell;
