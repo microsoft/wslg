@@ -6,10 +6,11 @@
 #include "FontMonitor.h"
 
 #define CONFIG_FILE ".wslgconfig"
-#define SHARE_PATH "/mnt/wslg"
 #define MSRDC_EXE "msrdc.exe"
 #define GDBSERVER_PATH "/usr/bin/gdbserver"
 #define WESTON_NOTIFY_SOCKET SHARE_PATH "/weston-notify.sock"
+#define DEFAULT_ICON_PATH "/usr/share/icons"
+#define USER_DISTRO_ICON_PATH USER_DISTRO_MOUNT_PATH DEFAULT_ICON_PATH
 
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
 constexpr auto c_userName = "wslg";
@@ -277,6 +278,8 @@ try {
     THROW_LAST_ERROR_IF(bind(socketFd.get(), reinterpret_cast<const sockaddr*>(&address), addressSize) < 0);
     THROW_LAST_ERROR_IF(listen(socketFd.get(), 1) < 0);
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
+    std::string socketEnvString("USE_VSOCK=");
+    socketEnvString += socketFdString;
 
     // Set required environment variables.
     struct envVar{ const char* name; const char* value; bool override; };
@@ -289,15 +292,14 @@ try {
         {"XDG_RUNTIME_DIR", c_xdgRuntimeDir, false},
         {"WAYLAND_DISPLAY", "wayland-0", false},
         {"DISPLAY", ":0", false},
-        {"XCURSOR_PATH", "/usr/share/icons", false},
+        {"XCURSOR_PATH", USER_DISTRO_ICON_PATH ":" DEFAULT_ICON_PATH , false},
         {"XCURSOR_THEME", "whiteglass", false},
         {"XCURSOR_SIZE", "16", false},
         {"PULSE_SERVER", SHARE_PATH "/PulseServer", false},
         {"PULSE_AUDIO_RDP_SINK", SHARE_PATH "/PulseAudioRDPSink", false},
         {"PULSE_AUDIO_RDP_SOURCE", SHARE_PATH "/PulseAudioRDPSource", false},
-        {"USE_VSOCK", socketFdString.c_str(), true},
-        {"WSL2_DEFAULT_APP_ICON", "/usr/share/icons/wsl/linux.png", false},
-        {"WSL2_DEFAULT_APP_OVERLAY_ICON", "/usr/share/icons/wsl/linux.png", false},
+        {"WSL2_DEFAULT_APP_ICON", DEFAULT_ICON_PATH "/wsl/linux.png", false},
+        {"WSL2_DEFAULT_APP_OVERLAY_ICON", DEFAULT_ICON_PATH "/wsl/linux.png", false},
     };
 
     for (auto &var : variables) {
@@ -407,6 +409,7 @@ try {
                 CAP_SYS_PTRACE
             },
             std::vector<std::string>{
+                std::move(socketEnvString),
                 "WSLGD_NOTIFY_SOCKET=" WESTON_NOTIFY_SOCKET,
                 "WESTON_DISABLE_ABSTRACT_FD=1"
             }
@@ -431,14 +434,17 @@ try {
         sharedMemoryObPath += sharedMemoryObDirectoryPath;
     }
 
-    std::string rdpClientExePath = c_mstscFullPath;
+    std::filesystem::path rdpClientExePath;
     bool isUseMstsc = GetEnvBool("WSLG_USE_MSTSC", false);
     if (!isUseMstsc && !wslExecutionAliasPath.empty()) {
-        std::string msrdcExePath = TranslateWindowsPath(wslExecutionAliasPath.c_str());
-        msrdcExePath += "/" MSRDC_EXE;
+        std::filesystem::path msrdcExePath = TranslateWindowsPath(wslExecutionAliasPath.c_str());
+        msrdcExePath /= MSRDC_EXE;
         if (access(msrdcExePath.c_str(), X_OK) == 0) {
             rdpClientExePath = std::move(msrdcExePath);
         }
+    }
+    if (rdpClientExePath.empty()) {
+        rdpClientExePath = c_mstscFullPath;
     }
 
     std::string wslDvcPlugin;
@@ -449,18 +455,19 @@ try {
     else
         wslDvcPlugin = "/plugin:WSLDVC";
 
-    std::filesystem::path rdpFilePath(wslInstallPath);
+    std::string rdpFilePathArg(wslInstallPath);
     auto rdpFile = getenv(c_rdpFileOverrideEnv);
     if (rdpFile) {
-        if (strstr(rdpFile, "..\\")) {
-            LOG_ERROR("RDP file must be placed under WSL install path (%s)", rdpFile);
+        if (strstr(rdpFile, "..\\") || strstr(rdpFile, "../")) {
+            LOG_ERROR("RDP file must not contain relative path (%s)", rdpFile);
             rdpFile = nullptr;
         }
     }
+    rdpFilePathArg += "\\"; // Windows-style path
     if (rdpFile) {
-        rdpFilePath /= rdpFile;
+        rdpFilePathArg += rdpFile;
     } else {
-        rdpFilePath /= c_rdpFile;
+        rdpFilePathArg += c_rdpFile;
     }
 
     monitor.LaunchProcess(std::vector<std::string>{
@@ -471,7 +478,7 @@ try {
         "/wslg",
         std::move(wslDvcPlugin),
         std::move(sharedMemoryObPath),
-        std::move(rdpFilePath)
+        std::move(rdpFilePathArg)
     });
 
     // Launch the system dbus daemon.

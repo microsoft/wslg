@@ -3,8 +3,8 @@
 #include "FontMonitor.h"
 #include "common.h"
 
-#define USER_DISTRO_MOUNT_PATH "/mnt/wslg/distro"
-#define USER_DISTRO_FONTPATH USER_DISTRO_MOUNT_PATH "/usr/share/fonts"
+#define DEFAULT_FONT_PATH "/usr/share/fonts"
+#define USER_DISTRO_FONT_PATH USER_DISTRO_MOUNT_PATH DEFAULT_FONT_PATH
 
 constexpr auto c_fontsdir = "fonts.dir";
 constexpr auto c_xset = "/usr/bin/xset";
@@ -58,26 +58,24 @@ void wslgd::FontFolder::ExecuteShellCommand(const char *cmd)
 
 void wslgd::FontFolder::ModifyX11FontPath(bool isAdd)
 {
+    sleep(2); /* workaround for optional fonts.alias, wait 2 sec before invoking xset */
     try {
         /* update X server font path, add or remove. */
-        {
-            std::string cmd(c_xset);
-            if (isAdd)
-                cmd += " +fp ";
-            else
-                cmd += " -fp ";
-            cmd += m_path;
-            ExecuteShellCommand(cmd.c_str());
-            m_isPathAdded = isAdd;
-        }
+        std::string cmd;
+
+        cmd = c_xset;
+        if (isAdd)
+            cmd += " +fp ";
+        else
+            cmd += " -fp ";
+        cmd += m_path;
+        ExecuteShellCommand(cmd.c_str());
+        m_isPathAdded = isAdd;
 
         /* let X server reread font database */
-        {
-            std::string cmd(c_xset);
-            cmd += " fp rehash";
-            sleep(2); /* workaround for optional fonts.alias, wait 2 sec to run rehash */
-            ExecuteShellCommand(cmd.c_str());
-        }
+        cmd = c_xset;
+        cmd += " fp rehash";
+        ExecuteShellCommand(cmd.c_str());
     }
     CATCH_LOG();
 }
@@ -107,9 +105,9 @@ void wslgd::FontMonitor::AddMonitorFolder(const char *path)
             if (fontFolder.get()->GetWd() >= 0) {
                 m_fontMonitorFolders.insert(std::make_pair(std::move(monitorPath), std::move(fontFolder)));
                 // If this is mount path, only track under X11 folder if it's already exist.
-                if (strcmp(path, USER_DISTRO_FONTPATH) == 0) {
-                    if (std::filesystem::exists(USER_DISTRO_FONTPATH "/X11")) {
-                        AddMonitorFolder(USER_DISTRO_FONTPATH "/X11");
+                if (strcmp(path, USER_DISTRO_FONT_PATH) == 0) {
+                    if (std::filesystem::exists(USER_DISTRO_FONT_PATH "/X11")) {
+                        AddMonitorFolder(USER_DISTRO_FONT_PATH "/X11");
                     }
                 } else {
                     // Otherwise, add all existing subfolders to track.
@@ -147,7 +145,7 @@ void wslgd::FontMonitor::HandleFolderEvent(struct inotify_event *event)
                 if (event->mask & (IN_CREATE|IN_MOVED_TO)) {
                     bool addMonitorFolder = true;
                     std::filesystem::path fullPath(it->second->GetPath());
-                    if (fullPath.compare(USER_DISTRO_FONTPATH) == 0) {
+                    if (fullPath.compare(USER_DISTRO_FONT_PATH) == 0) {
                         /* Immediately under mount folder, only monitor "X11" and its subfolder */
                         addMonitorFolder = (strcmp(event->name, "X11") == 0);
                     }
@@ -241,13 +239,13 @@ int wslgd::FontMonitor::Start()
         // if user distro mount folder does not exist, bail out.
         THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_MOUNT_PATH));
         // and check fonts path inside user distro.
-        THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_FONTPATH));
+        THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_FONT_PATH));
 
         // start monitoring on mounted font folder.
         wil::unique_fd fd(inotify_init());
         THROW_LAST_ERROR_IF(!fd);
         m_fd.reset(fd.release());
-        AddMonitorFolder(USER_DISTRO_FONTPATH);
+        AddMonitorFolder(USER_DISTRO_FONT_PATH);
 
         // Create font folder monitor thread.
         THROW_LAST_ERROR_IF(pthread_create(&m_fontMonitorThread, NULL, FontMonitorThread, (void*)this) < 0);
@@ -273,7 +271,7 @@ void wslgd::FontMonitor::Stop()
         m_fontMonitorThread = 0;
     }
 
-    RemoveMonitorFolder(USER_DISTRO_FONTPATH);
+    RemoveMonitorFolder(USER_DISTRO_FONT_PATH);
     m_fontMonitorFolders.clear();
 
     m_fd.reset();
