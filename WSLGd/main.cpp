@@ -411,7 +411,10 @@ try {
             std::vector<std::string>{
                 std::move(socketEnvString),
                 "WSLGD_NOTIFY_SOCKET=" WESTON_NOTIFY_SOCKET,
-                "WESTON_DISABLE_ABSTRACT_FD=1"
+                "WESTON_DISABLE_ABSTRACT_FD=1",
+                "WLOG_APPENDER=file",
+                "WLOG_FILEAPPENDER_OUTPUT_FILE_NAME=wlog.log",
+                "WLOG_FILEAPPENDER_OUTPUT_FILE_PATH=" SHARE_PATH
             }
         );
 
