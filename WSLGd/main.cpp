@@ -47,9 +47,31 @@ constexpr auto c_westonRdprailShell = "rdprail-shell";
 constexpr auto c_rdpFileOverrideEnv = "WSL2_RDP_CONFIG_OVERRIDE";
 constexpr auto c_rdpFile = "wslg.rdp";
 
+void LogPrint(int level, const char *func, int line, const char *fmt, ...) noexcept
+{
+    std::array<char, 128> buffer;
+    struct timeval tv;
+    struct tm *time;
+    va_list va_args;
+
+    gettimeofday(&tv, NULL);
+    time = localtime(&tv.tv_sec);
+    strftime(buffer.data(), buffer.size(), "%H:%M:%S", time);
+    fprintf(stderr, "[%s.%03ld] <%d>WSLGd: %s:%u: ",
+        buffer.data(), (tv.tv_usec / 1000),
+        level, func, line);
+
+    va_start(va_args, fmt);
+    vfprintf(stderr, fmt, va_args);
+    va_end(va_args);
+    fprintf(stderr, "\n");
+
+    return;
+}
+
 void LogException(const char *message, const char *exceptionDescription) noexcept
 {
-    fprintf(stderr, "<3>WSLGd: %s %s", message ? message : "Exception:", exceptionDescription);
+    LogPrint(LOG_LEVEL_EXCEPTION, __FUNCTION__, __LINE__, "%s %s", message ? message : "Exception:", exceptionDescription);
     return;
 }
 
