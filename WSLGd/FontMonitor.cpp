@@ -43,39 +43,71 @@ wslgd::FontFolder::~FontFolder()
     }
 }
 
-void wslgd::FontFolder::ExecuteShellCommand(const char *cmd)
+bool wslgd::FontFolder::ExecuteShellCommand(std::vector<const char*>&& argv)
 {
     bool success = false;
+    int childPid = -1, waitPid = -1;
+    std::string cmd;
+
     try {
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-        THROW_LAST_ERROR_IF(!pipe);
-        THROW_LAST_ERROR_IF(pclose(pipe.release()) != 0);
-        success = true;
+        THROW_LAST_ERROR_IF((childPid = fork()) < 0);
+        if (childPid == 0) {
+            /* move this process to own process group to avoid interfere with Process Monitor */
+            THROW_LAST_ERROR_IF(setpgid(0, 0) < 0);
+            THROW_LAST_ERROR_IF(execvp(argv[0], const_cast<char *const *>(argv.data())) < 0);
+        } else if (childPid > 0) {
+            /* move child to own process group to avoid interfere with Process Monitor */
+            THROW_LAST_ERROR_IF(setpgid(childPid, childPid) < 0);
+        }
     }
     CATCH_LOG();
-    LOG_INFO("FontMonitor: execuate %s, %s", cmd, success ? "success" : "fail");
+
+    // Ensure that the child process exits.
+    if (childPid == 0) {
+        _exit(1);
+    }
+
+    if (childPid > 0) try {
+        int status;
+        THROW_LAST_ERROR_IF((waitPid = waitpid(childPid, &status, 0)) < 0);
+        if (WIFEXITED(status)) {
+            success = (WEXITSTATUS(status) == 0);
+        }
+    }
+    CATCH_LOG();
+
+    try {
+        for (std::vector<const char *>::iterator it = argv.begin(); *it != nullptr; it++) {
+            cmd += *it;
+            cmd += " ";
+        }
+        LOG_INFO("FontMonitor: pid:%d exited with %s, %s",
+            waitPid, success ? "success" : "fail", cmd.c_str());
+    }
+    CATCH_LOG();
+
+    return success;
 }
 
 void wslgd::FontFolder::ModifyX11FontPath(bool isAdd)
 {
+    std::vector<const char*> argv;
     sleep(2); /* workaround for optional fonts.alias, wait 2 sec before invoking xset */
-    try {
-        /* update X server font path, add or remove. */
-        std::string cmd;
-
-        cmd = c_xset;
-        if (isAdd)
-            cmd += " +fp ";
-        else
-            cmd += " -fp ";
-        cmd += m_path;
-        ExecuteShellCommand(cmd.c_str());
-        m_isPathAdded = isAdd;
-
-        /* let X server reread font database */
-        cmd = c_xset;
-        cmd += " fp rehash";
-        ExecuteShellCommand(cmd.c_str());
+    if (m_isPathAdded != isAdd) try {
+        argv.push_back(c_xset);
+        argv.push_back(isAdd ? "+fp" : "-fp");
+        argv.push_back(m_path.c_str());
+        argv.push_back(nullptr);
+        if (ExecuteShellCommand(std::move(argv))) {
+            m_isPathAdded = isAdd;
+            /* let X server reread font database */
+            argv.clear();
+            argv.push_back(c_xset);
+            argv.push_back("fp");
+            argv.push_back("rehash");
+            argv.push_back(nullptr);
+            ExecuteShellCommand(std::move(argv));
+        }
     }
     CATCH_LOG();
 }
