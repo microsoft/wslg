@@ -108,7 +108,7 @@ int wslgd::ProcessMonitor::Run() try {
                     LOG_ERROR("pid %d return unknown status %d, %s", pid, status, cmd.c_str());
                 }
 
-                LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities));
+                LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities), std::move(found->second.env));
             }
 
             m_children.erase(found);
