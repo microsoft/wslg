@@ -11,15 +11,11 @@ WSLg strives to make Linux GUI applications feel native and natural to use on Wi
 
 ## Pre-requisites
 
-- Windows 11 (build 22000.*) or Windows 11 Insider Preview (builds 21362+)
-   - WSLg is going to be generally available alongside the upcoming release of Windows. To get access to a preview of WSLg, you'll need to install the [Windows Subsystem for Linux **Preview** from the Microsoft Store](https://aka.ms/wslstorepage).
+- WSLg is supported on both Windows 11 and Windows 10. Windows 10 users must ensure their Windows 10 installation is fully up to date by visiting Windows Update and installing all available updates.
 
-- It is recommended to run WSLg on a system with virtual GPU (vGPU) enabled for WSL so that you can benefit from hardware accelerated OpenGL rendering. You can find preview drivers supporting WSL from each of our partners below.
+- WSLg is available both as part of the Windows 11 WSL inbox support as well as through the  [Windows Subsystem for Linux from the Microsoft Store](https://aka.ms/wslstorepage). It is highly recommended to use the Microsoft Store version of WSL, which supports both Windows 10 and Windows 11, and contains the most up to date version of WSL and WSLg.
 
-   - [AMD GPU driver for WSL](https://community.amd.com/community/radeon-pro-graphics/blog/2020/06/17/announcing-amd-support-for-gpu-accelerated-machine-learning-training-on-windows-10)
-   - [Intel GPU driver for WSL](https://downloadcenter.intel.com/download/30579/Intel-Graphics-Windows-DCH-Drivers)
-
-   - [NVIDIA GPU driver for WSL](https://developer.nvidia.com/cuda/wsl)
+- Make sure to update your graphics driver to the latest driver available from your GPU manufacturer's website to benefit from GPU acceleration in your WSL environment.
      
    
 ## Install instructions (Fresh Install - no prior WSL installation)
