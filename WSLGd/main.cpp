@@ -7,6 +7,7 @@
 
 #define CONFIG_FILE ".wslgconfig"
 #define MSRDC_EXE "msrdc.exe"
+#define MSTSC_EXE "mstsc.exe"
 #define GDBSERVER_PATH "/usr/bin/gdbserver"
 #define WESTON_NOTIFY_SOCKET SHARE_PATH "/weston-notify.sock"
 #define DEFAULT_ICON_PATH "/usr/share/icons"
@@ -39,7 +40,7 @@ constexpr auto c_installPathEnv = "WSL2_INSTALL_PATH";
 constexpr auto c_userProfileEnv = "WSL2_USER_PROFILE";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
-constexpr auto c_mstscFullPath = "/mnt/c/Windows/System32/mstsc.exe";
+constexpr auto c_windowsSystem32 = "/mnt/c/Windows/System32";
 
 constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
 constexpr auto c_westonRdprailShell = "rdprail-shell";
@@ -473,7 +474,8 @@ try {
         }
     }
     if (rdpClientExePath.empty()) {
-        rdpClientExePath = c_mstscFullPath;
+        rdpClientExePath = c_windowsSystem32;
+        rdpClientExePath /= MSTSC_EXE;
     }
 
     std::string wslDvcPlugin;
@@ -500,7 +502,9 @@ try {
     }
 
     monitor.LaunchProcess(std::vector<std::string>{
+        "/init",
         std::move(rdpClientExePath),
+        basename(rdpClientExePath.c_str()),
         std::move(remote),
         std::move(serviceId),
         "/silent",
