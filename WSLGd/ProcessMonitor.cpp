@@ -26,21 +26,8 @@ int wslgd::ProcessMonitor::LaunchProcess(
     if (childPid == 0) try {
         // Construct a null-terminated argument array.
         std::vector<const char*> arguments;
-        if (argv[0].compare("/init") != 0) {
-            for (auto &arg : argv) {
-                arguments.push_back(arg.c_str());
-            }
-        } else {
-            for (int i = 0; i < argv.size(); i++) {
-                arguments.push_back(argv[i].c_str());
-                if (i == 1) {
-                    /* insert executable name without full path after 
-                       full path executable at arguments[2] */
-                    auto const pos = argv[i].find_last_of('/');
-                    const auto leaf = argv[i].substr(pos + 1);
-                    arguments.push_back(leaf.c_str());
-                }
-            }
+        for (auto &arg : argv) {
+            arguments.push_back(arg.c_str());
         }
 
         arguments.push_back(nullptr);
