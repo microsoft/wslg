@@ -476,9 +476,6 @@ try {
     if (rdpClientExePath.empty()) {
         rdpClientExePath = c_windowsSystem32;
         rdpClientExePath /= MSTSC_EXE;
-        isUseMstsc = true;
-    } else {
-        isUseMstsc = false;
     }
 
     std::string wslDvcPlugin;
@@ -507,7 +504,7 @@ try {
     monitor.LaunchProcess(std::vector<std::string>{
         "/init",
         std::move(rdpClientExePath),
-        isUseMstsc ? MSTSC_EXE : MSRDC_EXE,
+        basename(rdpClientExePath.c_str()),
         std::move(remote),
         std::move(serviceId),
         "/silent",
