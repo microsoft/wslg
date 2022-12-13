@@ -500,6 +500,7 @@ try {
     }
 
     monitor.LaunchProcess(std::vector<std::string>{
+        "/init",
         std::move(rdpClientExePath),
         std::move(remote),
         std::move(serviceId),
