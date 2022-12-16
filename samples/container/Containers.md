@@ -27,7 +27,7 @@ FROM ubuntu:20.04 as runtime
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt update && apt upgrade && \
+RUN apt update && \
    apt install -y x11-apps
 
 CMD /usr/bin/xclock
@@ -71,7 +71,7 @@ FROM ubuntu:20.04 as runtime
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt update && apt upgrade && \
+RUN apt update && \
    apt install -y mesa-utils
 
 ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib
