@@ -43,7 +43,9 @@ int wslgd::ProcessMonitor::LaunchProcess(
             environments.push_back(*c);
         }
         for (auto &s : env) {
-            environments.push_back(s.c_str());
+            if (s.size()) {
+                environments.push_back(s.c_str());
+            }
         }
 
         environments.push_back(nullptr);
