@@ -402,7 +402,7 @@ try {
     westonShellOption += ".so";
 
     // Construct log file option string.
-    std::filesystem::path westonLogFileOption("--log=");
+    std::string westonLogFileOption("--log=");
     auto westonLogFilePathEnv = getenv("WSLG_WESTON_LOG_PATH");
     if (westonLogFilePathEnv) {
         westonLogFileOption += westonLogFilePathEnv;
