@@ -87,3 +87,65 @@ sudo docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -v /mnt/wslg:/mnt/wslg \
     -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
     -e PULSE_SERVER=$PULSE_SERVER --gpus all glxinfo
 ```
+
+## Containerized applications access to vGPU accelerated video
+
+For a containerized application to use vGPU video acceleration, the following must be done.
+
+The following devices must be shared with the container.
+
+```/dev/dxg```
+
+```/dev/dri/card0```
+
+```/dev/dri/renderD128```
+
+The following mount location must be mapped in the container.
+
+```/usr/lib/wsl```
+
+The following path must be added to the ```LD_LIBRARY_PATH``` environment variable inside the container.
+
+```/usr/lib/wsl/lib```
+
+The following VA-API driver name must be set to the ```LIBVA_DRIVER_NAME``` environment variable inside the container.
+
+```d3d12```
+
+The following libraries must be installed in the container.
+
+```
+  vainfo
+  mesa-va-drivers
+```
+For example the following dockerfile containerized `videoaccel`.
+
+```
+FROM ubuntu:22.10 as runtime
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Uncomment the lines below to use a 3rd party repository
+# to get the latest (unstable from mesa/main) mesa library version
+# RUN apt-get update && apt install -y software-properties-common
+# RUN add-apt-repository ppa:oibaf/graphics-drivers -y
+
+RUN apt update && apt install -y \
+    vainfo \
+    mesa-va-drivers
+
+ENV LIBVA_DRIVER_NAME=d3d12
+ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib
+CMD vainfo --display drm --device /dev/dri/card0
+```
+
+This container can be build and launch as follow.
+
+```
+sudo docker build -t videoaccel -f Dockerfile.videoaccel .
+sudo docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -v /mnt/wslg:/mnt/wslg \
+    -v /usr/lib/wsl:/usr/lib/wsl --device=/dev/dxg -e DISPLAY=$DISPLAY \
+    --device /dev/dri/card0 --device /dev/dri/renderD128 \
+    -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+    -e PULSE_SERVER=$PULSE_SERVER --gpus all videoaccel
+```
