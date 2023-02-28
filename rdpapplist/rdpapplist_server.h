@@ -36,6 +36,7 @@ typedef UINT (*psRdpAppListCaps)(RdpAppListServerContext* context, const RDPAPPL
 typedef UINT (*psRdpAppListUpdate)(RdpAppListServerContext* context, const RDPAPPLIST_UPDATE_APPLIST_PDU *updateAppList);
 typedef UINT (*psRdpAppListDelete)(RdpAppListServerContext* context, const RDPAPPLIST_DELETE_APPLIST_PDU *deleteAppList);
 typedef UINT (*psRdpAppListDeleteProvider)(RdpAppListServerContext* context, const RDPAPPLIST_DELETE_APPLIST_PROVIDER_PDU *deleteAppListProvider);
+typedef UINT (*psRdpAppListAssociateWindowId)(RdpAppListServerContext* context, const RDPAPPLIST_ASSOCIATE_WINDOW_ID_PDU *associateWindowId);
 
 typedef UINT (*psRdpAppListClientCaps)(RdpAppListServerContext* context, const RDPAPPLIST_CLIENT_CAPS_PDU *clientCaps);
 
@@ -51,6 +52,7 @@ struct _rdpapplist_server_context
 	psRdpAppListUpdate UpdateApplicationList;
 	psRdpAppListDelete DeleteApplicationList;
 	psRdpAppListDeleteProvider DeleteApplicationListProvider;
+	psRdpAppListAssociateWindowId AssociateWindowId;
 
 	psRdpAppListClientCaps ApplicationListClientCaps;
 

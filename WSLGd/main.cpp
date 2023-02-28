@@ -338,6 +338,8 @@ try {
     THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
     std::string socketEnvString("USE_VSOCK=");
     socketEnvString += socketFdString;
+    std::string serviceIdEnvString("WSLG_SERVICE_ID=");
+    serviceIdEnvString += ToServiceId(address.svm_port);
 
     // "ulimits -c unlimited" for core dumps.
     struct rlimit limit;
@@ -456,6 +458,7 @@ try {
             },
             std::vector<std::string>{
                 std::move(socketEnvString),
+                std::move(serviceIdEnvString),
                 "WSLGD_NOTIFY_SOCKET=" WESTON_NOTIFY_SOCKET,
                 "WESTON_DISABLE_ABSTRACT_FD=1",
                 getenv("WLOG_APPENDER") ? : "", "WLOG_APPENDER=file",
