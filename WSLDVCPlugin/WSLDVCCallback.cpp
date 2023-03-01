@@ -88,6 +88,10 @@ public:
 
         ReadUINT16(serverCaps->version, cur, len);
         ReadSTRING(serverCaps->appListProviderName, cur, len, true);
+        if (serverCaps->version >= 4)
+        {
+            ReadSTRING(serverCaps->appListProviderUniqueId, cur, len, true);
+        }
     
         *buffer = cur;
         *size = len;
@@ -292,6 +296,54 @@ public:
     }
 
     HRESULT
+        ReadAssociateWindowId(
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer,
+            _Out_ RDPAPPLIST_ASSOCIATE_WINDOW_ID_PDU* associateWindowId
+        )
+    {
+        const BYTE* cur;
+        UINT64 len;
+
+        assert(size);
+        assert(buffer);
+        assert(associateWindowId);
+
+        cur = *buffer;
+        len = *size;
+
+        ReadUINT32(associateWindowId->flags, cur, len);
+        CheckRequiredFlags(associateWindowId->flags,
+            RDPAPPLIST_FIELD_ID | RDPAPPLIST_FIELD_WINDOW_ID);
+        ReadUINT32(associateWindowId->appWindowId, cur, len);
+        if (associateWindowId->flags & RDPAPPLIST_FIELD_ID)
+        {
+            ReadSTRING(associateWindowId->appId, cur, len, true);
+        }
+        if (associateWindowId->flags & RDPAPPLIST_FIELD_GROUP)
+        {
+            ReadSTRING(associateWindowId->appGroup, cur, len, false);
+        }
+        if (associateWindowId->flags & RDPAPPLIST_FIELD_EXECPATH)
+        {
+            ReadSTRING(associateWindowId->appExecPath, cur, len, true);
+        }
+        if (associateWindowId->flags & RDPAPPLIST_FIELD_DESC)
+        {
+            ReadSTRING(associateWindowId->appDesc, cur, len, true);
+        }
+
+        *buffer = cur;
+        *size = len;
+
+        return S_OK;
+
+    Error_Read:
+
+        return E_FAIL;
+    }
+
+    HRESULT
         OnSyncStart()
     {
         DebugPrint(L"OnSyncStart():\n");
@@ -451,6 +503,8 @@ public:
                 DebugPrint(L"m_spChannel->Write failed, hr = %x\n", hr);
             }
         }
+
+        m_handShakeComplated = SUCCEEDED(hr) ? true : false;
 
         return hr;
     }
@@ -656,7 +710,7 @@ public:
         {
             return E_FAIL;
         }
-        hr = m_spFileDB->OnFileAdded(key, linkPath, iconPath);
+        hr = m_spFileDB->OnFileAdded(key, linkPath, iconPath, m_expandedPathObj, exeArgs);
         if (FAILED(hr))
         {
             return hr;
@@ -774,6 +828,108 @@ public:
         return S_OK;
     }
 
+    HRESULT
+        OnAssociateWindowId(
+            _Inout_ UINT64* size,
+            _Inout_ const BYTE** buffer
+        )
+    {
+        HRESULT hr;
+        RDPAPPLIST_ASSOCIATE_WINDOW_ID_PDU associateWindowId = {};
+        WCHAR windowId[MAX_PATH] = {};
+        WCHAR iconPath[MAX_PATH] = {};
+        WCHAR exePath[MAX_PATH] = {};
+        WCHAR exeArgs[MAX_PATH] = {};
+        WCHAR tmpBuf[MAX_PATH] = {};
+
+        // Buffer read scope
+        {
+            const BYTE* cur;
+            UINT64 len;
+
+            assert(size);
+            assert(buffer);
+
+            cur = *buffer;
+            len = *size;
+
+            hr = ReadAssociateWindowId(&len, &cur, &associateWindowId);
+            if (FAILED(hr))
+            {
+                return hr;
+            }
+
+            *buffer = cur;
+            *size = len;
+        }
+
+        tmpBuf[0] = L'\0';
+        if (associateWindowId.appGroupLength)
+        {
+            if ((wcscpy_s(tmpBuf, ARRAYSIZE(tmpBuf), associateWindowId.appGroup) != 0) ||
+                (wcscat_s(tmpBuf, ARRAYSIZE(tmpBuf), L"\\") != 0))
+            {
+                return E_FAIL;
+            }
+        }
+        if (wcscat_s(tmpBuf, ARRAYSIZE(tmpBuf), associateWindowId.appId) != 0)
+        {
+            return E_FAIL;
+        }
+
+        if ((swprintf_s(windowId, ARRAYSIZE(windowId), L"%s:%016x",
+            m_serverCaps.appListProviderUniqueId, associateWindowId.appWindowId) < 0) ||
+            (windowId[0] == L'\0'))
+        {
+            return E_FAIL;
+        }
+
+        DebugPrint(L"AssociateWindowId AppId Path: %s\n", tmpBuf);
+        DebugPrint(L"    Desc: %s\n", associateWindowId.appDesc);
+        DebugPrint(L"    WindowId: %s\n", windowId);
+        DebugPrint(L"    CmdLine from server: %s\n", associateWindowId.appExecPath);
+
+        hr = m_spFileDB->FindFiles(tmpBuf,
+            NULL, 0,
+            iconPath, ARRAYSIZE(iconPath),
+            exePath, ARRAYSIZE(exePath),
+            exeArgs, ARRAYSIZE(exeArgs));
+        if (SUCCEEDED(hr))
+        {
+            if ((swprintf_s(tmpBuf, ARRAYSIZE(tmpBuf), L"%s %s",
+                exePath, exeArgs) < 0) ||
+                (tmpBuf[0] == L'\0'))
+            {
+                return E_FAIL;
+            }
+        }
+        else if (associateWindowId.appExecPath[0] != '\0')
+        {
+            /* if key is not present, reconstruct using server side exe path */
+            if ((swprintf_s(tmpBuf, ARRAYSIZE(tmpBuf), L"%s -d %s --cd \"%s\" -- %s",
+                m_expandedPathObj,
+                m_appProvider,
+                L"~",
+                associateWindowId.appExecPath) < 0) ||
+                (tmpBuf[0] == L'\0'))
+            {
+                return E_FAIL;
+            }
+
+            /* TODO: must provide default icon */
+        }
+        else
+        {
+            DebugPrint(L"OnDeleteAppList(): key %s not found or no cmdLine from server\n", tmpBuf);
+            return E_FAIL;
+        }
+
+        DebugPrint(L"    CmdLine at local: %s\n", tmpBuf);
+        DebugPrint(L"    Icon Path at local: %s\n", iconPath);
+ 
+        return S_OK;
+    }
+
     //
     // IWTSVirtualChannelCallback interface
     //
@@ -809,6 +965,14 @@ public:
                     break;
                 }
             }
+            else if (m_handShakeComplated == false)
+            {
+                // Caps exchange must be completed before processing
+                // any other messages.  
+                DebugPrint(L"HandShake is not completed\n");
+                hr = E_FAIL;
+                break;
+            }
             else if (appListHeader.cmdId == RDPAPPLIST_CMDID_UPDATE_APPLIST)
             {
                 hr = OnUpdateAppList(&len, &cur);
@@ -828,6 +992,14 @@ public:
             else if (appListHeader.cmdId == RDPAPPLIST_CMDID_DELETE_APPLIST_PROVIDER)
             {
                 // Nothing to do.
+            }
+            else if (appListHeader.cmdId == RDPAPPLIST_CMDID_ASSOCIATE_WINDOW_ID)
+            {
+                hr = OnAssociateWindowId(&len, &cur);
+                if (FAILED(hr))
+                {
+                    break;
+                }
             }
             else
             {
@@ -867,6 +1039,8 @@ private:
 
     ComPtr<IWSLDVCFileDB> m_spFileDB;
     ComPtr<IWSLDVCFileDB> m_spFileDBSync; // valid only during sync.
+
+    bool m_handShakeComplated = false;
 
     RDPAPPLIST_SERVER_CAPS_PDU m_serverCaps = {};
     WCHAR m_appProvider[MAX_PATH] = {};
