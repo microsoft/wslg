@@ -293,6 +293,101 @@ HRESULT BuildIconPath(
     return S_OK;
 }
 
+HRESULT
+UpdateTaskBarInfo(
+    HWND hwnd,
+    _In_z_ LPCWSTR relaunchCmdline,
+    _In_z_ LPCWSTR displayName,
+    _In_z_ LPCWSTR iconPath)
+{
+    HRESULT hr;
+    PROPVARIANT propvar;
+
+    DebugPrint(L"UpdateTaskBarInfo: 0x%p\n", hwnd);
+    DebugPrint(L"    relaunchCmdline: %s\n", relaunchCmdline);
+    DebugPrint(L"    displayName: %s\n", displayName);
+    DebugPrint(L"    iconPath: %s\n", iconPath);
+
+    IPropertyStore* ps = NULL;
+
+    hr = SHGetPropertyStoreForWindow(hwnd, IID_PPV_ARGS(&ps));
+    if (FAILED(hr))
+    {
+        DebugPrint(L"SHGetPropertyStoreForWindow failed: 0x%x\n", hr);
+        return hr;
+    }
+
+    BOOL bPinToTaskbar = relaunchCmdline && displayName && iconPath;
+    if (bPinToTaskbar)
+    {
+        hr = InitPropVariantFromString(displayName, &propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"InitPropVariantFromString failed: 0x%x\n", hr);
+            return hr;
+        }
+
+        hr = ps->SetValue(PKEY_AppUserModel_RelaunchDisplayNameResource, propvar);
+        PropVariantClear(&propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"SetValue(PKEY_AppUserModel_RelaunchDisplayNameResource failed: 0x%x\n", hr);
+            return hr;
+        }
+
+        hr = InitPropVariantFromString(iconPath, &propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"InitPropVariantFromString failed: 0x%x\n", hr);
+            return hr;
+        }
+
+        hr = ps->SetValue(PKEY_AppUserModel_RelaunchIconResource, propvar);
+        PropVariantClear(&propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"SetValue(PKEY_AppUserModel_RelaunchIconResource failed: 0x%x\n", hr);
+            return hr;
+        }
+
+        hr = InitPropVariantFromString(relaunchCmdline, &propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"InitPropVariantFromString failed: 0x%x\n", hr);
+            return hr;
+        }
+
+        hr = ps->SetValue(PKEY_AppUserModel_RelaunchCommand, propvar);
+        PropVariantClear(&propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"SetValue(PKEY_AppUserModel_RelaunchCommand failed: 0x%x\n", hr);
+            return hr;
+        }
+    }
+    else
+    {
+        hr = InitPropVariantFromBoolean(TRUE, &propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"InitPropVariantFromBoolean failed: 0x%x\n", hr);
+            return hr;
+        }
+
+        hr = ps->SetValue(PKEY_AppUserModel_PreventPinning, propvar);
+        PropVariantClear(&propvar);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"SetValue(PKEY_AppUserModel_PreventPinning failed: 0x%x\n", hr);
+            return hr;
+        }
+    }
+
+    ps->Release();
+
+    return S_OK;
+}
+
 #if ENABLE_WSL_SIGNATURE_CHECK
 // Link with the Wintrust.lib file.
 #pragma comment (lib, "wintrust")

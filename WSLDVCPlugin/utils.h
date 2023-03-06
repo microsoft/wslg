@@ -57,6 +57,13 @@ BuildIconPath(
     _In_z_ LPCWSTR appProvider,
     bool isCreateDir);
 
+HRESULT
+UpdateTaskBarInfo(
+    HWND hwnd,
+    _In_z_ LPCWSTR relaunchCmdline,
+    _In_z_ LPCWSTR displayName,
+    _In_z_ LPCWSTR iconPath);
+
 #if ENABLE_WSL_SIGNATURE_CHECK
 BOOL
 IsFileTrusted(_In_z_ LPCWSTR pwszFile);

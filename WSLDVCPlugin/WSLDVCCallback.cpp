@@ -7,6 +7,8 @@
 #include "WSLDVCCallback.h"
 #include "WSLDVCFileDB.h"
 
+LPCWSTR WSLG_WINDOW_ID = L"WslgServerWindowId";
+
 #ifdef WSLG_INBOX
 LPCWSTR c_WSL_exe = L"%windir%\\system32\\wsl.exe";
 LPCWSTR c_WSLg_exe = L"%windir%\\system32\\wslg.exe";
@@ -390,6 +392,7 @@ public:
         )
     {
         HRESULT hr;
+        WCHAR szAppProviderGUID[40];
 
         // Buffer read scope
         {
@@ -419,6 +422,24 @@ public:
         {
             DebugPrint(L"provider name can't contain '..', '\"' or space, %s\n", m_appProvider);
             return E_FAIL;
+        }
+
+        if (m_serverCaps.version >= 4)
+        {
+            if ((swprintf_s(szAppProviderGUID, ARRAYSIZE(szAppProviderGUID), L"{%s}",
+                           &m_serverCaps.appListProviderUniqueId[0]) < 0) ||
+                (szAppProviderGUID[0] == L'\0'))
+            {
+                DebugPrint(L"swprintf_s failed on %s\n", m_serverCaps.appListProviderUniqueId);
+                return E_FAIL;
+            }
+
+            hr = CLSIDFromString(szAppProviderGUID, &m_appProviderGUID);
+            if (FAILED(hr))
+            {
+                DebugPrint(L"CLSIDFromString failed on %s\n", szAppProviderGUID);
+                return hr;
+            }
         }
 
         hr = BuildMenuPath(ARRAYSIZE(m_appMenuPath), m_appMenuPath, m_appProvider, true);
@@ -828,6 +849,33 @@ public:
         return S_OK;
     }
 
+    typedef struct _WslgWindowData
+    {
+        UINT64 windowId;
+        LPCWSTR displayName;
+        LPCWSTR relaunchCommandline;
+        LPCWSTR iconPath;
+    } WslgWindowData;
+
+    static BOOL CALLBACK
+        FindWslgWindow(
+            _In_ HWND hwnd,
+            _In_ LPARAM args
+        )
+    {
+        WslgWindowData* wndData = (WslgWindowData*)args;
+        HANDLE windowId = GetPropW(hwnd, WSLG_WINDOW_ID);
+        if (windowId == (HANDLE)wndData->windowId)
+        {
+            UpdateTaskBarInfo(hwnd,
+                wndData->relaunchCommandline,
+                wndData->displayName,
+                wndData->iconPath);
+            return FALSE; /* found it, stop enum */
+        }
+        return TRUE; /* keep enum next one */
+    }
+
     HRESULT
         OnAssociateWindowId(
             _Inout_ UINT64* size,
@@ -836,11 +884,18 @@ public:
     {
         HRESULT hr;
         RDPAPPLIST_ASSOCIATE_WINDOW_ID_PDU associateWindowId = {};
-        WCHAR windowId[MAX_PATH] = {};
+        WCHAR tmpBuf[MAX_PATH] = {};
+        WCHAR tmpPath[MAX_PATH] = {};
+        WCHAR tmpArgs[MAX_PATH] = {};
         WCHAR iconPath[MAX_PATH] = {};
         WCHAR exePath[MAX_PATH] = {};
-        WCHAR exeArgs[MAX_PATH] = {};
-        WCHAR tmpBuf[MAX_PATH] = {};
+
+        if (m_serverCaps.version < 4)
+        {
+            DebugPrint(L"associate window id requires version 4 or newer: current version: %d\n",
+                m_serverCaps.version < 4);
+            return E_FAIL;
+        }
 
         // Buffer read scope
         {
@@ -863,6 +918,16 @@ public:
             *size = len;
         }
 
+        /* construct full unique window id */
+        UINT64 windowId = (UINT64)m_appProviderGUID.Data1;
+        windowId <<= 32;
+        windowId |= associateWindowId.appWindowId;
+        if (windowId == 0LL)
+        {
+            DebugPrint(L"windowId can't be 0\n");
+            return E_FAIL;
+        }
+
         tmpBuf[0] = L'\0';
         if (associateWindowId.appGroupLength)
         {
@@ -877,28 +942,21 @@ public:
             return E_FAIL;
         }
 
-        if ((swprintf_s(windowId, ARRAYSIZE(windowId), L"%s:%016x",
-            m_serverCaps.appListProviderUniqueId, associateWindowId.appWindowId) < 0) ||
-            (windowId[0] == L'\0'))
-        {
-            return E_FAIL;
-        }
-
-        DebugPrint(L"AssociateWindowId AppId Path: %s\n", tmpBuf);
+        DebugPrint(L"AssociateWindowId AppId: %s\n", tmpBuf);
         DebugPrint(L"    Desc: %s\n", associateWindowId.appDesc);
-        DebugPrint(L"    WindowId: %s\n", windowId);
+        DebugPrint(L"    Full Unique WindowId: 0x%p\n", windowId); /* somehow PRIx64 doesn't work here */
         DebugPrint(L"    CmdLine from server: %s\n", associateWindowId.appExecPath);
 
         hr = m_spFileDB->FindFiles(tmpBuf,
             NULL, 0,
             iconPath, ARRAYSIZE(iconPath),
-            exePath, ARRAYSIZE(exePath),
-            exeArgs, ARRAYSIZE(exeArgs));
+            tmpPath, ARRAYSIZE(tmpPath),
+            tmpArgs, ARRAYSIZE(tmpArgs));
         if (SUCCEEDED(hr))
         {
-            if ((swprintf_s(tmpBuf, ARRAYSIZE(tmpBuf), L"%s %s",
-                exePath, exeArgs) < 0) ||
-                (tmpBuf[0] == L'\0'))
+            if ((swprintf_s(exePath, ARRAYSIZE(exePath), L"%s %s",
+                tmpPath, tmpArgs) < 0) ||
+                (exePath[0] == L'\0'))
             {
                 return E_FAIL;
             }
@@ -906,27 +964,30 @@ public:
         else if (associateWindowId.appExecPath[0] != '\0')
         {
             /* if key is not present, reconstruct using server side exe path */
-            if ((swprintf_s(tmpBuf, ARRAYSIZE(tmpBuf), L"%s -d %s --cd \"%s\" -- %s",
+            if ((swprintf_s(exePath, ARRAYSIZE(exePath), L"%s -d %s --cd \"%s\" -- %s",
                 m_expandedPathObj,
                 m_appProvider,
                 L"~",
                 associateWindowId.appExecPath) < 0) ||
-                (tmpBuf[0] == L'\0'))
+                (exePath[0] == L'\0'))
             {
                 return E_FAIL;
             }
 
             /* TODO: must provide default icon */
         }
-        else
-        {
-            DebugPrint(L"OnDeleteAppList(): key %s not found or no cmdLine from server\n", tmpBuf);
-            return E_FAIL;
-        }
 
-        DebugPrint(L"    CmdLine at local: %s\n", tmpBuf);
+        DebugPrint(L"    CmdLine at local: %s\n", exePath);
         DebugPrint(L"    Icon Path at local: %s\n", iconPath);
  
+        WslgWindowData data = {};
+        data.windowId = windowId;
+        data.displayName = associateWindowId.appDesc[0] != '\0' ? associateWindowId.appDesc : NULL;
+        data.relaunchCommandline = exePath[0] != '\0' ? exePath : NULL;      
+        data.iconPath = iconPath[0] != '\0' ? iconPath : NULL;
+
+        EnumWindows(FindWslgWindow, (LPARAM)&data);
+
         return S_OK;
     }
 
@@ -1043,6 +1104,7 @@ private:
     bool m_handShakeComplated = false;
 
     RDPAPPLIST_SERVER_CAPS_PDU m_serverCaps = {};
+    GUID m_appProviderGUID;
     WCHAR m_appProvider[MAX_PATH] = {};
     WCHAR m_appMenuPath[MAX_PATH] = {};
     WCHAR m_iconPath[MAX_PATH] = {};
