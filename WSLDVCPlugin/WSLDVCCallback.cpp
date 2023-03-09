@@ -1104,7 +1104,7 @@ private:
     bool m_handShakeComplated = false;
 
     RDPAPPLIST_SERVER_CAPS_PDU m_serverCaps = {};
-    GUID m_appProviderGUID;
+    GUID m_appProviderGUID = {};
     WCHAR m_appProvider[MAX_PATH] = {};
     WCHAR m_appMenuPath[MAX_PATH] = {};
     WCHAR m_iconPath[MAX_PATH] = {};
