@@ -1,6 +1,6 @@
 project('rdpapplist',
     'c',
-    version : '1.0.0',
+    version : '2.0.0',
 )
 
 name_rdpapplist = meson.project_name()

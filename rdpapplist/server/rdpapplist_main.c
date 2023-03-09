@@ -315,7 +315,8 @@ static UINT rdpapplist_send_caps(RdpAppListServerContext *context, const RDPAPPL
 	}
 
 	int len = 2 + // version.
-		  2 + caps->appListProviderName.length;
+		  2 + caps->appListProviderName.length +
+		  2 + caps->appListProviderUniqueId.length;
 
 	wStream* s = rdpapplist_server_single_packet_new(RDPAPPLIST_CMDID_CAPS, len);
 
@@ -329,6 +330,9 @@ static UINT rdpapplist_send_caps(RdpAppListServerContext *context, const RDPAPPL
 	Stream_Write_UINT16(s, caps->appListProviderName.length);
 	Stream_Write(s, caps->appListProviderName.string,
 	             caps->appListProviderName.length);
+	Stream_Write_UINT16(s, caps->appListProviderUniqueId.length);
+	Stream_Write(s, caps->appListProviderUniqueId.string,
+	             caps->appListProviderUniqueId.length);
 	return rdpapplist_server_packet_send(context, s);
 }
 
@@ -527,6 +531,84 @@ static UINT rdpapplist_send_delete_applist_provider(RdpAppListServerContext* con
 	return rdpapplist_server_packet_send(context, s);
 }
 
+static UINT rdpapplist_send_associate_window_id(RdpAppListServerContext* context, const RDPAPPLIST_ASSOCIATE_WINDOW_ID_PDU *associateWindowId)
+{
+	UINT32 len = 8; // flags + windowId.
+
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_ID)
+	{
+		if (associateWindowId->appId.length > RDPAPPLIST_MAX_STRING_SIZE)
+		{
+			WLog_ERR(TAG, " rdpapplist_send_associate_window_id: appId is too large.");
+			return ERROR_INVALID_DATA;
+		}
+		len += (2 + associateWindowId->appId.length);
+	}
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_GROUP)
+	{
+		if (associateWindowId->appGroup.length > RDPAPPLIST_MAX_STRING_SIZE)
+		{
+			WLog_ERR(TAG, " rdpapplist_send_associate_window_id: appGroup is too large.");
+			return ERROR_INVALID_DATA;
+		}
+		len += (2 + associateWindowId->appGroup.length);
+	}
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_EXECPATH)
+	{
+		if (associateWindowId->appExecPath.length > RDPAPPLIST_MAX_STRING_SIZE)
+		{
+			WLog_ERR(TAG, "rdpapplist_send_associate_window_id: appExecPath is too large.");
+			return ERROR_INVALID_DATA;
+		}
+		len += (2 + associateWindowId->appExecPath.length);
+	}
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_DESC)
+	{
+		if (associateWindowId->appDesc.length > RDPAPPLIST_MAX_STRING_SIZE)
+		{
+			WLog_ERR(TAG, "rdpapplist_send_associate_window_id: appDesc is too large.");
+			return ERROR_INVALID_DATA;
+		}
+		len += (2 + associateWindowId->appDesc.length);
+	}
+
+	wStream* s = rdpapplist_server_single_packet_new(RDPAPPLIST_CMDID_ASSOCIATE_WINDOW_ID, len);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rdpapplist_server_single_packet_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT32(s, associateWindowId->flags);
+	Stream_Write_UINT32(s, associateWindowId->appWindowId);
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_ID)
+	{
+		Stream_Write_UINT16(s, associateWindowId->appId.length);
+		Stream_Write(s, associateWindowId->appId.string,
+		             associateWindowId->appId.length);
+	}
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_GROUP)
+	{
+		Stream_Write_UINT16(s, associateWindowId->appGroup.length);
+		Stream_Write(s, associateWindowId->appGroup.string,
+		             associateWindowId->appGroup.length);
+	}
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_EXECPATH)
+	{
+		Stream_Write_UINT16(s, associateWindowId->appExecPath.length);
+		Stream_Write(s, associateWindowId->appExecPath.string,
+		             associateWindowId->appExecPath.length);
+	}
+	if (associateWindowId->flags & RDPAPPLIST_FIELD_DESC)
+	{
+		Stream_Write_UINT16(s, associateWindowId->appDesc.length);
+		Stream_Write(s, associateWindowId->appDesc.string,
+		             associateWindowId->appDesc.length);
+	}
+	return rdpapplist_server_packet_send(context, s);
+}
+
 /**
  * Function description
  *
@@ -679,6 +761,7 @@ RdpAppListServerContext* rdpapplist_server_context_new(HANDLE vcm)
 	context->UpdateApplicationList = rdpapplist_send_update_applist;
 	context->DeleteApplicationList = rdpapplist_send_delete_applist;
 	context->DeleteApplicationListProvider = rdpapplist_send_delete_applist_provider;
+	context->AssociateWindowId = rdpapplist_send_associate_window_id;
 	priv->isReady = FALSE;
 	return context;
 out_free_priv:

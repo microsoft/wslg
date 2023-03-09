@@ -23,26 +23,35 @@ public:
     {
         return m_iconFilePath;
     }
+    wstring getExeFilePath() const
+    {
+        return m_exeFilePath;
+    }
+    wstring getExeFileArgs() const
+    {
+        return m_exeFileArgs;
+    }
 
     //fileEntry(const fileEntry& r)
     //{
     //    m_fileId = r.m_fileId;
     //    m_linkFilePath = r.m_linkFilePath;
     //    m_iconFilePath = r.m_iconFilePath;
+    //    m_exeFilePath = r.m_exeFilePath;
+    //    m_exeFileArgs = r.m_exeFileArgs;
     //}
-    fileEntry(const wchar_t* fileId)
-    {
-        assert(fileId);
-        m_fileId = fileId;
-        m_linkFilePath = L"";
-        m_iconFilePath = L"";
-    }
-    fileEntry(const wchar_t* fileId, const wchar_t* linkPath, const wchar_t* iconPath)
+    fileEntry(const wchar_t* fileId,
+        const wchar_t* linkPath = L"",
+        const wchar_t* iconPath = L"",
+        const wchar_t* exePath = L"",
+        const wchar_t* exeArgs = L"")
     {
         assert(fileId);
         m_fileId = fileId;
         m_linkFilePath = linkPath;
         m_iconFilePath = iconPath;
+        m_exeFilePath = exePath;
+        m_exeFileArgs = exeArgs;
     }
 
     bool operator< (LPWSTR key) const
@@ -60,6 +69,8 @@ private:
     wstring m_fileId;
     wstring m_linkFilePath;
     wstring m_iconFilePath;
+    wstring m_exeFilePath;
+    wstring m_exeFileArgs;
 };
 
 class WSLDVCFileDB :
@@ -85,13 +96,13 @@ public:
         WCHAR iconFile[MAX_PATH] = {};
 
         {
-            fileEntry fileEntry(lnkFile, L"", L"");
+            fileEntry fileEntry(lnkFile);
             m_fileEntries.insert(fileEntry);
         }
 
         if (SUCCEEDED(GetIconFileFromShellLink(ARRAYSIZE(iconFile), iconFile, lnkFile)))
         {
-            fileEntry fileEntry(iconFile, L"", L"");
+            fileEntry fileEntry(iconFile);
             m_fileEntries.insert(fileEntry);
         }
 
@@ -103,7 +114,11 @@ public:
     }
 
     STDMETHODIMP
-        OnFileAdded(_In_z_ LPCWSTR key, _In_opt_z_ LPCWSTR linkFilePath, _In_opt_z_ LPCWSTR iconFilePath)
+        OnFileAdded(_In_z_ LPCWSTR key,
+            _In_opt_z_ LPCWSTR linkFilePath,
+            _In_opt_z_ LPCWSTR iconFilePath,
+            _In_opt_z_ LPCWSTR exeFilePath,
+            _In_opt_z_ LPCWSTR exeFileArgs)
     {
         HRESULT hr = S_OK;
         set<fileEntry>::iterator it;
@@ -127,20 +142,40 @@ public:
         {
             iconFilePath = L"";
         }
+        if (exeFilePath && lstrlenW(exeFilePath))
+        {
+            DebugPrint(L"\texeFilePath: %s\n", exeFilePath);
+        }
+        else
+        {
+            exeFilePath = L"";
+        }
+        if (exeFileArgs && lstrlenW(exeFileArgs))
+        {
+            DebugPrint(L"\texeFileArgs: %s\n", exeFileArgs);
+        }
+        else
+        {
+            exeFileArgs = L"";
+        }
 
-        fileEntry fileEntry(key, linkFilePath, iconFilePath);
+        fileEntry fileEntry(key, linkFilePath, iconFilePath, exeFilePath, exeFileArgs);
         p = m_fileEntries.insert(fileEntry);
         if (!p.second)
         {
             if (p.first->getLinkFilePath().compare(linkFilePath) != 0 ||
-                p.first->getIconFilePath().compare(iconFilePath) != 0)
+                p.first->getIconFilePath().compare(iconFilePath) != 0 ||
+                p.first->getExeFilePath().compare(exeFilePath) != 0 ||
+                p.first->getExeFileArgs().compare(exeFileArgs) != 0)
             {
                 DebugPrint(L"\tKey: %s is already exists and has different path data\n", key);
                 DebugPrint(L"\tlinkFilePath: %s\n", p.first->getLinkFilePath().c_str());
                 DebugPrint(L"\ticonFilePath: %s\n", p.first->getIconFilePath().c_str());
+                DebugPrint(L"\texeFilePath: %s\n", p.first->getExeFilePath().c_str());
+                DebugPrint(L"\texeFileArgs: %s\n", p.first->getExeFileArgs().c_str());
                 // TODO: implement update existing by erase and add.         
                 // DebugAssert(false);
-                return E_FAIL;
+                hr = E_FAIL;
             }
         }
 
@@ -168,6 +203,14 @@ public:
             {
                 DebugPrint(L"\ticonPath: %s\n", it->getIconFilePath().c_str());
             }
+            if (it->getExeFilePath().length())
+            {
+                DebugPrint(L"\texePath: %s\n", it->getExeFilePath().c_str());
+            }
+            if (it->getExeFileArgs().length())
+            {
+                DebugPrint(L"\texeArgs: %s\n", it->getExeFileArgs().c_str());
+            }
             m_fileEntries.erase(it);
         }
         else
@@ -182,17 +225,25 @@ public:
     STDMETHODIMP FindFiles(
         _In_z_ LPCWSTR key, 
         _Out_writes_z_(linkFilePathSize) LPWSTR linkFilePath, UINT32 linkFilePathSize,
-        _Out_writes_z_(iconFilePathSize) LPWSTR iconFilePath, UINT32 iconFilePathSize)
+        _Out_writes_z_(iconFilePathSize) LPWSTR iconFilePath, UINT32 iconFilePathSize,
+        _Out_writes_z_(exeFilePathSize) LPWSTR exeFilePath, UINT32 exeFilePathSize,
+        _Out_writes_z_(exeFileArgsSize) LPWSTR exeFileArgs, UINT32 exeFileArgsSize)
     {
         set<fileEntry>::iterator it;
 
-        assert(linkFilePath);
-        assert(linkFilePathSize);
-        assert(iconFilePath);
-        assert(iconFilePathSize);
+        assert((linkFilePath && linkFilePathSize) ||
+               (linkFilePath == nullptr && linkFilePathSize == 0));
+        assert((iconFilePath && iconFilePathSize) ||
+               (iconFilePath == nullptr && iconFilePathSize == 0));
+        assert((exeFilePath && exeFilePathSize) ||
+               (exeFilePath == nullptr && exeFilePathSize == 0));
+        assert((exeFileArgs && exeFileArgsSize) ||
+               (exeFileArgs == nullptr && exeFileArgsSize == 0));
 
-        *linkFilePath = NULL;
-        *iconFilePath = NULL;
+        if (linkFilePath) *linkFilePath = NULL;
+        if (iconFilePath) *iconFilePath = NULL;
+        if (exeFilePath) *exeFilePath = NULL;
+        if (exeFileArgs) *exeFileArgs = NULL;
 
         DebugPrint(L"FindFiles()\n");
         DebugPrint(L"\tkey: %s\n", key);
@@ -203,13 +254,35 @@ public:
             DebugPrint(L"\tKey found:\n");
             DebugPrint(L"\tlinkPath: %s\n", it->getLinkFilePath().c_str());
             DebugPrint(L"\ticonPath: %s\n", it->getIconFilePath().c_str());
-            if (wcscpy_s(linkFilePath, linkFilePathSize, it->getLinkFilePath().c_str()) != 0)
+            DebugPrint(L"\texePath: %s\n", it->getExeFilePath().c_str());
+            DebugPrint(L"\texeArgs: %s\n", it->getExeFileArgs().c_str());
+            if (linkFilePath)
             {
-                return E_FAIL;
+                if (wcscpy_s(linkFilePath, linkFilePathSize, it->getLinkFilePath().c_str()) != 0)
+                {
+                    return E_FAIL;
+                }
             }
-            if (wcscpy_s(iconFilePath, iconFilePathSize, it->getIconFilePath().c_str()) != 0)
+            if (iconFilePath)
             {
-                return E_FAIL;
+                if (wcscpy_s(iconFilePath, iconFilePathSize, it->getIconFilePath().c_str()) != 0)
+                {
+                    return E_FAIL;
+                }
+            }
+            if (exeFilePath)
+            {
+                if (wcscpy_s(exeFilePath, exeFilePathSize, it->getExeFilePath().c_str()) != 0)
+                {
+                    return E_FAIL;
+                }
+            }
+            if (exeFileArgs)
+            {
+                if (wcscpy_s(exeFileArgs, exeFileArgsSize, it->getExeFileArgs().c_str()) != 0)
+                {
+                    return E_FAIL;
+                }
             }
             return S_OK;
         }

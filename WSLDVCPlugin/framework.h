@@ -12,3 +12,7 @@
 #include <objidl.h>   /* For IPersistFile */
 #include <shlobj.h>   /* For IShellLink */
 #include <shlwapi.h>  /* For PathIsDirectoryEmpty */
+#include <shellapi.h> /* For SHGetPropertyStoreForWindow */
+#include <propvarutil.h> /* For InitPropVariantFromString */
+#include <propkey.h> /* For PKEY_* */
+#include <inttypes.h> /* For PRIx64 */
