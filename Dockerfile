@@ -192,7 +192,7 @@ WORKDIR /work/vendor/pulseaudio
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Ddatabase=simple \
-        -Dbluez5=false \
+        -Ddoxygen=false \
         -Dgsettings=disabled \
         -Dtests=false && \
     ninja -C build -j8 install && \
