@@ -31,6 +31,7 @@
 #include <map>
 #include <new>
 #include <vector>
+#include <algorithm>
 #include "config.h"
 #include "lxwil.h"
 #if HAVE_WINPR

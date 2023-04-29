@@ -40,6 +40,9 @@ constexpr auto c_installPathEnv = "WSL2_INSTALL_PATH";
 constexpr auto c_userProfileEnv = "WSL2_USER_PROFILE";
 constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
+constexpr auto c_westonIniFile = "/home/wslg/.config/weston.ini";
+constexpr auto c_westonKeyboardSection = "weston-keyboard";
+
 constexpr auto c_windowsSystem32 = "/mnt/c/Windows/System32";
 
 constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
@@ -138,9 +141,61 @@ bool GetEnvBool(const char *EnvName, bool DefaultValue)
     return DefaultValue;
 }
 
-void SetupOptionalEnv()
-{
 #if HAVE_WINPR
+void SetupOptionalEnv(wIniFile *iniFile)
+{
+    // Set additional environment variables.
+    int numKeys = 0;
+    char **keyNames = IniFile_GetSectionKeyNames(iniFile, c_systemDistroEnvSection, &numKeys);
+    for (int n = 0; keyNames && n < numKeys; n++) {
+        const char *value = IniFile_GetKeyValueString(iniFile, c_systemDistroEnvSection, keyNames[n]);
+        if (value) {
+            setenv(keyNames[n], value, true);
+        }
+    }
+
+    free(keyNames);
+}
+
+void SetupWestonKeyboard(wIniFile *iniFile)
+{
+    // Merge weston-keyboard section from wslgconfig into weston.ini
+    const char *section_header = "[keyboard]";
+
+    std::vector<std::string> valid_keys {
+        "keymap_rules",
+        "keymap_model",
+        "keymap_layout",
+        "keymap_variant",
+        "keymap_options",
+    };
+
+    int numKeys = 0;
+    char **keyNames = IniFile_GetSectionKeyNames(iniFile, c_westonKeyboardSection, &numKeys);
+
+    if (numKeys > 0) {
+        wil::unique_file westonIniFile(fopen(c_westonIniFile, "a"));
+        if (westonIniFile.get()) {
+            THROW_LAST_ERROR_IF(fprintf(westonIniFile.get(), "\n%s\n", section_header) < 0);
+
+            for (int n = 0; keyNames && n < numKeys; n++) {
+                if (std::find(valid_keys.begin(), valid_keys.end(), keyNames[n]) == valid_keys.end()) {
+                    continue;
+                }
+
+                const char *value = IniFile_GetKeyValueString(iniFile, c_westonKeyboardSection, keyNames[n]);
+                if (value) {
+                    THROW_LAST_ERROR_IF(fprintf(westonIniFile.get(), "%s=%s\n", keyNames[n], value) < 0);
+                }
+            }
+        }
+    }
+
+    free(keyNames);
+}
+
+void ParseConfig()
+{
     // Get the path to the WSLG config file.
     std::string configFilePath = "/mnt/c/ProgramData/Microsoft/WSL/" CONFIG_FILE;
     auto userProfile = getenv(c_userProfileEnv);
@@ -149,28 +204,21 @@ void SetupOptionalEnv()
         configFilePath += "/" CONFIG_FILE;
     }
 
-    // Set additional environment variables.
     wIniFile* wslgConfigIniFile = IniFile_New();
     if (wslgConfigIniFile) {
         if (IniFile_ReadFile(wslgConfigIniFile, configFilePath.c_str()) > 0) {
-            int numKeys = 0;
-            char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile, c_systemDistroEnvSection, &numKeys);
-            for (int n = 0; keyNames && n < numKeys; n++) {
-                const char *value = IniFile_GetKeyValueString(wslgConfigIniFile, c_systemDistroEnvSection, keyNames[n]);
-                if (value) {
-                    setenv(keyNames[n], value, true);
-                }
-            }
-
-            free(keyNames);
+            SetupOptionalEnv(wslgConfigIniFile);
+            SetupWestonKeyboard(wslgConfigIniFile);
         }
-
         IniFile_Free(wslgConfigIniFile);
     }
-#endif // HAVE_WINPR
-
+}
+#else
+void ParseConfig()
+{
     return;
 }
+#endif
 
 int SetupReadyNotify(const char *socket_path)
 {
@@ -235,7 +283,7 @@ try {
         THROW_LAST_ERROR_IF(setenv(var.name, var.value, var.override) < 0);
     }
 
-    SetupOptionalEnv();
+    ParseConfig();
 
     // if any components output log to /dev/kmsg, make it writable.
     if (GetEnvBool("WSLG_LOG_KMSG", false))
