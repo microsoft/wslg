@@ -551,6 +551,9 @@ try {
     std::string pulseaudioLaunchArgs =
         "/usr/bin/dbus-launch "
         "/usr/bin/pulseaudio "
+        "--log-time=true "
+        "--disallow-exit=true "
+        "--exit-idle-time=-1 "
         "--load=\"module-rdp-sink sink_name=RDPSink\" "
         "--load=\"module-rdp-source source_name=RDPSource\" "
         "--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\" ";
@@ -561,7 +564,7 @@ try {
     if (pulseAudioLogFilePathEnv) {
         pulseaudioLogFileOption += pulseAudioLogFilePathEnv;
     } else {
-        pulseaudioLogFileOption += "file:" SHARE_PATH "/pulseaudio.log";
+        pulseaudioLogFileOption += "newfile:" SHARE_PATH "/pulseaudio.log";
     }
     pulseaudioLaunchArgs += pulseaudioLogFileOption;
 
