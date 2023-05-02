@@ -5,6 +5,8 @@
 
 #define DEFAULT_FONT_PATH "/usr/share/fonts"
 #define USER_DISTRO_FONT_PATH USER_DISTRO_MOUNT_PATH DEFAULT_FONT_PATH
+#define ALT_FONT_PATH "/usr/share/X11/fonts"
+#define ALT_DISTRO_FONT_PATH USER_DISTRO_MOUNT_PATH ALT_FONT_PATH
 
 constexpr auto c_fontsdir = "fonts.dir";
 constexpr auto c_xset = "/usr/bin/xset";
@@ -270,14 +272,25 @@ int wslgd::FontMonitor::Start()
 
         // if user distro mount folder does not exist, bail out.
         THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_MOUNT_PATH));
+
+        bool userDistroFontPathExists = std::filesystem::exists(USER_DISTRO_FONT_PATH);
+        bool altDistroFontPathExists = std::filesystem::exists(ALT_DISTRO_FONT_PATH);
+
         // and check fonts path inside user distro.
-        THROW_LAST_ERROR_IF_FALSE(std::filesystem::exists(USER_DISTRO_FONT_PATH));
+        THROW_LAST_ERROR_IF_FALSE(userDistroFontPathExists || altDistroFontPathExists);
 
         // start monitoring on mounted font folder.
         wil::unique_fd fd(inotify_init());
         THROW_LAST_ERROR_IF(!fd);
         m_fd.reset(fd.release());
-        AddMonitorFolder(USER_DISTRO_FONT_PATH);
+        
+        // add both the default and alternative font paths if they exist.
+        if (userDistroFontPathExists) {
+            AddMonitorFolder(USER_DISTRO_FONT_PATH);
+        }
+        if (altDistroFontPathExists) {
+            AddMonitorFolder(ALT_DISTRO_FONT_PATH);
+        }
 
         // Create font folder monitor thread.
         THROW_LAST_ERROR_IF(pthread_create(&m_fontMonitorThread, NULL, FontMonitorThread, (void*)this) < 0);
@@ -303,9 +316,15 @@ void wslgd::FontMonitor::Stop()
         m_fontMonitorThread = 0;
     }
 
-    RemoveMonitorFolder(USER_DISTRO_FONT_PATH);
-    m_fontMonitorFolders.clear();
+    // Remove both the default and alternative font paths if they were added.
+    if (m_fontMonitorFolders.find(USER_DISTRO_FONT_PATH) != m_fontMonitorFolders.end()) {
+        RemoveMonitorFolder(USER_DISTRO_FONT_PATH);
+    }
+    if (m_fontMonitorFolders.find(ALT_DISTRO_FONT_PATH) != m_fontMonitorFolders.end()) {
+        RemoveMonitorFolder(ALT_DISTRO_FONT_PATH);
+    }
 
+    m_fontMonitorFolders.clear();
     m_fd.reset();
 
     LOG_INFO("FontMonitor: monitoring stopped.");
