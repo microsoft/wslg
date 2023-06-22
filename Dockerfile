@@ -181,7 +181,6 @@ WORKDIR /work/vendor/mesa
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Dgallium-drivers=swrast,d3d12 \
-        -Ddri-drivers= \
         -Dvulkan-drivers= \
         -Dllvm=disabled && \
     ninja -C build -j8 install && \

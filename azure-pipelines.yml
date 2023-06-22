@@ -40,12 +40,12 @@ stages:
 
       - template: devops/common-linux.yml
 
-      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz &&
-                tar -xvf mesa-21.0.0.tar.xz
+      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz &&
+                tar -xvf mesa-23.1.0.tar.xz
         displayName: 'Download Mesa from CBL Mariner'
 
-      - script: wget https://github.com/microsoft/DirectX-Headers/archive/refs/tags/v1.602.0-r1.tar.gz &&
-                tar -xvf v1.602.0-r1.tar.gz
+      - script: wget https://github.com/microsoft/DirectX-Headers/archive/refs/tags/v1.608.0.tar.gz &&
+                tar -xvf v1.608.0.tar.gz
         displayName: 'Download DirectX-Headers from GitHub'
 
       - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
