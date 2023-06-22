@@ -51,8 +51,8 @@ stages:
       - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
                 mv weston-mirror/ wslg/vendor/weston &&
                 mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
-                mv mesa-21.0.0/ wslg/vendor/mesa &&
-                mv DirectX-Headers-1.602.0-r1/ wslg/vendor/DirectX-Headers-1.0
+                mv mesa-23.1.0/ wslg/vendor/mesa &&
+                mv DirectX-Headers-1.608.0/ wslg/vendor/DirectX-Headers-1.0
         displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa, DirectX-Headers)'
 
       - script: docker build -f ./wslg/Dockerfile -t system-distro-x64 
@@ -195,19 +195,19 @@ stages:
                 sudo service docker restart
         displayName: 'Enable Docker Engine experimental '
 
-      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-21.0.0.tar.xz &&
-                tar -xvf mesa-21.0.0.tar.xz
+      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz &&
+                tar -xvf mesa-23.1.0.tar.xz
         displayName: 'Download Mesa from CBL Mariner'
 
-      - script: wget https://github.com/microsoft/DirectX-Headers/archive/refs/tags/v1.602.0-r1.tar.gz &&
-                tar -xvf v1.602.0-r1.tar.gz
+      - script: wget https://github.com/microsoft/DirectX-Headers/archive/refs/tags/v1.608.0.tar.gz &&
+                tar -xvf v1.608.0.tar.gz
         displayName: 'Download DirectX-Headers from GitHub'
 
       - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
                 mv weston-mirror/ wslg/vendor/weston &&
                 mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
-                mv mesa-21.0.0/ wslg/vendor/mesa &&
-                mv DirectX-Headers-1.602.0-r1/ wslg/vendor/DirectX-Headers-1.0
+                mv mesa-23.1.0/ wslg/vendor/mesa &&
+                mv DirectX-Headers-1.608.0/ wslg/vendor/DirectX-Headers-1.0
         displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa, DirectX-Headers)'
 
       - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
