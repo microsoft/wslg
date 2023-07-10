@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <algorithm>
 #include <linux/vm_sockets.h>
 #include <array>
 #include <filesystem>
