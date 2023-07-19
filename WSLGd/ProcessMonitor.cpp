@@ -85,6 +85,8 @@ int wslgd::ProcessMonitor::LaunchProcess(
 }
 
 int wslgd::ProcessMonitor::Run() try {
+    std::map<std::string, std::vector<time_t>> crashes;
+
     for (;;) {
         // Reap any zombie child processes and re-launch any tracked processes.
         int pid;
@@ -110,7 +112,16 @@ int wslgd::ProcessMonitor::Run() try {
                     LOG_ERROR("pid %d return unknown status %d, %s", pid, status, cmd.c_str());
                 }
 
-                LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities), std::move(found->second.env));
+                auto& crashTimestamps = crashes[cmd];
+                auto now = time(nullptr);
+                crashTimestamps.erase(std::remove_if(crashTimestamps.begin(), crashTimestamps.end(), [&](auto ts) { return ts < now - 60; }), crashTimestamps.end());
+                crashTimestamps.emplace_back(now);
+
+                if (crashTimestamps.size() > 10) {
+                    LOG_INFO("%s exited more than 10 times in 60 seconds, not starting it again", cmd.c_str());
+                } else {
+                    LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities), std::move(found->second.env));
+                }
             }
 
             m_children.erase(found);
