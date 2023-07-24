@@ -330,6 +330,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             libxkbcommon \
             libXrandr \
             iproute \
+            nftables \
             pango \
             procps-ng \
             rpm \
