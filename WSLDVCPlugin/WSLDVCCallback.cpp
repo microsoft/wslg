@@ -7,16 +7,9 @@
 #include "WSLDVCCallback.h"
 #include "WSLDVCFileDB.h"
 
-LPCWSTR WSLG_WINDOW_ID = L"WslgServerWindowId";
-
-#ifdef WSLG_INBOX
-LPCWSTR c_WSL_exe = L"%windir%\\system32\\wsl.exe";
-LPCWSTR c_WSLg_exe = L"%windir%\\system32\\wslg.exe";
-#else
-LPCWSTR c_WSLg_exe = L"%localappdata%\\Microsoft\\WindowsApps\\MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe\\wslg.exe";
-#endif // WSLG_INBOX
-
-LPCWSTR c_Working_dir = L"%windir%\\system32";
+constexpr LPCWSTR c_WSLg_window_id = L"WslgServerWindowId";
+constexpr LPCWSTR c_WSLg_exe = L"%localappdata%\\Microsoft\\WindowsApps\\MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe\\wslg.exe";
+constexpr LPCWSTR c_Working_dir = L"%windir%\\system32";
 
 //
 // This channel simply sends all the received messages back to the server. 
@@ -463,24 +456,6 @@ public:
         }
         DebugPrint(L"WSLg.exe: %s\n", m_expandedPathObj);
 
-#ifdef WSLG_INBOX
-        if (!PathFileExistsW(m_expandedPathObj) || !IsFileTrusted(m_expandedPathObj))
-        {
-            if (ExpandEnvironmentStringsW(c_WSL_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
-            {
-                DebugPrint(L"Failed to expand WSL exe: %s : %d\n", c_WSL_exe, GetLastError());
-                return E_FAIL;
-            }
-            DebugPrint(L"WSL.exe: %s\n", m_expandedPathObj);
-
-            if (!PathFileExistsW(m_expandedPathObj) || !IsFileTrusted(m_expandedPathObj))
-            {
-                DebugPrint(L"WSL.exe doesn't exists or not trustable\n");
-                return E_FAIL;
-            }
-        }
-#endif // WSLG_INBOX
-
         if (ExpandEnvironmentStringsW(c_Working_dir, m_expandedWorkingDir, ARRAYSIZE(m_expandedWorkingDir)) == 0)
         {
             DebugPrint(L"Failed to expand working dir: %s : %d\n", c_Working_dir, GetLastError());
@@ -864,7 +839,7 @@ public:
         )
     {
         WslgWindowData* wndData = (WslgWindowData*)args;
-        HANDLE windowId = GetPropW(hwnd, WSLG_WINDOW_ID);
+        HANDLE windowId = GetPropW(hwnd, c_WSLg_window_id);
         if (windowId == (HANDLE)wndData->windowId)
         {
             UpdateTaskBarInfo(hwnd,
