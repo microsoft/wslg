@@ -20,12 +20,10 @@ Copyright (C) Microsoft Corporation. All rights reserved.
   </metadata>
   <files>
     <file src="Microsoft.WSLg.targets" target="build/Microsoft.WSLg.targets" />
-    <file src="package/system_x64.img" target="build/native/bin/x64/system.img" />
     <file src="package/system_x64.vhd" target="build/native/bin/x64/system.vhd" />
     <file src="package/system-debuginfo_x64.tar.gz" target="build/native/bin/x64/system-debuginfo.tar.gz" />
     <file src="package/WSLDVCPlugin_x64.dll" target="build/native/bin/x64/WSLDVCPlugin.dll" />
     <file src="package/WSLDVCPlugin_x64.pdb" target="build/native/bin/x64/WSLDVCPlugin.pdb" />
-    <file src="package/system_ARM64.img" target="build/native/bin/arm64/system.img" />
     <file src="package/system_ARM64.vhd" target="build/native/bin/arm64/system.vhd" />
     <file src="package/system-debuginfo_ARM64.tar.gz" target="build/native/bin/arm64/system-debuginfo.tar.gz" />
     <file src="package/WSLDVCPlugin_ARM64.dll" target="build/native/bin/arm64/WSLDVCPlugin.dll" />

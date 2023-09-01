@@ -89,21 +89,6 @@ stages:
           artifact: 'system_x64.vhd'
           publishLocation: 'pipeline'
 
-      - task: Go@0
-        inputs:
-          command: 'custom'
-          customCommand: 'run'
-          arguments: 'tar2ext4.go -i $(Agent.BuildDirectory)/system_x64.tar -o $(Agent.BuildDirectory)/system_x64.img'
-          workingDirectory: 'hcsshim/cmd/tar2ext4'
-        displayName: 'Create system_x64.img'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish system_x64.img artifact'
-        inputs:
-          targetPath: $(Agent.BuildDirectory)/system_x64.img
-          artifact: 'system_x64.img'
-          publishLocation: 'pipeline'
-
       - task: PublishPipelineArtifact@1
         displayName: 'Publish system-debuginfo_x64.tar.gz artifact'
         inputs:
@@ -234,22 +219,6 @@ stages:
           artifact: 'system_arm64.vhd'
           publishLocation: 'pipeline'
 
-      - task: Go@0
-        inputs:
-          command: 'custom'
-          customCommand: 'run'
-          arguments: 'tar2ext4.go -i $(Agent.BuildDirectory)/system_arm64.tar -o $(Agent.BuildDirectory)/system_arm64.img'
-          workingDirectory: 'hcsshim/cmd/tar2ext4'
-        displayName: 'Create system_arm64.img'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish system_arm64.img artifact'
-        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-        inputs:
-          targetPath: $(Agent.BuildDirectory)/system_arm64.img
-          artifact: 'system_arm64.img'
-          publishLocation: 'pipeline'
-
       - script: mkdir ./dev &&
                 ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
                 --output type=tar,dest=./dev/dev_build.tar 
@@ -340,13 +309,6 @@ stages:
           targetPath: 'package/'
 
       - task: DownloadPipelineArtifact@2
-        displayName: 'Download system_x64.img'
-        inputs:
-          buildType: 'current'
-          artifactName: 'system_x64.img'
-          targetPath: 'package/'
-
-      - task: DownloadPipelineArtifact@2
         displayName: 'Download system-debuginfo_x64.tar.gz'
         inputs:
           buildType: 'current'
@@ -372,13 +334,6 @@ stages:
         inputs:
           buildType: 'current'
           artifactName: 'system_arm64.vhd'
-          targetPath: 'package/'
-
-      - task: DownloadPipelineArtifact@2
-        displayName: 'Download system_arm64.img'
-        inputs:
-          buildType: 'current'
-          artifactName: 'system_arm64.img'
           targetPath: 'package/'
 
       - task: DownloadPipelineArtifact@2
