@@ -140,6 +140,16 @@ stages:
         solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
         platform: 'x64'
         configuration: 'Release'
+        
+    - task: PublishSymbols@2
+      displayName: Publish symbols
+      inputs:
+        SymbolServerType: 'TeamServices'
+        TreatNotIndexedAsWarning: true
+        SymbolsProduct: wslg
+        SearchPattern: |
+          WSLDVCPlugin/x64/Release/*.pdb
+          WSLDVCPlugin/x64/Release/*.dll
 
     - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb package\WSLDVCPlugin_x64.pdb'
       displayName: 'Move plugin PDB to package (x64)'
@@ -299,6 +309,16 @@ stages:
         solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
         platform: 'ARM64'
         configuration: 'Release'
+        
+    - task: PublishSymbols@2
+      displayName: Publish symbols
+      inputs:
+        SymbolServerType: 'TeamServices'
+        TreatNotIndexedAsWarning: true
+        SymbolsProduct: wslg
+        SearchPattern: |
+          WSLDVCPlugin/arm64/Release/*.pdb
+          WSLDVCPlugin/arm64/Release/*.dll
 
     - script: 'MOVE WSLDVCPlugin\ARM64\Release\WSLDVCPlugin.pdb package\WSLDVCPlugin_ARM64.pdb'
       displayName: 'Move plugin PDB to package (ARM64)'
