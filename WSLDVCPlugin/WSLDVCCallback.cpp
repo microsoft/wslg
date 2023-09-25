@@ -30,6 +30,9 @@ public:
         if (SUCCEEDED(hr))
         {
             m_spChannel = pChannel;
+
+            InitializeCriticalSection(&m_crit);
+            m_bCriticalSectionInitialized = true;
         }
         return hr;
     }
@@ -980,9 +983,15 @@ public:
         const BYTE* cur = pBuffer;
         UINT64 len = cbSize;
 
+        if (m_bChannelClosed)
+        {
+            return S_OK;
+        }
+
+        EnterCriticalSection(&m_crit);
         DebugPrint(L"OnDataReceived enter, size = %d\n", len);
 
-        while (len)
+        while (len && !m_bChannelClosed)
         {
             RDPAPPLIST_HEADER appListHeader = {};
 
@@ -1048,17 +1057,28 @@ public:
         }
 
         DebugPrint(L"OnDataReceived returns hr = %x\n", hr);
+        LeaveCriticalSection(&m_crit);
+
         return hr;
     }
 
     STDMETHODIMP 
         OnClose()
     {
+        m_bChannelClosed = true;
+
+        EnterCriticalSection(&m_crit);
+        DebugPrint(L"OnClose enter\n");
+
         // Make sure sync mode is cancelled.
         OnSyncEnd(false);
 
         m_spFileDB->OnClose();
         m_spFileDB = nullptr;
+
+        DebugPrint(L"OnClose returns hr = %x\n", S_OK);
+        LeaveCriticalSection(&m_crit);
+
         return S_OK;
     }
 
@@ -1067,6 +1087,10 @@ protected:
     virtual 
         ~WSLDVCCallback() 
     {
+        if (m_bCriticalSectionInitialized)
+        {
+            DeleteCriticalSection(&m_crit);
+        }
     }
 
 private:
@@ -1076,6 +1100,10 @@ private:
     ComPtr<IWSLDVCFileDB> m_spFileDB;
     ComPtr<IWSLDVCFileDB> m_spFileDBSync; // valid only during sync.
 
+    CRITICAL_SECTION m_crit = {};
+    bool m_bCriticalSectionInitialized = false;
+
+    bool m_bChannelClosed = false;
     bool m_handShakeComplated = false;
 
     RDPAPPLIST_SERVER_CAPS_PDU m_serverCaps = {};
