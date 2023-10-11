@@ -7,8 +7,8 @@
 #include "WSLDVCCallback.h"
 #include "WSLDVCFileDB.h"
 
+constexpr LPCWSTR c_WSL_registry_path = L"Software\\Microsoft\\Windows\\CurrentVersion\\Lxss";
 constexpr LPCWSTR c_WSLg_window_id = L"WslgServerWindowId";
-constexpr LPCWSTR c_WSLg_exe = L"%localappdata%\\Microsoft\\WindowsApps\\MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe\\wslg.exe";
 constexpr LPCWSTR c_Working_dir = L"%windir%\\system32";
 
 //
@@ -452,9 +452,26 @@ public:
         }
         DebugPrint(L"IconPath: %s\n", m_iconPath);
 
-        if (ExpandEnvironmentStringsW(c_WSLg_exe, m_expandedPathObj, ARRAYSIZE(m_expandedPathObj)) == 0)
+        // Read the registry key that declares where the WSL package is installed.
+        HKEY key;
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, c_WSL_registry_path, 0, KEY_READ, &key));
+        if (FAILED(hr))
         {
-            DebugPrint(L"Failed to expand WSLg exe: %s : %d\n", c_WSLg_exe, GetLastError());
+            DebugPrint(L"RegOpenKeyExW failed\n");
+            return hr;
+        }
+
+        DWORD valueSize = sizeof(m_expandedPathObj);
+        hr = HRESULT_FROM_WIN32(RegGetValueW(key, L"Msi", L"InstallLocation", (RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ), nullptr, m_expandedPathObj, &valueSize));
+        RegCloseKey(key);
+        if (FAILED(hr))
+        {
+            DebugPrint(L"RegGetValueW failed\n");
+            return hr;
+        }
+
+        if (wcscat_s(m_expandedPathObj, ARRAYSIZE(m_expandedPathObj), L"\\wslg.exe") != 0)
+        {
             return E_FAIL;
         }
         DebugPrint(L"WSLg.exe: %s\n", m_expandedPathObj);
