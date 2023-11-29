@@ -26,8 +26,6 @@ stages:
   - job: 'Build_Ubuntu_x64'
     displayName: 'Build x64 system distro'
     timeoutInMinutes: 200
-    variables:
-      - group: 'Keys'
 
     pool:
       vmImage: 'ubuntu-latest'
@@ -160,8 +158,6 @@ stages:
     displayName: 'Build ARM64 system distro'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     timeoutInMinutes: 200
-    variables:
-      - group: 'Keys'
 
     pool:
       vmImage: 'ubuntu-latest'
