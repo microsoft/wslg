@@ -527,10 +527,10 @@ try {
         "/init",
         std::move(rdpClientExePath),
         basename(rdpClientExePath.c_str()),
+        "/wslg", // set wslg option first so following parameters are parsed in context of wslg.
+        "/silent", // then set silent option before anything-else.
         std::move(remote),
         std::move(serviceId),
-        "/silent",
-        "/wslg",
         std::move(wslDvcPlugin),
         std::move(sharedMemoryObPath),
         std::move(rdpFilePathArg)
