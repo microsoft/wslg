@@ -12,6 +12,7 @@
 #define WESTON_NOTIFY_SOCKET SHARE_PATH "/weston-notify.sock"
 #define DEFAULT_ICON_PATH "/usr/share/icons"
 #define USER_DISTRO_ICON_PATH USER_DISTRO_MOUNT_PATH DEFAULT_ICON_PATH
+#define MAX_RESERVED_PORT 1024
 
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
 constexpr auto c_userName = "wslg";
@@ -322,22 +323,26 @@ try {
         LOG_ERROR("shared memory ob directory path is not set.");
     }
 
-    // Create a listening vsock to be used for the RDP connection.
-    //
-    // N.B. getsockname is used to get the port assigned by the kernel.
+    // Create a listening vsock in the reserved port range to be used for the RDP connection.
     sockaddr_vm address{};
     address.svm_family = AF_VSOCK;
     address.svm_cid = VMADDR_CID_ANY;
-    address.svm_port = VMADDR_PORT_ANY;
     socklen_t addressSize = sizeof(address);
     wil::unique_fd socketFd{socket(AF_VSOCK, SOCK_STREAM, 0)};
     THROW_LAST_ERROR_IF(!socketFd);
-    auto socketFdString = std::to_string(socketFd.get());
-    THROW_LAST_ERROR_IF(bind(socketFd.get(), reinterpret_cast<const sockaddr*>(&address), addressSize) < 0);
+    for (unsigned int port = 1; port < MAX_RESERVED_PORT; port += 1) {
+        address.svm_port = port;
+        if (bind(socketFd.get(), reinterpret_cast<const sockaddr*>(&address), addressSize) == 0) {
+            break;
+        }
+
+        THROW_LAST_ERROR_IF(errno != EADDRINUSE);
+    }
+
+    THROW_ERRNO_IF(EINVAL, (address.svm_port == MAX_RESERVED_PORT));
     THROW_LAST_ERROR_IF(listen(socketFd.get(), 1) < 0);
-    THROW_LAST_ERROR_IF(getsockname(socketFd.get(), reinterpret_cast<sockaddr*>(&address), &addressSize));
     std::string socketEnvString("USE_VSOCK=");
-    socketEnvString += socketFdString;
+    socketEnvString += std::to_string(socketFd.get());
     std::string serviceIdEnvString("WSLG_SERVICE_ID=");
     serviceIdEnvString += ToServiceId(address.svm_port);
 
