@@ -27,11 +27,6 @@ constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 constexpr auto c_stdErrLogFile = SHARE_PATH "/stderr.log";
 
-constexpr auto c_coreDir = SHARE_PATH "/dumps";
-constexpr auto c_corePatternDefault = "core.%e";
-constexpr auto c_corePatternFile = "/proc/sys/kernel/core_pattern";
-constexpr auto c_corePatternEnv = "WSL2_WSLG_CORE_PATTERN";
-
 constexpr auto c_sharedMemoryMountPoint = "/mnt/shared_memory";
 constexpr auto c_sharedMemoryMountPointEnv = "WSL2_SHARED_MEMORY_MOUNT_POINT";
 constexpr auto c_sharedMemoryObDirectoryPathEnv = "WSL2_SHARED_MEMORY_OB_DIRECTORY";
