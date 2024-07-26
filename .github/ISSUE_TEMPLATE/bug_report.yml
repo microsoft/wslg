@@ -63,7 +63,7 @@ body:
   id: dumps
   attributes:
     label: "WSL dumps:"
-    description: "Attach any dump files from `/mnt/wslg/dumps`, such as core.weston, if exists."
+    description: "Attach any dump files from `%tmp%\wsl-crashes`, such as core.weston, if exists. If running an older version, the dump files can be found in `/mnt/wslg/dumps`"
   validations:
     required: false
 - type: textarea

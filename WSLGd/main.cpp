@@ -27,11 +27,6 @@ constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 constexpr auto c_stdErrLogFile = SHARE_PATH "/stderr.log";
 
-constexpr auto c_coreDir = SHARE_PATH "/dumps";
-constexpr auto c_corePatternDefault = "core.%e";
-constexpr auto c_corePatternFile = "/proc/sys/kernel/core_pattern";
-constexpr auto c_corePatternEnv = "WSL2_WSLG_CORE_PATTERN";
-
 constexpr auto c_sharedMemoryMountPoint = "/mnt/shared_memory";
 constexpr auto c_sharedMemoryMountPointEnv = "WSL2_SHARED_MEMORY_MOUNT_POINT";
 constexpr auto c_sharedMemoryObDirectoryPathEnv = "WSL2_SHARED_MEMORY_OB_DIRECTORY";
@@ -346,37 +341,10 @@ try {
     std::string serviceIdEnvString("WSLG_SERVICE_ID=");
     serviceIdEnvString += ToServiceId(address.svm_port);
 
-    // "ulimits -c unlimited" for core dumps.
     struct rlimit limit;
-    limit.rlim_cur = RLIM_INFINITY;
-    limit.rlim_max = RLIM_INFINITY;
-    THROW_LAST_ERROR_IF(setrlimit(RLIMIT_CORE, &limit) < 0);
-
     THROW_LAST_ERROR_IF(getrlimit(RLIMIT_NOFILE, &limit) < 0);
     limit.rlim_cur = limit.rlim_max;
     THROW_LAST_ERROR_IF(setrlimit(RLIMIT_NOFILE, &limit) < 0);
-
-    // create folder to store core files.
-    std::filesystem::create_directories(c_coreDir);
-    THROW_LAST_ERROR_IF(chmod(c_coreDir, 0777) < 0);
-
-    // update core_pattern.
-    {
-        wil::unique_file corePatternFile(fopen(c_corePatternFile, "w"));
-        if (corePatternFile.get()) {
-            // combine folder path and core pattern.
-            std::string corePatternFullPath(c_coreDir);
-            corePatternFullPath += "/";
-            auto corePattern = getenv(c_corePatternEnv);
-            if (corePattern) {
-                corePatternFullPath += corePattern;
-            } else {
-                corePatternFullPath += c_corePatternDefault; // set to default core_pattern.
-            }
-            // write to core_pattern file.
-            THROW_LAST_ERROR_IF(fprintf(corePatternFile.get(), "%s", corePatternFullPath.c_str()) < 0);
-        }
-    }
 
     // Set shared memory mount point to env when available.
     if (!isSharedMemoryMounted ||
