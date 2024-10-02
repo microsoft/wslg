@@ -125,7 +125,7 @@ FROM build-env AS dev
 ARG WSLG_VERSION="<current>"
 ARG WSLG_ARCH="x86_64"
 ARG SYSTEMDISTRO_DEBUG_BUILD
-ARG FREERDP_VERSION=2
+ARG FREERDP_VERSION=3
 
 WORKDIR /work
 RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
@@ -205,20 +205,29 @@ WORKDIR /work/vendor/FreeRDP
 RUN cmake -G Ninja \
         -B build \
         -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-        -DCMAKE_INSTALL_LIBDIR=${PREFIX}/lib \
+        -DCMAKE_INSTALL_LIBDIR=./lib \
         -DCMAKE_BUILD_TYPE=${BUILDTYPE_FREERDP} \
+        -DPKG_CONFIG_RELOCATABLE=OFF \
         -DWITH_DEBUG_ALL=${WITH_DEBUG_FREERDP} \
+        -DWITH_WINPR_DEPRECATED=ON \
         -DWITH_ICU=ON \
         -DWITH_SERVER=ON \
         -DWITH_CHANNEL_GFXREDIR=ON \
-        -DWITH_CHANNEL_RDPAPPLIST=ON \
         -DWITH_CLIENT=OFF \
         -DWITH_CLIENT_COMMON=OFF \
         -DWITH_CLIENT_CHANNELS=OFF \
         -DWITH_CLIENT_INTERFACE=OFF \
         -DWITH_PROXY=OFF \
         -DWITH_SHADOW=OFF \
-        -DWITH_SAMPLE=OFF && \
+        -DWITH_SAMPLE=OFF \
+        -DWITH_PULSE=OFF \
+        -DWITH_ALSA=OFF \
+        -DWITH_DSP_FFMPEG=OFF \
+        -DWITH_VIDEO_FFMPEG=OFF \
+        -DWITH_FFMPEG=OFF \
+        -DWITH_PKCS11=OFF \
+        -DWITH_KRB5=OFF \
+        -DWITH_SWSCALE=OFF && \
     ninja -C build -j8 install && \
     echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
 

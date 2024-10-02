@@ -1,7 +1,6 @@
 /usr/bin/winpr-hash
 /usr/bin/winpr-makecert
-/usr/lib/libfreerdp-server3.so.3.0.0
-/usr/lib/libfreerdp3.so.3.0.0
-/usr/lib/libuwac0.so.0.2.0
-/usr/lib/libwinpr-tools3.so.3.0.0
-/usr/lib/libwinpr3.so.3.0.0
+/usr/lib/libfreerdp-server3.so.3.8.0
+/usr/lib/libfreerdp3.so.3.8.0
+/usr/lib/libwinpr-tools3.so.3.8.0
+/usr/lib/libwinpr3.so.3.8.0
