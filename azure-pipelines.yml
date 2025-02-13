@@ -38,7 +38,7 @@ stages:
 
       - template: devops/common-linux.yml
 
-      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz &&
+      - script: wget https://azurelinuxsrcstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz &&
                 tar -xvf mesa-23.1.0.tar.xz
         displayName: 'Download Mesa from CBL Mariner'
 
@@ -186,7 +186,7 @@ stages:
                 sudo service docker restart
         displayName: 'Enable Docker Engine experimental '
 
-      - script: wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz &&
+      - script: wget https://azurelinuxsrcstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz &&
                 tar -xvf mesa-23.1.0.tar.xz
         displayName: 'Download Mesa from CBL Mariner'
 
