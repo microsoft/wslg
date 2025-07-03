@@ -16,7 +16,6 @@
 
 constexpr auto c_serviceIdTemplate = "%08X-FACB-11E6-BD58-64006A7986D3";
 constexpr auto c_userName = "wslg";
-constexpr auto c_vmIdEnv = "WSL2_VM_ID";
 
 constexpr auto c_dbusDir = "/var/run/dbus";
 constexpr auto c_versionFile = "/etc/versions.txt";
@@ -131,6 +130,22 @@ bool GetEnvBool(const char *EnvName, bool DefaultValue)
     }
 
     return DefaultValue;
+}
+
+std::string GetVmId()
+{
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("/usr/bin/wslinfo --vm-id -n", "r"), pclose);
+    THROW_LAST_ERROR_IF(!pipe);
+
+    std::array<char, 128> buffer;
+    std::string result;
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+
+    THROW_ERRNO_IF(EINVAL, pclose(pipe.release()) != 0);
+
+    return result;
 }
 
 void SetupOptionalEnv()
@@ -255,9 +270,9 @@ try {
     }
 
     // Query the VM ID.
-    auto vmId = getenv(c_vmIdEnv);
-    if (!vmId) {
-        LOG_ERROR("%s must be set.", c_vmIdEnv);
+    auto vmId = GetVmId();
+    if (vmId.empty()) {
+        LOG_ERROR("could not query VM ID.");
         return 1;
     }
 
