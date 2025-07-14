@@ -99,7 +99,7 @@ stages:
     displayName: 'Build WSLDCV (x64) Plugin'
     
     pool:
-      vmImage: 'windows-2019'
+      vmImage: 'windows-2025'
       demands:
       - msbuild
       - visualstudio
@@ -250,7 +250,7 @@ stages:
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     
     pool:
-      vmImage: 'windows-2019'
+      vmImage: 'windows-2025'
       demands:
       - msbuild
       - visualstudio
@@ -313,7 +313,7 @@ stages:
     displayName: 'Download artifact and push NuGet package'
 
     pool:
-      vmImage: 'windows-2019'
+      vmImage: 'windows-2025'
 
     steps:
 
