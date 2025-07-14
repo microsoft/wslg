@@ -156,7 +156,7 @@ stages:
 
   - job: 'Build_Ubuntu_ARM64'
     displayName: 'Build ARM64 system distro'
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+#   condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     timeoutInMinutes: 200
 
     pool:
@@ -173,7 +173,8 @@ stages:
       - bash: |
               curl -L -o ~/.docker/cli-plugins/docker-buildx --create-dirs ${BUILDX_URL}
               chmod a+x ~/.docker/cli-plugins/docker-buildx
-              docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+              # docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+              docker run --privileged --rm tonistiigi/binfmt:qemu-v9.2.0-51 --install all
               ~/.docker/cli-plugins/docker-buildx create --use
               ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
         displayName: Prepare buildx
