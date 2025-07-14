@@ -156,7 +156,7 @@ stages:
 
   - job: 'Build_Ubuntu_ARM64'
     displayName: 'Build ARM64 system distro'
-#   condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     timeoutInMinutes: 200
 
     pool:
@@ -173,12 +173,11 @@ stages:
       - bash: |
               curl -L -o ~/.docker/cli-plugins/docker-buildx --create-dirs ${BUILDX_URL}
               chmod a+x ~/.docker/cli-plugins/docker-buildx
-              # docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
               docker run --privileged --rm tonistiigi/binfmt:qemu-v9.2.0-51 --install all
               ~/.docker/cli-plugins/docker-buildx create --use
               ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
         displayName: Prepare buildx
-#       condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
         env:
           BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
 
@@ -220,7 +219,7 @@ stages:
 
       - task: PublishPipelineArtifact@1
         displayName: 'Publish system_arm64.vhd artifact'
-#       condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
         inputs:
           targetPath: $(Agent.BuildDirectory)/system_arm64.vhd
           artifact: 'system_arm64.vhd'
@@ -248,7 +247,7 @@ stages:
   - job: 'Build_Windows_ARM64'
     dependsOn: 'Build_Ubuntu_ARM64'
     displayName: 'Build WSLDCV (ARM64) Plugin'
-#   condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     
     pool:
       vmImage: 'windows-2019'
@@ -310,7 +309,7 @@ stages:
   displayName: "Publish WSLg NuGet Package"
   jobs:
   - job: 'Publish_UniversalPackage'
-#   condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     displayName: 'Download artifact and push NuGet package'
 
     pool:
@@ -404,7 +403,7 @@ stages:
           publishLocation: 'pipeline'
 
       - task: '333b11bd-d341-40d9-afcf-b32d5ce6f23b@2'
-#       condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
         inputs:
           command: 'push'
           packagesToPush: 'Microsoft.WSLg.nupkg'
