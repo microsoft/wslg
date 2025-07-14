@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20250207 AS build-env
+FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20250701 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -85,7 +85,8 @@ RUN echo "== Install Core dependencies ==" && \
         unzip  \
         vala  \
         vala-devel  \
-        vala-tools
+        vala-tools  \
+        zlib-devel
 
 RUN echo "== Install UI dependencies ==" && \
     tdnf    install -y \
@@ -216,6 +217,9 @@ RUN cmake -G Ninja \
         -DWITH_CLIENT_COMMON=OFF \
         -DWITH_CLIENT_CHANNELS=OFF \
         -DWITH_CLIENT_INTERFACE=OFF \
+        -DWITH_LIBSYSTEMD=OFF \
+        -DWITH_WAYLAND=OFF \
+        -DWITH_X11=OFF \
         -DWITH_PROXY=OFF \
         -DWITH_SHADOW=OFF \
         -DWITH_SAMPLE=OFF && \
@@ -306,7 +310,7 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 
 ## Create the distro image with just what's needed at runtime
 
-FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20250207 AS runtime
+FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20250701 AS runtime
 
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
