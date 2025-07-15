@@ -28,7 +28,7 @@ stages:
     timeoutInMinutes: 200
 
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: 'ubuntu-22.04'
       
     steps:
       - checkout: FreeRDP
@@ -160,7 +160,7 @@ stages:
     timeoutInMinutes: 200
 
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: 'ubuntu-22.04'
       
     steps:
       - checkout: FreeRDP
