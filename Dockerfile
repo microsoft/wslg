@@ -163,6 +163,7 @@ ENV LIBRARY_PATH=${DESTDIR}${PREFIX}/lib
 ENV LD_LIBRARY_PATH=${LIBRARY_PATH}
 ENV CC=/usr/bin/gcc
 ENV CXX=/usr/bin/g++
+ENV NINJA_J=2
 
 # Setup DebugInfo folder
 COPY debuginfo /work/debuginfo
@@ -174,7 +175,7 @@ WORKDIR /work/vendor/DirectX-Headers-1.0
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Dbuild-test=false && \
-    ninja -C build -j8 install && \
+    ninja -C build -j${NINJA_J} install && \
     echo 'DirectX-Headers:' `git --git-dir=/work/vendor/DirectX-Headers-1.0/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build mesa with the minimal options we need.
@@ -185,7 +186,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dgallium-drivers=swrast,d3d12 \
         -Dvulkan-drivers= \
         -Dllvm=disabled && \
-    ninja -C build -j8 install && \
+    ninja -C build -j${NINJA_J} install && \
     echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build PulseAudio
@@ -197,7 +198,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Ddoxygen=false \
         -Dgsettings=disabled \
         -Dtests=false && \
-    ninja -C build -j8 install && \
+    ninja -C build -j${NINJA_J} install && \
     echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build FreeRDP
@@ -223,7 +224,7 @@ RUN cmake -G Ninja \
         -DWITH_PROXY=OFF \
         -DWITH_SHADOW=OFF \
         -DWITH_SAMPLE=OFF && \
-    ninja -C build -j8 install && \
+    ninja -C build -j${NINJA_J} install && \
     echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 WORKDIR /work/debuginfo
@@ -237,7 +238,7 @@ COPY rdpapplist /work/rdpapplist
 WORKDIR /work/rdpapplist
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
-    ninja -C build -j8 install
+    ninja -C build -j${NINJA_J} install
 
 WORKDIR /work/debuginfo
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
@@ -273,7 +274,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dresize-pool=false \
         -Dwcap-decode=false \
         -Dtest-junit-xml=false && \
-    ninja -C build -j8 install && \
+    ninja -C build -j${NINJA_J} install && \
     echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 WORKDIR /work/debuginfo
@@ -290,7 +291,7 @@ COPY WSLGd /work/WSLGd
 WORKDIR /work/WSLGd
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
-    ninja -C build -j8 install
+    ninja -C build -j${NINJA_J} install
 
 WORKDIR /work/debuginfo
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \

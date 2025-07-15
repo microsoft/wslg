@@ -204,6 +204,7 @@ stages:
       - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
                 --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
                 --platform=linux/arm64 
+                --load --progress=plain 
                 ./wslg 
                 --build-arg WSLG_VERSION=`gitversion /targetpath ./wslg /showvariable InformationalVersion` 
                 --build-arg WSLG_ARCH=aarch64
