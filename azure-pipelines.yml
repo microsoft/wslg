@@ -156,7 +156,7 @@ stages:
 
   - job: 'Build_Ubuntu_ARM64'
     displayName: 'Build ARM64 system distro'
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    #condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     timeoutInMinutes: 200
 
     pool:
