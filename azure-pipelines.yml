@@ -177,7 +177,7 @@ stages:
               ~/.docker/cli-plugins/docker-buildx create --use
               ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
         displayName: Prepare buildx
-        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        #condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
         env:
           BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
 
