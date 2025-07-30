@@ -244,6 +244,10 @@ stages:
           artifact: 'system-debuginfo_arm64.tar.gz'
           publishLocation: 'pipeline'
 
+      - script: dmesg
+        displayName: 'Collect dmesg output'
+        condition: always()
+
   - job: 'Build_Windows_ARM64'
     dependsOn: 'Build_Ubuntu_ARM64'
     displayName: 'Build WSLDCV (ARM64) Plugin'
