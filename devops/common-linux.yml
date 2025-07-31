@@ -4,7 +4,7 @@ steps:
       dockerVersion: '20.10.7'
       releaseType: 'stable'
 
-  - script: wget https://github.com/GitTools/GitVersion/releases/download/5.6.8/gitversion-linux-x64-5.6.8.tar.gz &&
+  - script: wget https://github.com/GitTools/GitVersion/releases/download/6.3.0/gitversion-linux-x64-6.3.0.tar.gz &&
             tar -xvf gitversion-linux-x64-5.6.8.tar.gz &&
             sudo mv gitversion /usr/local/bin &&
             sudo mv libgit2-6777db8.so /usr/local/bin
