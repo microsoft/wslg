@@ -171,14 +171,14 @@ stages:
       - checkout: FreeRDP
       - checkout: weston
       - checkout: pulseaudio
-      - checkout: self
+      - checkout: wslg
 
       - template: devops/common-linux.yml
 
       - bash: |
               curl -L -o ~/.docker/cli-plugins/docker-buildx --create-dirs ${BUILDX_URL}
               chmod a+x ~/.docker/cli-plugins/docker-buildx
-              docker run --privileged --rm tonistiigi/binfmt:qemu-v9.2.0-51 --install all
+              docker run --privileged --rm tonistiigi/binfmt:qemu-v9.2.2-52 --install all
               ~/.docker/cli-plugins/docker-buildx create --use
               ~/.docker/cli-plugins/docker-buildx inspect --bootstrap
         displayName: Prepare buildx
