@@ -1,7 +1,7 @@
 
-$version = [string](gitversion /showvariable AssemblySemFileVer)
+$version = [string](dotnet-gitversion /showvariable AssemblySemFileVer)
 $versionComma = $version.Replace(".", ",")
-$informationalVersion = [string](gitversion /showvariable InformationalVersion)
+$informationalVersion = [string](dotnet-gitversion /showvariable InformationalVersion)
 
 $content = (Get-Content -Encoding "windows-1252" -Path ".\WSLDVCPlugin.rc")
 $content = $content.Replace("1,0,0,1", $versionComma);
