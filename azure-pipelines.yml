@@ -110,22 +110,22 @@ stages:
       - visualstudio
 
     steps:
-    - checkout: self
+    - checkout: wslg
 
-    - template: devops/common-win.yml
+    - template: wslg/devops/common-win.yml
 
     - task: PowerShell@2
       displayName: 'Update WSLDVCPlugin version'
       inputs:
         targetType: filePath
         workingDirectory: './WSLDVCPlugin'
-        filePath: .\WSLDVCPlugin\UpdateRCVersion.ps1
+        filePath: .\wslg\WSLDVCPlugin\UpdateRCVersion.ps1
         pwsh: true
 
     - task: MSBuild@1
       displayName: 'Build RDP Plugin (x64)'
       inputs:
-        solution: './WSLDVCPlugin/WSLDVCPlugin.sln'
+        solution: './wslg/WSLDVCPlugin/WSLDVCPlugin.sln'
         platform: 'x64'
         configuration: 'Release'
         
@@ -136,10 +136,10 @@ stages:
         TreatNotIndexedAsWarning: true
         SymbolsProduct: wslg
         SearchPattern: |
-          WSLDVCPlugin/x64/Release/*.pdb
-          WSLDVCPlugin/x64/Release/*.dll
+          wslg/WSLDVCPlugin/x64/Release/*.pdb
+          wslg/WSLDVCPlugin/x64/Release/*.dll
 
-    - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb package\WSLDVCPlugin_x64.pdb'
+    - script: 'MOVE wslg\WSLDVCPlugin\x64\Release\WSLDVCPlugin.pdb package\WSLDVCPlugin_x64.pdb'
       displayName: 'Move plugin PDB to package (x64)'
 
     - task: PublishPipelineArtifact@1
@@ -149,7 +149,7 @@ stages:
         artifact: 'WSLDVCPlugin.x64.pdb'
         publishLocation: 'pipeline'
 
-    - script: 'MOVE WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll package\WSLDVCPlugin_x64.dll'
+    - script: 'MOVE wslg\WSLDVCPlugin\x64\Release\WSLDVCPlugin.dll package\WSLDVCPlugin_x64.dll'
       displayName: 'Move plugin DLL to package (x64)'
 
     - task: PublishPipelineArtifact@1
@@ -161,7 +161,7 @@ stages:
 
   - job: 'Build_Wslg_ARM64'
     displayName: 'Build ARM64 system distro'
-#    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     timeoutInMinutes: 200
 
     pool:
@@ -314,7 +314,7 @@ stages:
   displayName: "Publish WSLg NuGet Package"
   jobs:
   - job: 'Publish_UniversalPackage'
-#    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     displayName: 'Download artifact and push NuGet package'
 
     pool:
@@ -408,7 +408,7 @@ stages:
           publishLocation: 'pipeline'
 
       - task: '333b11bd-d341-40d9-afcf-b32d5ce6f23b@2'
-#        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
         inputs:
           command: 'push'
           packagesToPush: 'Microsoft.WSLg.nupkg'
