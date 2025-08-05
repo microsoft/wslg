@@ -118,7 +118,7 @@ stages:
       displayName: 'Update WSLDVCPlugin version'
       inputs:
         targetType: filePath
-        workingDirectory: './WSLDVCPlugin'
+        workingDirectory: './wslg/WSLDVCPlugin'
         filePath: .\wslg\WSLDVCPlugin\UpdateRCVersion.ps1
         pwsh: true
 
