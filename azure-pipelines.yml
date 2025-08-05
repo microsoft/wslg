@@ -112,7 +112,7 @@ stages:
     steps:
     - checkout: wslg
 
-    - template: wslg/devops/common-win.yml
+    - template: devops/common-win.yml
 
     - task: PowerShell@2
       displayName: 'Update WSLDVCPlugin version'
