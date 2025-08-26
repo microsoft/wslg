@@ -164,7 +164,7 @@ typedef struct _RDPAPPLIST_ASSOCIATE_WINDOW_ID
         goto Error_Read; \
     } if (o ## Length) { \
         ReadBYTES(o, p, o ## Length, r); \
-        o[o ## Length] = L'\0'; \
+        o[o ## Length / sizeof(WCHAR)] = L'\0'; \
     } else if (required) { \
         DebugPrint(LSTR(#o) L" is required\n"); \
         goto Error_Read; \
