@@ -36,11 +36,13 @@ constexpr auto c_systemDistroEnvSection = "system-distro-env";
 
 constexpr auto c_windowsSystem32 = "/mnt/c/Windows/System32";
 
-constexpr auto c_westonShellOverrideEnv = "WSL2_WESTON_SHELL_OVERRIDE";
-constexpr auto c_westonRdprailShell = "rdprail-shell";
+constexpr auto c_westonShellDesktopEnv = "WSL2_WESTON_SHELL_DESKTOP";
 
-constexpr auto c_rdpFileOverrideEnv = "WSL2_RDP_CONFIG_OVERRIDE";
-constexpr auto c_rdpFile = "wslg.rdp";
+constexpr auto c_westonRdprailShell = "rdprail-shell";
+constexpr auto c_westonRdpdesktopShell = "desktop-shell";
+
+constexpr auto c_rdpRailFile = "wslg.rdp";
+constexpr auto c_rdpDesktopFile = "wslg_desktop.rdp";
 
 void LogPrint(int level, const char *func, int line, const char *fmt, ...) noexcept
 {
@@ -368,16 +370,13 @@ try {
 
     // Check if weston shell override is specified.
     // Otherwise, default shell is 'rdprail-shell'.
-    bool isRdprailShell;
+    // Alternatively, it can be 'desktop-shell'.
+    bool isRdpDesktopShell = GetEnvBool(c_westonShellDesktopEnv, false);
     std::string westonShellName;
-    auto westonShellEnv = getenv(c_westonShellOverrideEnv);
-    if (!westonShellEnv) {
+    if (isRdpDesktopShell)
+        westonShellName = c_westonRdpdesktopShell;
+    else
         westonShellName = c_westonRdprailShell;
-        isRdprailShell = true;
-    } else {
-        westonShellName = westonShellEnv;
-        isRdprailShell = (westonShellName.compare(c_westonRdprailShell) == 0);
-    }
 
     // Construct shell option string.
     std::string westonShellOption("--shell=");
@@ -397,7 +396,7 @@ try {
     // By default, enable standard log and rdp-backend.
     std::string westonLoggerOption("--logger-scopes=log,rdp-backend");
     // If rdprail-shell is used, enable logger for that.
-    if (isRdprailShell) {
+    if (!isRdpDesktopShell) {
         westonLoggerOption += ",";
         westonLoggerOption += c_westonRdprailShell;
     }
@@ -490,19 +489,11 @@ try {
         wslDvcPlugin = "/plugin:WSLDVC";
 
     std::string rdpFilePathArg(wslInstallPath);
-    auto rdpFile = getenv(c_rdpFileOverrideEnv);
-    if (rdpFile) {
-        if (strstr(rdpFile, "..\\") || strstr(rdpFile, "../")) {
-            LOG_ERROR("RDP file must not contain relative path (%s)", rdpFile);
-            rdpFile = nullptr;
-        }
-    }
     rdpFilePathArg += "\\"; // Windows-style path
-    if (rdpFile) {
-        rdpFilePathArg += rdpFile;
-    } else {
-        rdpFilePathArg += c_rdpFile;
-    }
+    if (isRdpDesktopShell) 
+        rdpFilePathArg += c_rdpDesktopFile;
+    else 
+        rdpFilePathArg += c_rdpRailFile;
 
     monitor.LaunchProcess(std::vector<std::string>{
         "/init",
