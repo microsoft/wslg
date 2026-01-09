@@ -132,7 +132,7 @@ WORKDIR /work
 RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 RUN echo "Built at:" `date --utc` >> /work/versions.txt
 
-RUN echo "Mariner:" `cat /etc/os-release | head -2 | tail -1` >> /work/versions.txt
+RUN echo "Azure Linux:" `cat /etc/os-release | head -2 | tail -1` >> /work/versions.txt
 
 #
 # Build runtime dependencies.
@@ -367,6 +367,8 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         rpm -e --nodeps llvm && \
         # Remove password dictionary (not needed in WSLg) \
         rpm -e --nodeps cracklib-dicts && \
+        # Remove systemd-resolved (provides resolvconf, but we use dhcpcd's built-in resolv.conf management) \
+        rpm -e --nodeps systemd-resolved && \
         \
         echo "== Removing unnecessary files ==" && \
         # Remove unused Mesa driver \
@@ -377,7 +379,7 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         echo "== Install development aid packages ==" && \
         tdnf install -y \
              gdb \
-             mariner-repos-debug \
+             azurelinux-repos-debug \
              nano \
              vim \
              wayland-debuginfo \
