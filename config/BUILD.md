@@ -23,7 +23,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
 2. Download the mesa and directx headers code.
 
     ```
-    wget https://cblmarinerstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz
+    wget https://azurelinuxsrcstorage.blob.core.windows.net/sources/core/mesa-23.1.0.tar.xz
     tar -xf mesa-23.1.0.tar.xz -C vendor
     mv vendor/mesa-23.1.0 vendor/mesa
 

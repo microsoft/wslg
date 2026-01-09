@@ -134,7 +134,7 @@ Users wanting to use different servers than the one provided by WSLg can change 
 guiApplications=false
 ```
 
-The system distro is based on the Microsoft [CBL-Mariner Linux](https://github.com/microsoft/CBL-Mariner). This is a minimal Linux environment, just enough to run the various pieces of WSLg. For details on how to build and deploy a private system distro please see our [build instructions](CONTRIBUTING.md).
+The system distro is based on the Microsoft [Azure Linux 3.0](https://github.com/microsoft/azurelinux). This is a minimal Linux environment, just enough to run the various pieces of WSLg. For details on how to build and deploy a private system distro please see our [build instructions](CONTRIBUTING.md).
 
 Every WSL 2 user distro is paired with its own instance of the system distro. The system distro runs partially isolated from the user distro to which it is paired, in its own NS/PID/UTS namespace but shares other namespaces such as IPC, to allow for shared memory optimization across the boundary. 
 

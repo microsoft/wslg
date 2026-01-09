@@ -1,5 +1,5 @@
 # Create a builder image with the compilers, etc. needed
-FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20250701 AS build-env
+FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -117,7 +117,7 @@ RUN echo "== Install UI dependencies ==" && \
             wayland-protocols-devel \
             xkbcomp \
             xkeyboard-config \
-            xorg-x11-server-devel \
+            xorg-x11-server-Xwayland-devel \
             xorg-x11-util-macros
 
 # Create an image with builds of FreeRDP and Weston
@@ -132,7 +132,7 @@ WORKDIR /work
 RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
 RUN echo "Built at:" `date --utc` >> /work/versions.txt
 
-RUN echo "Mariner:" `cat /etc/os-release | head -2 | tail -1` >> /work/versions.txt
+RUN echo "Azure Linux:" `cat /etc/os-release | head -2 | tail -1` >> /work/versions.txt
 
 #
 # Build runtime dependencies.
@@ -310,7 +310,7 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 
 ## Create the distro image with just what's needed at runtime
 
-FROM mcr.microsoft.com/cbl-mariner/base/core:2.0.20250701 AS runtime
+FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS runtime
 
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
@@ -318,7 +318,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             chrony \
             dbus \
             dbus-glib \
-            dhcp-client \
+            dhcpcd \
             e2fsprogs \
             freefont \
             libinput \
@@ -345,31 +345,49 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             xcursor-themes \
             xorg-x11-server-Xwayland \
             xorg-x11-server-utils \
-            xorg-x11-xtrans-devel
+            xorg-x11-xtrans-devel && \
+    echo "== Remove unnecessary devel packages pulled by librsvg2 ==" && \
+    rpm -e --nodeps libstdc++-devel glib-devel harfbuzz-devel freetype-devel \
+                    brotli-devel libffi-devel libselinux-devel libsepol-devel \
+                    pcre2-devel pkgconf-pkg-config pkgconf pkgconf-m4 libpkgconf \
+                    zlib-devel icu-devel libpng-devel util-linux-devel && \
+    echo "== Remove docs, man pages, locales to reduce image size ==" && \
+    rm -rf /usr/share/man /usr/share/info /usr/share/locale /usr/share/gtk-doc && \
+    find /usr/share/doc -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
 
-# Install packages to aid in development, if not remove some packages. 
+# Remove unnecessary packages and files to reduce image size
 ARG SYSTEMDISTRO_DEBUG_BUILD
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        rpm -e --nodeps curl                     \
-        rpm -e --nodeps python3                  \
-        rpm -e --nodeps python3-libs;            \
-    else                                         \
+        echo "== Removing unnecessary packages ==" && \
+        # Remove build tools not needed at runtime \
+        rpm -e --nodeps gcc gcc-c++ perl && \
+        # Remove Python (not needed at runtime) \
+        rpm -e --nodeps python3 python3-libs && \
+        # Remove LLVM (only used by virtio_gpu driver which WSLg doesn't use) \
+        rpm -e --nodeps llvm && \
+        # Remove password dictionary (not needed in WSLg) \
+        rpm -e --nodeps cracklib-dicts && \
+        # Remove systemd-resolved (provides resolvconf, but we use dhcpcd's built-in resolv.conf management) \
+        rpm -e --nodeps systemd-resolved && \
+        \
+        echo "== Removing unnecessary files ==" && \
+        # Remove unused Mesa driver \
+        rm -f /usr/lib64/dri/virtio_gpu_dri.so && \
+        # Remove hardware database (not needed in WSL) \
+        rm -rf /usr/share/hwdata/*; \
+    else \
         echo "== Install development aid packages ==" && \
-        tdnf install -y                          \
-             gdb                                 \
-             mariner-repos-debug                 \
-             nano                                \
-             vim                              && \
-        tdnf install -y                          \
-             wayland-debuginfo                   \
-             xorg-x11-server-debuginfo;          \
+        tdnf install -y \
+             gdb \
+             azurelinux-repos-debug \
+             nano \
+             vim \
+             wayland-debuginfo \
+             xorg-x11-server-debuginfo; \
     fi
 
 # Clear the tdnf cache to make the image smaller
 RUN tdnf clean all
-
-# Remove extra doc
-RUN rm -rf /usr/lib/python3.7 /usr/share/gtk-doc
 
 # Create wslg user.
 RUN useradd -u 1000 --create-home wslg && \
