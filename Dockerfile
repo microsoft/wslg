@@ -345,15 +345,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             xcursor-themes \
             xorg-x11-server-Xwayland \
             xorg-x11-server-utils \
-            xorg-x11-xtrans-devel && \
-    echo "== Remove unnecessary devel packages pulled by librsvg2 ==" && \
-    rpm -e --nodeps libstdc++-devel glib-devel harfbuzz-devel freetype-devel \
-                    brotli-devel libffi-devel libselinux-devel libsepol-devel \
-                    pcre2-devel pkgconf-pkg-config pkgconf pkgconf-m4 libpkgconf \
-                    zlib-devel icu-devel libpng-devel util-linux-devel && \
-    echo "== Remove docs, man pages, locales to reduce image size ==" && \
-    rm -rf /usr/share/man /usr/share/info /usr/share/locale /usr/share/gtk-doc && \
-    find /usr/share/doc -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
+            xorg-x11-xtrans-devel
 
 # Remove unnecessary packages and files to reduce image size
 ARG SYSTEMDISTRO_DEBUG_BUILD
@@ -361,16 +353,26 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         echo "== Removing unnecessary packages ==" && \
         # Remove build tools not needed at runtime \
         rpm -e --nodeps gcc gcc-c++ perl && \
+        # Remove all perl subpackages \
+        rpm -e --nodeps $(rpm -qa | grep ^perl-) && \
         # Remove Python (not needed at runtime) \
         rpm -e --nodeps python3 python3-libs && \
         # Remove LLVM (only used by virtio_gpu driver which WSLg doesn't use) \
         rpm -e --nodeps llvm && \
+        # Remove all -devel packages (including those pulled by librsvg2) \
+        rpm -e --nodeps $(rpm -qa | grep -E -- '-devel') && \
+        # Remove pkgconf and related packages \
+        rpm -e --nodeps pkgconf-pkg-config pkgconf pkgconf-m4 libpkgconf && \
         # Remove password dictionary (not needed in WSLg) \
         rpm -e --nodeps cracklib-dicts && \
         # Remove systemd-resolved (provides resolvconf, but we use dhcpcd's built-in resolv.conf management) \
         rpm -e --nodeps systemd-resolved && \
-        \
+        # Remove orphaned packages (but keep icu which provides runtime libraries) \
+        tdnf autoremove -y --exclude icu && \
         echo "== Removing unnecessary files ==" && \
+        # Remove docs, man pages, locales, gtk-doc \
+        rm -rf /usr/share/man /usr/share/info /usr/share/locale /usr/share/gtk-doc && \
+        find /usr/share/doc -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} + && \
         # Remove unused Mesa driver \
         rm -f /usr/lib64/dri/virtio_gpu_dri.so && \
         # Remove hardware database (not needed in WSL) \
