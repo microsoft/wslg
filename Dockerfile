@@ -314,6 +314,7 @@ FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS runtime
 
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
+            busybox \
             cairo \
             chrony \
             dbus \
@@ -321,6 +322,8 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             dhcpcd \
             e2fsprogs \
             freefont \
+            icu \
+            kmod \
             libinput \
             libjpeg-turbo \
             libltdl \
@@ -340,35 +343,41 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             procps-ng \
             rpm \
             sed \
+            systemd-libs \
             tzdata \
-            wayland-protocols-devel \
+            util-linux \
             xcursor-themes \
             xorg-x11-server-Xwayland \
-            xorg-x11-server-utils \
-            xorg-x11-xtrans-devel
+            xorg-x11-server-utils
+
+# Install busybox utilities
+RUN /sbin/busybox --install -s
 
 # Remove unnecessary packages and files to reduce image size
 ARG SYSTEMDISTRO_DEBUG_BUILD
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         echo "== Removing unnecessary packages ==" && \
-        # Remove build tools not needed at runtime \
-        rpm -e --nodeps gcc gcc-c++ perl && \
+        # Remove build tools and packages not needed at runtime \
+        rpm -e --nodeps \
+            cracklib-dicts \
+            gcc \
+            gcc-c++ \
+            libpkgconf \
+            llvm \
+            perl \
+            pkgconf \
+            pkgconf-m4 \
+            pkgconf-pkg-config \
+            python3 \
+            python3-libs && \
         # Remove all perl subpackages \
-        rpm -e --nodeps $(rpm -qa | grep ^perl-) && \
-        # Remove Python (not needed at runtime) \
-        rpm -e --nodeps python3 python3-libs && \
-        # Remove LLVM (only used by virtio_gpu driver which WSLg doesn't use) \
-        rpm -e --nodeps llvm && \
-        # Remove all -devel packages (including those pulled by librsvg2) \
-        rpm -e --nodeps $(rpm -qa | grep -E -- '-devel') && \
-        # Remove pkgconf and related packages \
-        rpm -e --nodeps pkgconf-pkg-config pkgconf pkgconf-m4 libpkgconf && \
-        # Remove password dictionary (not needed in WSLg) \
-        rpm -e --nodeps cracklib-dicts && \
-        # Remove systemd-resolved (provides resolvconf, but we use dhcpcd's built-in resolv.conf management) \
-        rpm -e --nodeps systemd-resolved && \
-        # Remove orphaned packages (but keep icu which provides runtime libraries) \
-        tdnf autoremove -y --exclude icu && \
+        rpm -e --nodeps $(rpm -qa | grep -- '^perl-') && \
+        # Remove all -devel packages \
+        rpm -e --nodeps $(rpm -qa | grep -- '-devel') && \
+        # Remove systemd components (except systemd-libs which is needed by weston) \
+        rpm -e --nodeps $(rpm -qa | grep -- '^systemd-' | grep -v systemd-libs) && \
+        # Remove orphaned packages \
+        tdnf autoremove -y && \
         echo "== Removing unnecessary files ==" && \
         # Remove docs, man pages, locales, gtk-doc \
         rm -rf /usr/share/man /usr/share/info /usr/share/locale /usr/share/gtk-doc && \
