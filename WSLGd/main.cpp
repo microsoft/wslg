@@ -22,7 +22,6 @@ constexpr auto c_versionFile = "/etc/versions.txt";
 constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
 constexpr auto c_shareDocsDir = "/usr/share/doc";
 constexpr auto c_shareDocsMount = SHARE_PATH "/doc";
-constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 constexpr auto c_stdErrLogFile = SHARE_PATH "/stderr.log";
 
@@ -305,9 +304,6 @@ try {
     std::filesystem::create_directories(c_dbusDir);
     THROW_LAST_ERROR_IF(chown(c_dbusDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
     THROW_LAST_ERROR_IF(chmod(c_dbusDir, 0777) < 0);
-
-    std::filesystem::create_directories(c_x11RuntimeDir);
-    THROW_LAST_ERROR_IF(chmod(c_x11RuntimeDir, 0777) < 0);
 
     std::filesystem::create_directories(c_xdgRuntimeDir);
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
