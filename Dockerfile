@@ -317,12 +317,17 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             busybox \
             cairo \
             chrony \
+            containerd2 \
+            containernetworking-plugins \
+            runc \
             dbus \
             dbus-glib \
             dhcpcd \
             e2fsprogs \
             freefont \
+            gzip \
             icu \
+            iptables \
             kmod \
             libinput \
             libjpeg-turbo \
@@ -338,12 +343,14 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             libxkbcommon \
             libXrandr \
             iproute \
+            moby-engine \
             nftables \
             pango \
             procps-ng \
             rpm \
             sed \
             systemd-libs \
+            tar \
             tzdata \
             util-linux \
             xcursor-themes \
@@ -385,7 +392,9 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         # Remove unused Mesa driver \
         rm -f /usr/lib64/dri/virtio_gpu_dri.so && \
         # Remove hardware database (not needed in WSL) \
-        rm -rf /usr/share/hwdata/*; \
+        rm -rf /usr/share/hwdata/* && \
+        # Remove temporary files, logs, caches, and systemd catalog \
+        rm -rf /tmp/* /var/tmp/* /var/log/* /var/cache/* /usr/lib/systemd/catalog/*; \
     else \
         echo "== Install development aid packages ==" && \
         tdnf install -y \
