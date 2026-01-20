@@ -30,8 +30,10 @@
 #include <array>
 #include <filesystem>
 #include <map>
+#include <set>
 #include <new>
 #include <vector>
+#include <string>
 #include "config.h"
 #include "lxwil.h"
 #if HAVE_WINPR
