@@ -315,6 +315,7 @@ FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS runtime
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
             busybox \
+            ca-certificates \
             cairo \
             chrony \
             containerd2 \
@@ -323,6 +324,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             dbus \
             dbus-glib \
             dhcpcd \
+            docker-cli \
             e2fsprogs \
             freefont \
             gzip \
