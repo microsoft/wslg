@@ -316,6 +316,8 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
             busybox \
             ca-certificates \
+            btrfs-progs \
+            xfsprogs \
             cairo \
             chrony \
             containerd2 \
