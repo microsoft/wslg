@@ -4,8 +4,18 @@
             "Component": { 
                 "Type": "git", 
                 "Git": {
-                    "RepositoryUrl": "https://github.com/pulseaudio/pulseaudio", 
-                    "CommitHash": "0e691b96640919b1c7ed91ae9240761c5775deeb"
+                    "RepositoryUrl": "https://github.com/PipeWire/pipewire", 
+                    "CommitHash": "ced36a5315135044a22c4b373be44368d312f9c8"
+                }
+            },
+            "DevelopmentDependency": false
+        },
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/PipeWire/wireplumber", 
+                    "CommitHash": "84429b47943d789389fbde17c06b82efb197d04e"
                 }
             },
             "DevelopmentDependency": false

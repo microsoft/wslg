@@ -125,7 +125,7 @@ The user distro is essentially the WSL distribution you are using for your Linux
 All user and system distros for a particular Windows user run within the same WSL virtual machine against a single instance of the Linux kernel. Different Windows users on a PC have their own VM and instance of WSL. Your Linux environment is guaranteed to always be your own and not shared with other Windows users on the same PC.
 
 ## WSLg System Distro
-The system distro is where all of the magic happens. The system distro is a containerized Linux environment where the WSLg XServer, Wayland server and Pulse Audio server are running. Communication socket for each of these servers are projected into the user distro so client applications can connect to them. We preconfigure the user distro environment variables DISPLAY, WAYLAND_DISPLAY and PULSE_SERVER to refer these servers by default so WSLg lights up out of the box.
+The system distro is where all of the magic happens. The system distro is a containerized Linux environment where the WSLg XServer, Wayland server and PipeWire (with a PulseAudio-compatible server) are running. Communication socket for each of these servers are projected into the user distro so client applications can connect to them. We preconfigure the user distro environment variables DISPLAY, WAYLAND_DISPLAY and PULSE_SERVER to refer these servers by default so WSLg lights up out of the box.
 
 Users wanting to use different servers than the one provided by WSLg can change these environment variables. User can also choose to turn off the system distro entirely by adding the following entry in their `.wslconfig` file (located at `c:\users\MyUser\.wslconfig`). This will turn off support for GUI applications in WSL.
 
@@ -143,7 +143,7 @@ While a user can get a terminal into the system distro, the system distro is not
 Although the Microsoft published WSLg system distro as read-only, we do want to encourage folks to tinker with it and experiment. Although we expect very few folks to actually need or want to do that, we've shared detailed instruction on our [contributing](CONTRIBUTING.md) page on how to both build and deploy a private version of the system distro. Most users who just want to use GUI applications in WSL don't need to worry about those details.
 
 ## WSLGd
-**WSLGd** is the first process to launch after **init**. **WSLGd** launches **Weston** (with XWayland), **PulseAudio** and establishes the RDP connection by launching **mstsc.exe** on the host in silent mode. The RDP connection will remain active and ready to show a new GUI applications being launch on a moment's notice, without any connection establishment delays. **WSLGd** then monitors these processes and if they exit by error (say as a result of a crash), it automatically restarts them.
+**WSLGd** is the first process to launch after **init**. **WSLGd** launches **Weston** (with XWayland), **PipeWire** (with **wireplumber** and **pipewire-pulse**) and establishes the RDP connection by launching **mstsc.exe** on the host in silent mode. The RDP connection will remain active and ready to show a new GUI applications being launch on a moment's notice, without any connection establishment delays. **WSLGd** then monitors these processes and if they exit by error (say as a result of a crash), it automatically restarts them.
 
 ## Weston
 Weston is the Wayland project reference compositor and the heart of WSLg. For WSLg, we've extended the existing RDP backend of libweston to teach it how to remote applications rather than monitor/desktop. We've also added various functionality to it, such as support for multi-monitor, cut/paste, audio in/out, etc...
@@ -156,8 +156,8 @@ Weston is modular and has various shells today, such as the desktop shell, fulls
 ## FreeRDP
 Weston leverages FreeRDP to implement its backend RDP Server. FreeRDP is used to encode all communications going from the RDP Server (in Weston) to the RDP Client (mstsc on Windows) according to the RDP protocol specifications. It is also used to decode all traffic coming from the RDP Client into the RDP server.
 
-## Pulse Audio Plugin
-For audio in (microphone) and out (speakers/headphone) WSLg runs a PulseAudio server. WSLg uses a [sink plugin](https://github.com/microsoft/pulseaudio-mirror/blob/working/src/modules/rdp/module-rdp-sink.c) for audio out, and a [source plugin](https://github.com/microsoft/pulseaudio-mirror/blob/working/src/modules/rdp/module-rdp-source.c) for audio in. These plugins effectively transfer audio samples between the PulseServer and the Weston RDP Server. The audio streams are merged by the Weston RDP Server onto the RDP transport, effectively enabling audio in/out in the Weston RDP backend across all scenarios (Desktop/RAIL/VAIL style remoting), including WSLg.
+## PipeWire Audio
+For audio in (microphone) and out (speakers/headphone) WSLg runs PipeWire with a PulseAudio-compatible server. The PipeWire RDP modules bridge audio to the Weston RDP backend using the same RDP sink/source sockets as before, so PulseAudio clients in the user distro keep working through the `PULSE_SERVER` socket. The audio streams are merged by the Weston RDP Server onto the RDP transport, effectively enabling audio in/out in the Weston RDP backend across all scenarios (Desktop/RAIL/VAIL style remoting), including WSLg.
 
 ## WSL Dynamic Virtual Channel Plugin (WSLDVCPlugin)
 WSLg makes use of a custom RDP virtual channel between the Weston RDP Server and the mstsc RDP Client running on the Windows host. This channel is used by Weston to enumerate all Linux GUI applications (i.e. applications which have a desktop file entry of type gui) along with their launch command line and icon. The open source [WSLDVCPlugin](https://github.com/microsoft/wslg/tree/main/WSLDVCPlugin) processes the list of Linux GUI applications sent over this channel and creates links for them in the Windows start menu.
@@ -173,7 +173,7 @@ Support for Linux, including support for WSLg, has been upstream and part of the
 Please note that for the first release of WSLg, vGPU interops with the Weston compositor through system memory. If running on a discrete GPU, this effectively means that the rendered data is copied from VRAM to system memory before being presented to the compositor within WSLg, and uploaded onto the GPU again on the Windows side. As a result, there is a performance penalty proportionate to the presentation rate. At very high frame rates such as 600fps on a discrete GPU, that overhead can be as high as 50%. At lower frame rate or on integrated GPU, performance much closer to native can be achieved depending on the workload. Using a vGPU still provides a very significant performance and experience improvement over using a software renderer despite this v1 limitation.
 
 # WSLg Code Flow
-WSLg builds on the great work of the Linux community and makes use of a large number of open source projects. Most components are used as-is from their upstream version and didn't require any changes to light up in WSLg. Some components at the heart of WSLg, in particular Weston, FreeRDP and PulseAudio, required changes to enable the rich WSLg integration. These changes aren't yet upstream. Microsoft is working with the community to share these contributions back with each project such that, over time, WSLg can be built from upstream component directly, without the need for any WSLg specific modifications.
+WSLg builds on the great work of the Linux community and makes use of a large number of open source projects. Most components are used as-is from their upstream version and didn't require any changes to light up in WSLg. Some components at the heart of WSLg, in particular Weston, FreeRDP and PipeWire, required changes to enable the rich WSLg integration. These changes aren't yet upstream. Microsoft is working with the community to share these contributions back with each project such that, over time, WSLg can be built from upstream component directly, without the need for any WSLg specific modifications.
 
 All of these in-flight contributions are kept in Microsoft mirror repos. We keep these mirrors up to date with upstream releases and stage our WSLg changes in those repos. WSLg pulls and builds code from these mirror repos as part of our Insider WSLg Preview releases. These mirrors are public and accessible to everyone. Curious developers can take a peek at early stages of our contribution by looking at code in those mirrors, keeping in mind that the final version of the code will likely look different once the contribution reaches the upstream project and is adapted based on the feedback receives by the various project owners. All of our mirrors follow the same model. There is a **main** branch which correspond to the upstream branch at our last synchronization point. We update the **main** branch from time to time to pick update from the upstream project. There is also a **working** branch that contains all of our in-flight changes. WSLg is built using the **working** branch from each of the mirror projects.
 
@@ -185,7 +185,8 @@ At this point in time, we have the following project mirrors for currently in-fl
 |---|---|---|
 | Weston | https://github.com/wayland-project/weston | https://github.com/microsoft/Weston-mirror|
 | FreeRDP | https://github.com/FreeRDP/FreeRDP | https://github.com/microsoft/FreeRDP-mirror |
-| PulseAudio | https://github.com/pulseaudio/pulseaudio | https://github.com/microsoft/PulseAudio-mirror |
+| PipeWire | https://github.com/PipeWire/pipewire | https://github.com/PipeWire/pipewire |
+| WirePlumber | https://github.com/PipeWire/wireplumber | https://github.com/PipeWire/wireplumber |
 
 The following is a high level overview of the currently in-flight contributions to each project contained within these mirrors.
 
@@ -200,8 +201,25 @@ We've also fixed several bugs impacting various applications. Generally, these w
 ## FreeRDP
 Weston currently uses FreeRDP for its RDP Backend. WSLg continues to leverage FreeRDP and we have added support for a new RDP Protocol/Channel to enable VAIL optimized scenario as well as support for the WSLg plugin. We've also fixed various bugs that were impacting interops with mstsc or causing instability.
 
-## PulseAudio
-For PulseAudio, our contributions focused on a sink and a source plugin that shuffle audio data between PulseAudio and the Weston RDP backend such that the audio data can be integrated over the RDP connection back to the host. There are no changes to the core of PulseAudio outside of adding these new plugins.
+## PipeWire
+For PipeWire, our contributions focus on RDP sink/source modules that shuffle audio data between PipeWire and the Weston RDP backend such that the audio data can be integrated over the RDP connection back to the host.
+
+## WirePlumber
+WSLg relies on WirePlumber as the PipeWire session manager to handle policy and device routing in the system distro.
+
+### Verifying PipeWire availability
+After installing a system distro built with these changes, run `wsl --shutdown`, then launch a WSL distro to start WSLg. From a system distro shell (`wsl --system <DistroName>`), confirm the audio stack and sockets:
+
+```
+ps -ax | grep -E "pipewire|wireplumber|pipewire-pulse"
+ls -la /mnt/wslg/PulseServer
+```
+
+From the user distro, verify that PulseAudio clients connect to PipeWire:
+
+```
+pactl info | grep "Server Name"
+```
 
 # Contributing
 

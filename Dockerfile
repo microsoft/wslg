@@ -100,6 +100,8 @@ RUN echo "== Install UI dependencies ==" && \
             libSM-devel \
             libsndfile \
             libsndfile-devel \
+            lua \
+            lua-devel \
             libXcursor \
             libXcursor-devel \
             libXdamage-devel \
@@ -188,17 +190,88 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
     ninja -C build -j8 install && \
     echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
 
-# Build PulseAudio
-COPY vendor/pulseaudio /work/vendor/pulseaudio
-WORKDIR /work/vendor/pulseaudio
+# Build PipeWire
+COPY vendor/pipewire /work/vendor/pipewire
+RUN /usr/bin/meson setup /work/vendor/pipewire/build /work/vendor/pipewire \
+        --prefix=${PREFIX} \
+        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
+        -Ddocs=disabled \
+        -Dman=disabled \
+        -Dexamples=disabled \
+        -Dtests=disabled \
+        -Dsystemd-system-service=disabled \
+        -Dsystemd-user-service=disabled \
+        -Dx11=disabled \
+        -Dx11-xfixes=disabled \
+        -Dsession-managers=[] \
+        -Dpipewire-jack=enabled \
+        -Dpipewire-v4l2=enabled \
+        -Dlibpulse=disabled \
+        -Dbluez5=disabled \
+        -Dffmpeg=disabled \
+        -Dgsettings=disabled \
+        -Davahi=disabled \
+        -Dsnap=disabled \
+        -Drlimits-install=false \
+        -Dgstreamer=disabled \
+        -Dgstreamer-device-provider=disabled \
+        -Dlv2=disabled \
+        -Droc=disabled \
+        -Dspa-plugins=enabled && \
+    ninja -C /work/vendor/pipewire/build -j8 install && \
+    echo 'pipewire:' `git --git-dir=/work/vendor/pipewire/.git rev-parse --verify HEAD` >> /work/versions.txt
+
+# Build WSLg PipeWire RDP modules
+COPY config/pipewire-rdp-module.c /work/vendor/pipewire/src/modules/module-wslg-rdp.c
+COPY config/pipewire-wslg-rdp.patch /work/vendor/pipewire/pipewire-wslg-rdp.patch
+RUN cd /work/vendor/pipewire && \
+    git apply pipewire-wslg-rdp.patch && \
+    /usr/bin/meson setup /work/vendor/pipewire/build-wslg /work/vendor/pipewire \
+        --prefix=${PREFIX} \
+        --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
+        -Ddocs=disabled \
+        -Dman=disabled \
+        -Dexamples=disabled \
+        -Dtests=disabled \
+        -Dsystemd-system-service=disabled \
+        -Dsystemd-user-service=disabled \
+        -Dsession-managers=[] \
+        -Dpipewire-jack=enabled \
+        -Dpipewire-v4l2=enabled \
+        -Dpipewire-alsa=enabled \
+        -Dlibpulse=disabled \
+        -Dbluez5=disabled \
+        -Dffmpeg=disabled \
+        -Dgsettings=disabled \
+        -Davahi=disabled \
+        -Dsnap=disabled \
+        -Drlimits-install=false \
+        -Dgstreamer=disabled \
+        -Dgstreamer-device-provider=disabled \
+        -Dlv2=disabled \
+        -Droc=disabled \
+        -Dspa-plugins=enabled && \
+    ninja -C /work/vendor/pipewire/build-wslg -j8 pipewire-module-wslg-rdp-sink pipewire-module-wslg-rdp-source && \
+    install -m 0755 /work/vendor/pipewire/build-wslg/src/modules/pipewire-module-wslg-rdp-sink.so ${DESTDIR}${PREFIX}/lib/pipewire-0.3/pipewire-module-wslg-rdp-sink.so && \
+    install -m 0755 /work/vendor/pipewire/build-wslg/src/modules/pipewire-module-wslg-rdp-source.so ${DESTDIR}${PREFIX}/lib/pipewire-0.3/pipewire-module-wslg-rdp-source.so
+
+
+# Build WirePlumber
+COPY vendor/wireplumber /work/vendor/wireplumber
+WORKDIR /work/vendor/wireplumber
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
-        -Ddatabase=simple \
-        -Ddoxygen=false \
-        -Dgsettings=disabled \
-        -Dtests=false && \
+        -Ddoc=disabled \
+        -Dtests=false \
+        -Dsystemd=disabled \
+        -Dsystemd-user-service=false \
+        -Dsystemd-system-service=false \
+        -Dintrospection=disabled \
+        -Ddaemon=true \
+        -Dtools=false \
+        -Dmodules=true && \
     ninja -C build -j8 install && \
-    echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
+    echo 'wireplumber:' `git --git-dir=/work/vendor/wireplumber/.git rev-parse --verify HEAD` >> /work/versions.txt
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -337,6 +410,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             libpng \
             librsvg2 \
             libsndfile \
+            lua \
             libwayland-client \
             libwayland-server \
             libwayland-cursor \
@@ -428,17 +502,20 @@ COPY resources/linux.png /usr/share/icons/wsl/linux.png
 COPY --from=dev /work/build/usr/ /usr/
 COPY --from=dev /work/build/etc/ /etc/
 
-# Append WSLg setttings to pulseaudio.
-COPY config/default_wslg.pa /etc/pulse/default_wslg.pa
-RUN cat /etc/pulse/default_wslg.pa >> /etc/pulse/default.pa
-RUN rm /etc/pulse/default_wslg.pa
+# Append WSLg settings to PipeWire.
+COPY config/pipewire.conf /etc/pipewire/pipewire.conf
+COPY config/pipewire-pulse.conf /etc/pipewire/pipewire-pulse.conf
 
-# Copy the licensing information for PulseAudio
-COPY --from=dev /work/vendor/pulseaudio/GPL \
-                /work/vendor/pulseaudio/LGPL \
-                /work/vendor/pulseaudio/LICENSE \
-                /work/vendor/pulseaudio/NEWS \
-                /work/vendor/pulseaudio/README /usr/share/doc/pulseaudio/
+# Copy the licensing information for PipeWire
+COPY --from=dev /work/vendor/pipewire/COPYING \
+                /work/vendor/pipewire/LICENSE \
+                /work/vendor/pipewire/NEWS \
+                /work/vendor/pipewire/README.md /usr/share/doc/pipewire/
+
+# Copy the licensing information for WirePlumber
+COPY --from=dev /work/vendor/wireplumber/LICENSE \
+                /work/vendor/wireplumber/NEWS.rst \
+                /work/vendor/wireplumber/README.rst /usr/share/doc/wireplumber/
 
 # Copy the licensing information for Weston
 COPY --from=dev /work/vendor/weston/COPYING /usr/share/doc/weston/COPYING

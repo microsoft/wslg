@@ -15,13 +15,13 @@ or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any addi
 
 # Building the WSLg System Distro
 
-The heart of WSLg is what we call the WSL system distro. This is where the Weston compositor, XWayland and the PulseAudio server are running. The system distro runs these components and projects their communication sockets into the user distro. Every user distro is paired with a unique instance of the system distro. There is a single version of the system distro on disk which is instantiated in memory when a user distro is launched.
+The heart of WSLg is what we call the WSL system distro. This is where the Weston compositor, XWayland and the PipeWire audio stack (with pipewire-pulse) are running. The system distro runs these components and projects their communication sockets into the user distro. Every user distro is paired with a unique instance of the system distro. There is a single version of the system distro on disk which is instantiated in memory when a user distro is launched.
 
 The system distro is essentially a Linux container packaged and distributed as a vhd. The system distro is accessible to the user, but is mounted read-only. Any changes made by the user to the system distro while it is running are discarded when WSL is restarted. Although a user can log into the system distro, it is not meant to be used as a general purpose user distro. The reason behind this choice is due to the way we service WSLg. When updating WSLg we simply replace the existing system distro with a new one. If the user had data embedded into the system distro vhd, this data would be lost.
 
 For folks who want to tinker with or customize their system distro, we give the ability to run a private version of the system distro. When running a private version of WSLg, Windows will load and run your private and ignore the Microsoft published one. If you update your WSL setup (`wsl --update`), the Microsoft published WSLg vhd will be updated, but you will continue to be running your private. You can switch between the Microsoft pulished WSLg system distro and a private one at any time although it does require restarting WSL (`wsl --shutdown`).
 
-The WSLg system distro is built using docker build. We essentially start from a [Azure Linux 3.0](https://github.com/microsoft/azurelinux) base image, install various packages, then build and install version of Weston, FreeRDP and PulseAudio from our mirror repo. This repository contains a Dockerfile and supporting tools to build the WSLg container and convert the container into an ext4 vhd that Windows will load as the system distro.
+The WSLg system distro is built using docker build. We essentially start from a [Azure Linux 3.0](https://github.com/microsoft/azurelinux) base image, install various packages, then build and install version of Weston, FreeRDP, PipeWire, and WirePlumber. This repository contains a Dockerfile and supporting tools to build the WSLg container and convert the container into an ext4 vhd that Windows will load as the system distro.
 
 ## Build instructions
 
@@ -39,12 +39,13 @@ The WSLg system distro is built using docker build. We essentially start from a 
     git clone https://github.com/microsoft/wslg wslg
 ```
 
-2. Clone the FreeRDP, Weston and PulseAudio mirror. These need to be located in a **vendor** sub-directory where you clone the wslg project (e.g. wslg/vendor), this is where our docker build script expects to find the source code. Make sure to checkout the **working** branch from each of these projects, the **main** branch references the upstream code.
+2. Clone the FreeRDP, Weston, PipeWire, and WirePlumber repositories. These need to be located in a **vendor** sub-directory where you clone the wslg project (e.g. wslg/vendor), this is where our docker build script expects to find the source code.
 
     ```bash
     git clone https://github.com/microsoft/FreeRDP-mirror wslg/vendor/FreeRDP -b working
     git clone https://github.com/microsoft/weston-mirror wslg/vendor/weston -b working
-    git clone https://github.com/microsoft/PulseAudio-mirror wslg/vendor/pulseaudio -b working
+    git clone https://github.com/PipeWire/pipewire wslg/vendor/pipewire -b 1.4.10
+    git clone https://github.com/PipeWire/wireplumber wslg/vendor/wireplumber -b 0.5.13
     git clone https://github.com/microsoft/DirectX-Headers.git wslg/vendor/DirectX-Headers-1.0 -b v1.608.0
     git clone https://gitlab.freedesktop.org/mesa/mesa.git wslg/vendor/mesa -b mesa-23.1.0
     ```
