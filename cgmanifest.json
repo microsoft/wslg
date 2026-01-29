@@ -35,7 +35,7 @@
                 "Type": "mesa", 
                 "Git": {
                     "RepositoryUrl": "https://github.com/mesa3d/mesa", 
-                    "CommitHash": "731ea06758663a2de3a2bd1f12eb8809d4c136fd"
+                    "CommitHash": "23e3445940104465152dcfc1d5952d09d3ba7b37"
                 }
             },
             "DevelopmentDependency": false
