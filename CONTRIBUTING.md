@@ -46,7 +46,7 @@ The WSLg system distro is built using docker build. We essentially start from a 
     git clone https://github.com/microsoft/weston-mirror wslg/vendor/weston -b working
     git clone https://github.com/microsoft/PulseAudio-mirror wslg/vendor/pulseaudio -b working
     git clone https://github.com/microsoft/DirectX-Headers.git wslg/vendor/DirectX-Headers-1.0 -b v1.608.0
-    git clone https://gitlab.freedesktop.org/mesa/mesa.git wslg/vendor/mesa -b mesa-23.1.0
+    git clone https://gitlab.freedesktop.org/mesa/mesa.git wslg/vendor/mesa -b mesa-25.3.4
     ```
 
 2. Create the VHD:
