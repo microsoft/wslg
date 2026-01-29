@@ -1,0 +1,36 @@
+diff --git a/src/modules/meson.build b/src/modules/meson.build
+index 3d97bb5..e6f7b15 100644
+--- a/src/modules/meson.build
++++ b/src/modules/meson.build
+@@ -11,6 +11,7 @@ module_sources = [
+   'module-combine-stream.c',
+   'module-echo-cancel.c',
+   'module-example-filter.c',
++  'module-wslg-rdp.c',
+   'module-example-sink.c',
+   'module-example-source.c',
+   'module-fallback-sink.c',
+@@ -462,6 +463,22 @@ pipewire_module_example_sink = shared_library('pipewire-module-example-source',
+   install_rpath: modules_install_dir,
+   dependencies : [spa_dep, mathlib, dl_lib, pipewire_dep],
+ )
++
++pipewire_module_wslg_rdp_sink = shared_library('pipewire-module-wslg-rdp-sink',
++  [ 'module-wslg-rdp.c' ],
++  c_args : ['-DWSLG_RDP_MODE_SINK'],
++  include_directories : [configinc],
++  install : true,
++  install_dir : modules_install_dir,
++  install_rpath: modules_install_dir,
++  dependencies : [spa_dep, mathlib, dl_lib, pipewire_dep],
++)
++
++pipewire_module_wslg_rdp_source = shared_library('pipewire-module-wslg-rdp-source',
++  [ 'module-wslg-rdp.c' ],
++  c_args : ['-DWSLG_RDP_MODE_SOURCE'],
++  include_directories : [configinc],
++  install : true,
++  install_dir : modules_install_dir,
++  install_rpath: modules_install_dir,
++  dependencies : [spa_dep, mathlib, dl_lib, pipewire_dep],
++)

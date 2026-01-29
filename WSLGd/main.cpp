@@ -447,7 +447,7 @@ try {
             }
         );
 
-    // Wait weston to be ready before starting RDP client, pulseaudio server.
+    // Wait weston to be ready before starting RDP client, PipeWire stack.
     WaitForReadyNotify(notifyFd.get());
     unlink(WESTON_NOTIFY_SOCKET);
 
@@ -519,32 +519,49 @@ try {
         std::vector<cap_value_t>{CAP_SETGID, CAP_SETUID}
     );
 
-    // Construct pulseaudio launch command line.
-    std::string pulseaudioLaunchArgs =
+    // Construct pipewire launch command line.
+    std::string pipewireLaunchArgs =
         "/usr/bin/dbus-launch "
-        "/usr/bin/pulseaudio "
-        "--log-time=true "
-        "--disallow-exit=true "
-        "--exit-idle-time=-1 "
-        "--load=\"module-rdp-sink sink_name=RDPSink\" "
-        "--load=\"module-rdp-source source_name=RDPSource\" "
-        "--load=\"module-native-protocol-unix socket=" SHARE_PATH "/PulseServer auth-anonymous=true\" ";
+        "/usr/bin/pipewire";
 
-    // Construct log file option string.
-    std::string pulseaudioLogFileOption("--log-target=");
-    auto pulseAudioLogFilePathEnv = getenv("WSLG_PULSEAUDIO_LOG_PATH");
-    if (pulseAudioLogFilePathEnv) {
-        pulseaudioLogFileOption += pulseAudioLogFilePathEnv;
-    } else {
-        pulseaudioLogFileOption += "newfile:" SHARE_PATH "/pulseaudio.log";
+    // Construct pipewire log file option string.
+    auto pipewireLogFilePathEnv = getenv("WSLG_PIPEWIRE_LOG_PATH");
+    if (pipewireLogFilePathEnv && pipewireLogFilePathEnv[0] != '\0') {
+        pipewireLaunchArgs += " --log=";
+        pipewireLaunchArgs += pipewireLogFilePathEnv;
     }
-    pulseaudioLaunchArgs += pulseaudioLogFileOption;
 
-    // Launch pulseaudio and the associated dbus daemon.
+    // Launch pipewire and the associated dbus daemon.
     monitor.LaunchProcess(std::vector<std::string>{
         "/usr/bin/sh",
         "-c",
-        std::move(pulseaudioLaunchArgs)
+        std::move(pipewireLaunchArgs)
+    });
+
+    // Launch wireplumber session manager.
+    monitor.LaunchProcess(std::vector<std::string>{
+        "/usr/bin/sh",
+        "-c",
+        "/usr/bin/wireplumber"
+    });
+
+    // Construct pipewire-pulse launch command line.
+    std::string pipewirePulseLaunchArgs =
+        "/usr/bin/dbus-launch "
+        "/usr/bin/pipewire-pulse";
+
+    // Construct pipewire-pulse log file option string.
+    auto pipewirePulseLogFilePathEnv = getenv("WSLG_PIPEWIRE_PULSE_LOG_PATH");
+    if (pipewirePulseLogFilePathEnv && pipewirePulseLogFilePathEnv[0] != '\0') {
+        pipewirePulseLaunchArgs += " --log=";
+        pipewirePulseLaunchArgs += pipewirePulseLogFilePathEnv;
+    }
+
+    // Launch pipewire-pulse and the associated dbus daemon.
+    monitor.LaunchProcess(std::vector<std::string>{
+        "/usr/bin/sh",
+        "-c",
+        std::move(pipewirePulseLaunchArgs)
     });
 
     return monitor.Run();
