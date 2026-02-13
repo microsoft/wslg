@@ -324,6 +324,7 @@ RUN echo "== Install Core/UI Runtime Dependencies ==" && \
             dbus \
             dbus-glib \
             dhcpcd \
+            docker-buildx \
             docker-cli \
             e2fsprogs \
             freefont \
