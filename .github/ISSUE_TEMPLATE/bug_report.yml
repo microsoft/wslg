@@ -51,7 +51,7 @@ body:
 
       You can access the wslg logs using explorer at: `\\wsl$\<Distro-Name>\mnt\wslg` (e.g.: `\\wsl$\Ubuntu-20.04\mnt\wslg`)
 
-      * `pulseaudio.log`
+      * `pipewire-pulse.log`
       * `weston.log`
       * `stderr.log`
     label: "WSL logs:"

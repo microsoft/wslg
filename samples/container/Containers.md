@@ -1,6 +1,6 @@
 # Containerizing GUI applications with WSLg
 
-For containerized applications to work properly under WSLg developers need to be aware of a few peculiarity of our environment in order to allow applications to properly connect to our X11, Wayland or PulseAudio server or to use the vGPU.
+For containerized applications to work properly under WSLg developers need to be aware of a few peculiarity of our environment in order to allow applications to properly connect to our X11, Wayland or PipeWire (PulseAudio-compatible) server or to use the vGPU.
 
 ## Containerized GUI applications connecting to X11, Wayland or Pulse server
 
@@ -10,7 +10,7 @@ In order for a containerized application to access the servers provided by WSLg,
 |---|---|
 | X11 | ```/tmp/.X11-unix``` |
 | Wayland | ```/mnt/wslg``` |
-| PulseAudio | ```/mnt/wslg``` |
+| PipeWire (PulseAudio-compatible) | ```/mnt/wslg``` |
 
 And the following environment variable must be share with the container.
 
@@ -18,7 +18,7 @@ And the following environment variable must be share with the container.
 |---|---|
 | X11 | ```DISPLAY``` |
 | Wayland | ```WAYLAND_DISPLAY``` && ```XDG_RUNTIME_DIR``` |
-| PulseAudio | ```PULSE_SERVER``` |
+| PipeWire (PulseAudio-compatible) | ```PULSE_SERVER``` |
 
 For example, to run ```xclock``` as a containerized application, the following docker file can be use. 
 
@@ -42,7 +42,7 @@ sudo docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -v /mnt/wslg:/mnt/wslg \
     -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR -e PULSE_SERVER=$PULSE_SERVER xclock
 ```
 
-Please note that in this example we make all servers visible to ```xclock``` even though it only uses the X11 server and will not make use of the Wayland or PulseAudio servers. This is for illustrative purposes only. There is no real harm in exposing a server that is unused by an application. However it is good practice to only exposed containerized application to the resource they need. In this case we could have launch the containerized version of ```xclock``` with the following minimal command line.
+Please note that in this example we make all servers visible to ```xclock``` even though it only uses the X11 server and will not make use of the Wayland or PipeWire (PulseAudio-compatible) servers. This is for illustrative purposes only. There is no real harm in exposing a server that is unused by an application. However it is good practice to only exposed containerized application to the resource they need. In this case we could have launch the containerized version of ```xclock``` with the following minimal command line.
 
 ```
 sudo docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY xclock

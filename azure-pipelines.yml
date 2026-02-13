@@ -10,11 +10,16 @@ resources:
     endpoint: GitHub connection 1
     name: microsoft/weston-mirror
     ref: working
-  - repository: pulseaudio
+  - repository: pipewire
     type: github
     endpoint: GitHub connection 1
-    name: microsoft/pulseaudio-mirror
-    ref: working
+    name: PipeWire/pipewire
+    ref: 1.4.10
+  - repository: wireplumber
+    type: github
+    endpoint: GitHub connection 1
+    name: PipeWire/wireplumber
+    ref: 0.5.13
 
 trigger:
   - main
@@ -33,7 +38,8 @@ stages:
     steps:
       - checkout: FreeRDP
       - checkout: weston
-      - checkout: pulseaudio
+      - checkout: pipewire
+      - checkout: wireplumber
       - checkout: self
 
       - template: devops/common-linux.yml
@@ -48,10 +54,11 @@ stages:
 
       - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
                 mv weston-mirror/ wslg/vendor/weston &&
-                mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
+                mv pipewire/ wslg/vendor/pipewire &&
+                mv wireplumber/ wslg/vendor/wireplumber &&
                 mv mesa-23.1.0/ wslg/vendor/mesa &&
                 mv DirectX-Headers-1.608.0/ wslg/vendor/DirectX-Headers-1.0
-        displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa, DirectX-Headers)'
+        displayName: 'Move sub projects (FreeRDP, Weston, PipeWire, WirePlumber, Mesa, DirectX-Headers)'
 
       - script: docker build -f ./wslg/Dockerfile -t system-distro-x64 
                 ./wslg 
@@ -165,7 +172,8 @@ stages:
     steps:
       - checkout: FreeRDP
       - checkout: weston
-      - checkout: pulseaudio
+      - checkout: pipewire
+      - checkout: wireplumber
       - checkout: self
 
       - template: devops/common-linux.yml
@@ -196,10 +204,11 @@ stages:
 
       - script: mv FreeRDP-mirror/ wslg/vendor/FreeRDP &&
                 mv weston-mirror/ wslg/vendor/weston &&
-                mv pulseaudio-mirror/ wslg/vendor/pulseaudio &&
+                mv pipewire/ wslg/vendor/pipewire &&
+                mv wireplumber/ wslg/vendor/wireplumber &&
                 mv mesa-23.1.0/ wslg/vendor/mesa &&
                 mv DirectX-Headers-1.608.0/ wslg/vendor/DirectX-Headers-1.0
-        displayName: 'Move sub projects (FreeRDP, Weston, PulseAudio, Mesa, DirectX-Headers)'
+        displayName: 'Move sub projects (FreeRDP, Weston, PipeWire, WirePlumber, Mesa, DirectX-Headers)'
 
       - script: ~/.docker/cli-plugins/docker-buildx build -f ./wslg/Dockerfile
                 --output type=tar,dest=$(Agent.BuildDirectory)/system_arm64.tar 
