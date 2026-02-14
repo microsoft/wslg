@@ -23,6 +23,7 @@ constexpr auto c_versionMount = SHARE_PATH "/versions.txt";
 constexpr auto c_shareDocsDir = "/usr/share/doc";
 constexpr auto c_shareDocsMount = SHARE_PATH "/doc";
 constexpr auto c_x11RuntimeDir = SHARE_PATH "/.X11-unix";
+constexpr auto c_x11SocketDir = "/tmp/.X11-unix";
 constexpr auto c_xdgRuntimeDir = SHARE_PATH "/runtime-dir";
 constexpr auto c_stdErrLogFile = SHARE_PATH "/stderr.log";
 
@@ -211,6 +212,30 @@ void WaitForReadyNotify(int notifyFd)
     THROW_LAST_ERROR_IF(!fd);
 }
 
+void SetX11SocketPermissions()
+{
+    // /tmp/.X11-unix follows /tmp semantics with the sticky bit set (01777).
+    constexpr auto c_x11SocketDirMode = S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO;
+    constexpr auto c_x11SocketDirModeMask = S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO;
+    struct stat statResult {};
+    if (stat(c_x11SocketDir, &statResult) == 0) {
+        if ((statResult.st_mode & c_x11SocketDirModeMask) != c_x11SocketDirMode) {
+            if (chmod(c_x11SocketDir, c_x11SocketDirMode) < 0) {
+                LOG_ERROR("Failed to set permissions on %s; Xwayland may fail to start: %s.", c_x11SocketDir, strerror(errno));
+            }
+        }
+    } else {
+        auto lastError = errno;
+        if (lastError == ENOENT) {
+            LOG_ERROR("%s does not exist; Xwayland may fail to start if the host mount is missing.", c_x11SocketDir);
+        } else if (lastError == EACCES) {
+            LOG_ERROR("Permission denied while checking %s; Xwayland may fail to start: %s.", c_x11SocketDir, strerror(lastError));
+        } else {
+            LOG_ERROR("Failed to stat %s; Xwayland may fail to start: %s.", c_x11SocketDir, strerror(lastError));
+        }
+    }
+}
+
 int main(int Argc, char *Argv[])
 try {
     wil::g_LogExceptionCallback = LogException;
@@ -307,7 +332,8 @@ try {
     THROW_LAST_ERROR_IF(chmod(c_dbusDir, 0777) < 0);
 
     std::filesystem::create_directories(c_x11RuntimeDir);
-    THROW_LAST_ERROR_IF(chmod(c_x11RuntimeDir, 0777) < 0);
+    constexpr auto c_x11RuntimeDirMode = S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO;
+    THROW_LAST_ERROR_IF(chmod(c_x11RuntimeDir, c_x11RuntimeDirMode) < 0);
 
     std::filesystem::create_directories(c_xdgRuntimeDir);
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
@@ -450,6 +476,7 @@ try {
     // Wait weston to be ready before starting RDP client, pulseaudio server.
     WaitForReadyNotify(notifyFd.get());
     unlink(WESTON_NOTIFY_SOCKET);
+    SetX11SocketPermissions();
 
     // Start font monitoring if user distro's X11 fonts to be shared with system distro.
     if (GetEnvBool("WSLG_USE_USER_DISTRO_XFONTS", true))
