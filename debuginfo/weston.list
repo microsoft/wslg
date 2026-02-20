@@ -1,11 +1,11 @@
 usr/bin/weston
 usr/bin/weston-launch
 usr/bin/weston-screenshooter
-usr/lib/libweston-9.so.0.0.0
-usr/lib/libweston-desktop-9.so.0.0.0
-usr/lib/libweston-9/gl-renderer.so
-usr/lib/libweston-9/rdp-backend.so
-usr/lib/libweston-9/xwayland.so
+usr/lib/libweston-14.so.0.0.0
+usr/lib/libweston-desktop-14.so.0.0.0
+usr/lib/libweston-14/gl-renderer.so
+usr/lib/libweston-14/rdp-backend.so
+usr/lib/libweston-14/xwayland.so
 usr/lib/weston/libexec_weston.so.0.0.0
 usr/lib/weston/desktop-shell.so
 usr/lib/weston/rdprail-shell.so
