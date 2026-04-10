@@ -86,6 +86,10 @@ int wslgd::ProcessMonitor::LaunchProcess(
 
 int wslgd::ProcessMonitor::Run() try {
     std::map<std::string, std::vector<time_t>> crashes;
+    std::map<std::string, int> totalCrashes;
+
+    constexpr int c_maxCrashesPerMinute = 10;
+    constexpr int c_maxTotalCrashes = 20;
 
     for (;;) {
         // Reap any zombie child processes and re-launch any tracked processes.
@@ -117,8 +121,13 @@ int wslgd::ProcessMonitor::Run() try {
                 crashTimestamps.erase(std::remove_if(crashTimestamps.begin(), crashTimestamps.end(), [&](auto ts) { return ts < now - 60; }), crashTimestamps.end());
                 crashTimestamps.emplace_back(now);
 
-                if (crashTimestamps.size() > 10) {
-                    LOG_INFO("%s exited more than 10 times in 60 seconds, not starting it again", cmd.c_str());
+                auto& totalCrashCount = totalCrashes[cmd];
+                totalCrashCount++;
+
+                if (crashTimestamps.size() > c_maxCrashesPerMinute) {
+                    LOG_INFO("%s exited more than %d times in 60 seconds, not starting it again", cmd.c_str(), c_maxCrashesPerMinute);
+                } else if (totalCrashCount > c_maxTotalCrashes) {
+                    LOG_INFO("%s exited more than %d times in total, not starting it again", cmd.c_str(), c_maxTotalCrashes);
                 } else {
                     LaunchProcess(std::move(found->second.argv), std::move(found->second.capabilities), std::move(found->second.env));
                 }
