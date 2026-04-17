@@ -1,3 +1,84 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <winpr/crt.h>
+#include <winpr/stream.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("rdpapplist.common")
+
+#include "rdpapplist_common.h"
+
+#define RDPAPPLIST_HEADER_SIZE 8U
+
+/**
+ * Reads an RDPAPPLIST header from the stream.
+ *
+ * The header format is:
+ *   UINT32 cmdId
+ *   UINT32 length
+ *
+ * @param s The input stream.
+ * @param header The destination header structure.
+ *
+ * @return CHANNEL_RC_OK on success, otherwise a Win32 error code.
+ */
+UINT rdpapplist_read_header(wStream* s, RDPAPPLIST_HEADER* header)
+{
+	if (!s || !header)
+	{
+		WLog_ERR(TAG, "header parsing failed: invalid argument");
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	const size_t remaining = Stream_GetRemainingLength(s);
+	if (remaining < RDPAPPLIST_HEADER_SIZE)
+	{
+		WLog_ERR(TAG,
+		         "header parsing failed: not enough data (remaining=%" PRIuz
+		         ", required=%u)",
+		         remaining, RDPAPPLIST_HEADER_SIZE);
+		return ERROR_INVALID_DATA;
+	}
+
+	Stream_Read_UINT32(s, header->cmdId);
+	Stream_Read_UINT32(s, header->length);
+
+	return CHANNEL_RC_OK;
+}
+
+/**
+ * Writes an RDPAPPLIST header to the stream.
+ *
+ * The header format is:
+ *   UINT32 cmdId
+ *   UINT32 length
+ *
+ * @param s The output stream.
+ * @param header The source header structure.
+ *
+ * @return CHANNEL_RC_OK on success, otherwise a Win32 error code.
+ */
+UINT rdpapplist_write_header(wStream* s, const RDPAPPLIST_HEADER* header)
+{
+	if (!s || !header)
+	{
+		WLog_ERR(TAG, "header write failed: invalid argument");
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	if (Stream_GetRemainingLength(s) < RDPAPPLIST_HEADER_SIZE)
+	{
+		WLog_ERR(TAG, "header write failed: insufficient stream capacity");
+		return ERROR_INSUFFICIENT_BUFFER;
+	}
+
+	Stream_Write_UINT32(s, header->cmdId);
+	Stream_Write_UINT32(s, header->length);
+
+	return CHANNEL_RC_OK;
+}
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * RDPXXXX Remote Application List Virtual Channel Extension
