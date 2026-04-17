@@ -14,3 +14,4 @@ WSLDVCPlugin/x64
 WSLDVCPlugin/ARM64/Debug/
 WSLDVCPlugin/ARM64/Release/
 WSLDVCPlugin/WSLDVCPlugin.aps
+.fake
