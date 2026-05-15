@@ -1,0 +1,17 @@
+# GitVersion config for WSLg.
+#
+# On release/* branches we ship hotfix / servicing builds on top of an
+# existing release tag (e.g. release/1.0.73 from tag v1.0.73). We do
+# NOT want gitversion's default GitFlow behavior of bumping Minor and
+# applying a 'beta' pre-release label.
+#
+# Instead, the version should stay at the source tag's Major.Minor.Patch
+# (e.g. 1.0.73), with BuildMetaData = commits since the tag. The
+# wslg-build pipeline derives the 4th component from BuildMetaData
+# (e.g. 1.0.73 + 1 commit -> 1.0.73.1).
+branches:
+  release:
+    increment: None
+    label: ''
+    prevent-increment:
+      when-current-commit-tagged: true
