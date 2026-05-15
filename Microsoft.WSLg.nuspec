@@ -7,14 +7,14 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 <package>
   <metadata>
     <id>Microsoft.WSLg</id>
-    <version>0.2.12</version>
+    <version>$version$</version>
     <authors>Microsoft</authors>
     <owners>Microsoft, WSL Team</owners>
     <projectUrl>https://github.com/microsoft/wslg/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>WSLg support package.</description>
     <summary>Enabling the Windows Subsystem for Linux to include support for Wayland and X server related scenarios.</summary>
-    <releaseNotes>ebad9c1</releaseNotes>
+    <releaseNotes>$releaseNotes$</releaseNotes>
     <copyright>Copyright © Microsoft Corporation 2021</copyright>
     <tags>native</tags>
   </metadata>

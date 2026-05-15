@@ -1,117 +1,83 @@
-function Get-XmlNamespaceManager([xml]$XmlDocument, [string]$NamespaceURI = "")
-{
-    # If a Namespace URI was not given, use the Xml document's default namespace.
-	if ([string]::IsNullOrEmpty($NamespaceURI)) { $NamespaceURI = $XmlDocument.DocumentElement.NamespaceURI }	
-	
-	# In order for SelectSingleNode() to actually work, we need to use the fully qualified node path along with an Xml Namespace Manager, so set them up.
-	[System.Xml.XmlNamespaceManager]$xmlNsManager = New-Object System.Xml.XmlNamespaceManager($XmlDocument.NameTable)
-	$xmlNsManager.AddNamespace("ns", $NamespaceURI)
-    return ,$xmlNsManager		# Need to put the comma before the variable name so that PowerShell doesn't convert it into an Object[].
-}
-
-function Get-FullyQualifiedXmlNodePath([string]$NodePath, [string]$NodeSeparatorCharacter = '.')
-{
-    return "/ns:$($NodePath.Replace($('.'), '/ns:'))"
-}
-
-function Get-XmlNode([xml]$XmlDocument, [string]$NodePath, [string]$NamespaceURI = "", [string]$NodeSeparatorCharacter = '.')
-{
-	$xmlNsManager = Get-XmlNamespaceManager -XmlDocument $XmlDocument -NamespaceURI $NamespaceURI
-	[string]$fullyQualifiedNodePath = Get-FullyQualifiedXmlNodePath -NodePath $NodePath -NodeSeparatorCharacter $NodeSeparatorCharacter
-	
-	# Try and get the node, then return it. Returns $null if the node was not found.
-	$node = $XmlDocument.SelectSingleNode($fullyQualifiedNodePath, $xmlNsManager)
-	return $node
-}
-
-function Set-XmlAttributeValue([xml]$XmlDocument, [string]$ElementPath, [string]$AttributeName, [string]$AttributeValue, [string]$NamespaceURI = "", [string]$NodeSeparatorCharacter = '.')
-{
-	# Try and get the node.	
-	$node = Get-XmlNode -XmlDocument $XmlDocument -NodePath $ElementPath -NamespaceURI $NamespaceURI -NodeSeparatorCharacter $NodeSeparatorCharacter
-	$node.SetAttribute($AttributeName, $AttributeValue)
-}
-
-function Set-XmlElementsTextValue([xml]$XmlDocument, [string]$ElementPath, [string]$TextValue, [string]$NamespaceURI = "", [string]$NodeSeparatorCharacter = '.')
-{
-	# Try and get the node.	
-	$node = Get-XmlNode -XmlDocument $XmlDocument -NodePath $ElementPath -NamespaceURI $NamespaceURI -NodeSeparatorCharacter $NodeSeparatorCharacter
-	
-	# If the node already exists, update its value.
-	if ($node)
-	{ 
-		$node.InnerText = $TextValue
-	}
-	# Else the node doesn't exist yet, so create it with the given value.
-	else
-	{
-		# Create the new element with the given value.
-		$elementName = $ElementPath.Substring($ElementPath.LastIndexOf($NodeSeparatorCharacter) + 1)
- 		$element = $XmlDocument.CreateElement($elementName, $XmlDocument.DocumentElement.NamespaceURI)		
-		$textNode = $XmlDocument.CreateTextNode($TextValue)
-		$element.AppendChild($textNode) > $null
-		
-		# Try and get the parent node.
-		$parentNodePath = $ElementPath.Substring(0, $ElementPath.LastIndexOf($NodeSeparatorCharacter))
-		$parentNode = Get-XmlNode -XmlDocument $XmlDocument -NodePath $parentNodePath -NamespaceURI $NamespaceURI -NodeSeparatorCharacter $NodeSeparatorCharacter
-		
-		if ($parentNode)
-		{
-			$parentNode.AppendChild($element) > $null
-		}
-		else
-		{
-			throw "$parentNodePath does not exist in the xml."
-		}
-	}
-}
-
-function Update-XML-Attribute($File, $xpath, $name, $value) 
-{
-		$File = Resolve-Path $File
-	
-		[xml] $fileContents = Get-Content -Encoding UTF8 -Path $File
-	
-		if ($null -ne $value -and $value -ne "") {
-			Set-XmlAttributeValue -XmlDocument $fileContents -ElementPath $xpath -AttributeName $name -AttributeValue $value
-		}
-		$fileContents.Save($File)
-}
-
-function Update-XML-Text($File, $xpath, $value)
-{
-	$File = Resolve-Path $File
-
-	[xml] $fileContents = Get-Content -Encoding UTF8 -Path $File
-
-	if ($null -ne $value -and $value -ne "") {
-		Set-XmlElementsTextValue -XmlDocument $fileContents -ElementPath $xpath -TextValue $value
-	}
-
-	$fileContents.Save($File)
-}
 function Get-Current-Commit-Hash ()
 {
 	return ([string](git log -1 --pretty=%h)).Trim()
 }
 
-function Get-VersionInfo($type, $separator)
+# Parses `git describe --tags --match *.*.* --abbrev=1` output into a
+# structured object. The describe output is one of:
+#   "v1.0.77"           - HEAD is exactly on the tag (revision = 0)
+#   "v1.0.77-3-gabc123" - HEAD is 3 commits past the tag (revision = 3)
+# Tags may or may not be prefixed with 'v'. Throws if no Major.Minor.Patch tag
+# is reachable.
+function Get-DescribedVersion()
 {
-	if ($type -eq "hash")
+	# --match '*.*.*' --exclude '*.*.*.*' picks the most recent tag whose
+	# name looks like Major.Minor.Patch (3 numeric segments). Excluding
+	# 4-segment tags lets us cosmetically tag built releases like
+	# 'v1.0.73.1' without confusing the version derivation -- the
+	# describe call will skip over them to the underlying 'v1.0.73' tag,
+	# and the patch-count we compute will be relative to that.
+	$output = git describe --tags --match '*.*.*' --exclude '*.*.*.*' --abbrev=1 2>&1
+	if ($LASTEXITCODE -ne 0)
 	{
-		return Get-Current-Commit-Hash
+		throw "git describe failed (exit=$LASTEXITCODE): $output. Make sure tags are available -- a shallow clone usually isn't enough."
 	}
 
-	$major = [string](gitversion /showvariable Major)
-	$minor = [string](gitversion /showvariable Minor)
-	$patch = [string](gitversion /showvariable Patch)
-	$build = [string](gitversion /showvariable BuildMetaData)
-
-	$version = "$major.$minor.$patch"
-
-	if ($build -ne "")
+	$parts = ([string]$output).Trim().Split('-')
+	$base = $parts[0] -replace '^v', ''
+	if ($base -notmatch '^\d+\.\d+\.\d+$')
 	{
-		$version = $version + $separator + $build
+		throw "git describe output '$output' does not start with a Major.Minor.Patch tag (parsed base: '$base')."
+	}
+	$semver = $base.Split('.')
+
+	$revision = if ($parts.Length -lt 2) { 0 } else { [int]$parts[1] }
+
+	return [pscustomobject]@{
+		BaseVersion = $base
+		Major       = [int]$semver[0]
+		Minor       = [int]$semver[1]
+		Patch       = [int]$semver[2]
+		Revision    = $revision
+	}
+}
+
+# Returns the NuGet package version. The $separator argument selects the
+# convention to apply to off-tag builds:
+#   "."      -> release/* convention: keep the base tag, append ".$revision"
+#               (e.g. v1.0.73 + 1 commit  ->  "1.0.73.1")
+#   anything -> main/feature convention: bump Patch, append "$separator$revision"
+#               (e.g. v1.0.77 + 3 commits, "-Beta"  ->  "1.0.78-Beta3")
+# When HEAD is exactly on a tag the base version is returned unchanged
+# regardless of separator. $separator is required so that callers (notably CI
+# pipelines) cannot silently default to the wrong versioning convention.
+function Get-NugetVersion([Parameter(Mandatory = $true)][string]$separator)
+{
+	$v = Get-DescribedVersion
+	if ($v.Revision -eq 0) { return $v.BaseVersion }
+
+	if ($separator -eq ".")
+	{
+		return "$($v.BaseVersion).$($v.Revision)"
 	}
 
-	return $version
+	$bumped = "{0}.{1}.{2}" -f $v.Major, $v.Minor, ($v.Patch + 1)
+	return "$bumped$separator$($v.Revision)"
+}
+
+# Returns the 4-part Major.Minor.Patch.0 file version stamped into the
+# WSLDVCPlugin DLL resource. The 4th part is intentionally fixed at 0 -- the
+# DLL's release identity is the Major.Minor.Patch tag it was built from. Patch
+# is bumped on off-tag main/feature builds (separator != "."), preserved on
+# release/* and on-tag builds. $separator is required for the same reason as
+# Get-NugetVersion.
+function Get-FileVersion([Parameter(Mandatory = $true)][string]$separator)
+{
+	$v = Get-DescribedVersion
+	if ($separator -eq "." -or $v.Revision -eq 0)
+	{
+		return "$($v.BaseVersion).0"
+	}
+
+	return ("{0}.{1}.{2}.0" -f $v.Major, $v.Minor, ($v.Patch + 1))
 }
