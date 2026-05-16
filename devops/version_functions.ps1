@@ -36,7 +36,23 @@ function Get-DescribedVersion()
 	}
 	$semver = $base.Split('.')
 
-	$revision = if ($parts.Length -lt 2) { 0 } else { [int]$parts[1] }
+	# Validate revision explicitly (mirrors get-nuget-version.sh). The
+	# implicit [int] cast would throw a generic "Cannot convert" if a tag
+	# like 'v1.0.0-rc1' ever sneaks in; the explicit check gives a useful
+	# message naming the actual describe output.
+	if ($parts.Length -lt 2)
+	{
+		$revision = 0
+	}
+	else
+	{
+		$rev = $parts[1]
+		if ($rev -notmatch '^\d+$')
+		{
+			throw "Parsed revision '$rev' from describe output '$output' is not numeric."
+		}
+		$revision = [int]$rev
+	}
 
 	return [pscustomobject]@{
 		BaseVersion = $base
