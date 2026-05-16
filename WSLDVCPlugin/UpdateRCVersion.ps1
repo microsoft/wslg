@@ -10,8 +10,8 @@ $versionComma = $fileVersion.Replace(".", ",")
 $informationalVersion = "$nugetVersion+sha.$sha"
 
 $content = (Get-Content -Encoding "windows-1252" -Path ".\WSLDVCPlugin.rc")
-$content = $content.Replace("1,0,0,1", $versionComma)
-$content = $content.Replace("1.0.0.1", $fileVersion)
-$content = $content.Replace("InformationalVersion", $informationalVersion)
+$content = $content.Replace("__FILEVERSION_COMMAS__", $versionComma)
+$content = $content.Replace("__FILEVERSION_DOTS__", $fileVersion)
+$content = $content.Replace("__INFORMATIONAL_VERSION__", $informationalVersion)
 
 Set-Content -Encoding "windows-1252" -Path ".\WSLDVCPlugin.rc" -Value $content

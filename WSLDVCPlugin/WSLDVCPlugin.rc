@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION __FILEVERSION_COMMAS__
+ PRODUCTVERSION __FILEVERSION_COMMAS__
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "© Microsoft Corporation. All rights reserved"
             VALUE "FileDescription", "WSL Remote Application List Plug-in"
-            VALUE "FileVersion", "1.0.0.1"
+            VALUE "FileVersion", "__FILEVERSION_DOTS__"
             VALUE "InternalName", "WSLDVCPl.dll"
             VALUE "LegalCopyright", "© Microsoft Corporation. All rights reserved"
             VALUE "OriginalFilename", "WSLDVCPl.dll"
             VALUE "ProductName", "WSL Remote Application List Plug-in"
-            VALUE "ProductVersion", "InformationalVersion"
+            VALUE "ProductVersion", "__INFORMATIONAL_VERSION__"
         END
     END
     BLOCK "VarFileInfo"
