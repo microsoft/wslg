@@ -39,7 +39,7 @@ The WSLg system distro is built using docker build. We essentially start from a 
     git clone https://github.com/microsoft/wslg wslg
 ```
 
-2. Clone the FreeRDP, Weston and PulseAudio mirror. These need to be located in a **vendor** sub-directory where you clone the wslg project (e.g. wslg/vendor), this is where our docker build script expects to find the source code. Make sure to checkout the **working** branch from each of these projects, the **main** branch references the upstream code.
+2. Clone the vendor sub-projects (FreeRDP, Weston, PulseAudio, Mesa, DirectX-Headers) into `wslg/vendor/`. The Dockerfile (and `build-and-export.sh`) expect the source code to live there. Use the `working` branch for the mirrored projects; `main` tracks upstream.
 
     ```bash
     git clone https://github.com/microsoft/FreeRDP-mirror wslg/vendor/FreeRDP -b working
@@ -49,27 +49,32 @@ The WSLg system distro is built using docker build. We essentially start from a 
     git clone https://gitlab.freedesktop.org/mesa/mesa.git wslg/vendor/mesa -b mesa-23.1.0
     ```
 
-2. Create the VHD:
+3. Build the VHD. The easiest path is the helper script, which derives a version from `git describe`, captures each vendor's commit SHA, passes everything as `--build-arg`, runs `docker build`, exports the container, and converts to a VHD via `tar2ext4`:
 
-    2.1 From the parent directory where you cloned `wslg` clone `hcsshim` which contains `tar2ext4` and will be used to create the system distro vhd
-    ```
-    git clone --branch v0.8.9 --single-branch https://github.com/microsoft/hcsshim.git
-    ```
-    
-    2.2 From the parent directory build and export the docker image:
-    ```
-    sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64
-    sudo docker export `sudo docker create system-distro-x64` > system_x64.tar
-    ```
-    
-    2.3 Create the system distro vhd using `tar2ext4`
-    
     ```bash
-    cd hcsshim/cmd/tar2ext4
-    go run tar2ext4.go -vhd -i ../../../system_x64.tar -o ../../../system.vhd
+    cd wslg
+    ./build-and-export.sh
     ```
-    
-    This will create system distro image `system.vhd`
+
+    This produces `system_x64.vhd` in the current directory. If you prefer to do it by hand:
+
+    ```bash
+    # Build the system distro image. The --build-arg names match what
+    # the production pipeline (wslg-build) passes through; unset ones
+    # default to "<unknown>" and end up in /etc/versions.txt as such.
+    sudo docker build -f wslg/Dockerfile -t system-distro-x64 wslg \
+        --build-arg WSLG_VERSION="$(cd wslg && ./devops/get-nuget-version.sh -Beta)" \
+        --build-arg WSLG_COMMIT="$(git -C wslg rev-parse HEAD)" \
+        --build-arg WSLG_ARCH=x86_64 \
+        --build-arg FREERDP_COMMIT="$(git -C wslg/vendor/FreeRDP rev-parse HEAD)" \
+        --build-arg WESTON_COMMIT="$(git -C wslg/vendor/weston rev-parse HEAD)" \
+        --build-arg PULSEAUDIO_COMMIT="$(git -C wslg/vendor/pulseaudio rev-parse HEAD)"
+    sudo docker export "$(sudo docker create system-distro-x64)" > system_x64.tar
+
+    # Convert the tar to an ext4 VHD. tar2ext4 is part of hcsshim; on
+    # CI we 'go install' it, locally 'go run' is fine.
+    go run github.com/Microsoft/hcsshim/cmd/tar2ext4@latest -vhd -i system_x64.tar -o system.vhd
+    ```
 
 ## Installing a private version of the WSLg system distro
 
@@ -95,12 +100,16 @@ Please keep in mind that the system distro is loaded read-only from it's backing
 
 ## Building a debug version
 
-To build a debug version of the system distro, the docker build argument SYSTEMDISTRO_DEBUG_BUILD needs to be set and passed the value of "true". The following command would substitute the docker build command in step 3.2.2 of the "Build Instructions" section.
+To build a debug version of the system distro, pass `SYSTEMDISTRO_DEBUG_BUILD=true` as an additional docker build argument:
 
 ```
-    sudo docker build -t system-distro-x64  ./wslg  --build-arg SYSTEMDISTRO_VERSION=`git --git-dir=wslg/.git rev-parse --verify HEAD` --build-arg SYSTEMDISTRO_ARCH=x86_64 --build-arg SYSTEMDISTRO_DEBUG_BUILD=true
+    sudo docker build -f wslg/Dockerfile -t system-distro-x64 wslg \
+        --build-arg WSLG_VERSION="$(cd wslg && ./devops/get-nuget-version.sh -Beta)" \
+        --build-arg WSLG_COMMIT="$(git -C wslg rev-parse HEAD)" \
+        --build-arg WSLG_ARCH=x86_64 \
+        --build-arg SYSTEMDISTRO_DEBUG_BUILD=true
 ```
-The resulting system distro VHD will have useful development packages installed like gdb and will have compiled all runtime dependencies with the "debug" buildtype for Meson, rather than "release".
+The resulting system distro VHD will have useful development packages installed like gdb and will have compiled all runtime dependencies with the "debug" buildtype for Meson, rather than "release". Debug symbols for the components built from the vendor sources are kept inline rather than split out into `system-debuginfo.tar.gz`.
 
 # mstsc plugin
 
