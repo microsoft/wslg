@@ -146,16 +146,18 @@ ARG FREERDP_VERSION=2
 # a real footgun (CI misconfig surfacing 30 minutes into the build
 # instead of in the first step).
 #
-# Accepts either the angle-bracketed defaults declared above or the
-# bare 'unknown' that build-and-export.sh falls back to when a vendor
-# dir was sourced from a tarball without git metadata. If you really
-# need a partial build for local prototyping, pass --build-arg
-# WSLG_VERSION=dev (etc.) explicitly so the rejection here is opt-out
-# rather than accidental.
+# WSLG_ARCH is intentionally excluded from this loop -- it has a real
+# default ("x86_64") and is never a placeholder value.
+#
+# The reject list is "" / "<unknown>" / "<current>" / "unknown":
+#   - the angle-bracketed forms are the ARG defaults declared above and
+#     mean "caller forgot --build-arg";
+#   - bare "unknown" is reserved for "something went wrong" and is
+#     deliberately NOT what build-and-export.sh falls back to (it uses
+#     "dev" instead, which this loop permits).
 RUN set -e; \
     for kv in "WSLG_VERSION=${WSLG_VERSION}" \
               "WSLG_COMMIT=${WSLG_COMMIT}" \
-              "WSLG_ARCH=${WSLG_ARCH}" \
               "DIRECTX_HEADERS_VERSION=${DIRECTX_HEADERS_VERSION}" \
               "FREERDP_COMMIT=${FREERDP_COMMIT}" \
               "MESA_VERSION=${MESA_VERSION}" \
@@ -170,7 +172,7 @@ RUN set -e; \
                 exit 1 ;; \
         esac; \
     done; \
-    echo "All 8 required --build-arg values present."
+    echo "All 7 required --build-arg values present."
 
 WORKDIR /work
 RUN printf 'WSLg: %s\nArchitecture: %s\nBuilt: %s\nOS: %s\n\n' \

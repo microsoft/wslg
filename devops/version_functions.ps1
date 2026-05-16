@@ -63,6 +63,46 @@ function Get-DescribedVersion()
 	}
 }
 
+# Validates that an object passed to Get-NugetVersion / Get-FileVersion as a
+# pre-computed describe result has all the expected members with sensible
+# types. Returns the object unchanged on success; throws a clear error on the
+# first missing/wrong-typed property. This catches the case where a caller
+# passes a hashtable (which PowerShell will silently coerce to PSObject and
+# then yield $null .Major / .Revision, producing meaningless "0.0.1-Beta"
+# versions).
+function Assert-DescribedVersion($v)
+{
+	$required = @{
+		BaseVersion = 'string'
+		Major       = 'int'
+		Minor       = 'int'
+		Patch       = 'int'
+		Revision    = 'int'
+	}
+	foreach ($name in $required.Keys)
+	{
+		if (-not ($v.PSObject.Properties.Name -contains $name))
+		{
+			throw "describedVersion is missing required property '$name' (got: $($v.PSObject.Properties.Name -join ', '))."
+		}
+		$value = $v.$name
+		if ($null -eq $value)
+		{
+			throw "describedVersion.$name is `$null."
+		}
+		$expected = $required[$name]
+		if ($expected -eq 'string' -and -not ($value -is [string]))
+		{
+			throw "describedVersion.$name must be a string, got [$($value.GetType().FullName)]."
+		}
+		if ($expected -eq 'int' -and -not ($value -is [int]))
+		{
+			throw "describedVersion.$name must be an int, got [$($value.GetType().FullName)]."
+		}
+	}
+	return $v
+}
+
 # Returns the NuGet package version. The $separator argument selects the
 # convention to apply to off-tag builds:
 #   "."      -> release/* convention: keep the base tag, append ".$revision"
@@ -78,10 +118,13 @@ function Get-NugetVersion
 		[Parameter(Mandatory = $true)][string]$separator,
 		# Optional: caller can pass a pre-computed Get-DescribedVersion result
 		# to avoid re-invoking `git describe` when both Get-NugetVersion and
-		# Get-FileVersion are needed (e.g. UpdateRCVersion.ps1).
-		[Parameter(Mandatory = $false)]$describedVersion = $null
+		# Get-FileVersion are needed (e.g. UpdateRCVersion.ps1). Typed as
+		# [pscustomobject] and shape-checked below so that a caller passing
+		# the wrong shape (a hashtable, an empty object, $null wrapped, ...)
+		# fails loudly here instead of silently producing "0.0.1-Beta".
+		[Parameter(Mandatory = $false)][pscustomobject]$describedVersion = $null
 	)
-	$v = if ($null -ne $describedVersion) { $describedVersion } else { Get-DescribedVersion }
+	$v = if ($null -ne $describedVersion) { Assert-DescribedVersion $describedVersion } else { Get-DescribedVersion }
 	if ($v.Revision -eq 0) { return $v.BaseVersion }
 
 	if ($separator -eq ".")
@@ -103,9 +146,9 @@ function Get-FileVersion
 {
 	param(
 		[Parameter(Mandatory = $true)][string]$separator,
-		[Parameter(Mandatory = $false)]$describedVersion = $null
+		[Parameter(Mandatory = $false)][pscustomobject]$describedVersion = $null
 	)
-	$v = if ($null -ne $describedVersion) { $describedVersion } else { Get-DescribedVersion }
+	$v = if ($null -ne $describedVersion) { Assert-DescribedVersion $describedVersion } else { Get-DescribedVersion }
 	if ($separator -eq "." -or $v.Revision -eq 0)
 	{
 		return "$($v.BaseVersion).0"

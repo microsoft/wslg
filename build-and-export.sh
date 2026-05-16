@@ -15,11 +15,16 @@ set -eo pipefail
 # reason for a fallback (e.g. "make sure tags are available") is visible.
 WSLG_VERSION=$(./devops/get-nuget-version.sh "-Beta" || true)
 WSLG_VERSION=${WSLG_VERSION:-dev}
-WSLG_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+# Use the literal "dev" sentinel (not "unknown") for the git-failure fallback
+# so the Dockerfile's fail-fast can keep rejecting the truly-suspicious
+# "unknown"/"<unknown>" cases that only ever appear when CI forgets a
+# --build-arg, while still letting a tarball-sourced local-dev checkout
+# build successfully.
+WSLG_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "dev")
 
 # Vendor components: use rev-parse for the git-sourced ones, fall back
-# to "unknown" if a vendor dir was sourced from a tarball locally.
-vendor_commit() { git -C "$1" rev-parse HEAD 2>/dev/null || echo "unknown"; }
+# to the "dev" sentinel if a vendor dir was sourced from a tarball locally.
+vendor_commit() { git -C "$1" rev-parse HEAD 2>/dev/null || echo "dev"; }
 DIRECTX_HEADERS_VERSION=$(vendor_commit vendor/DirectX-Headers-1.0)
 FREERDP_COMMIT=$(vendor_commit vendor/FreeRDP)
 MESA_VERSION=$(vendor_commit vendor/mesa)
