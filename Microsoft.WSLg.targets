@@ -6,11 +6,11 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform)\system.vhd">
+    <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform.ToLower())\system.vhd">
       <Link>system.vhd</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform)\WSLDVCPlugin.dll">
+    <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform.ToLower())\WSLDVCPlugin.dll">
       <Link>WSLDVCPlugin.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
