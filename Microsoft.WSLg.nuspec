@@ -9,14 +9,12 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <id>Microsoft.WSLg</id>
     <version>$version$</version>
     <authors>Microsoft</authors>
-    <owners>Microsoft, WSL Team</owners>
-    <projectUrl>https://github.com/microsoft/wslg/</projectUrl>
+    <projectUrl>https://github.com/microsoft/wslg</projectUrl>
+    <repository type="git" url="https://github.com/microsoft/wslg.git" commit="$commit$" />
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>WSLg support package.</description>
-    <summary>Enabling the Windows Subsystem for Linux to include support for Wayland and X server related scenarios.</summary>
-    <releaseNotes>$releaseNotes$</releaseNotes>
-    <copyright>Copyright © Microsoft Corporation 2021</copyright>
-    <tags>native</tags>
+    <description>WSLg system distribution and WSLDVCPlugin for the Windows Subsystem for Linux: Wayland, X11, audio (PulseAudio), and RemoteApp (RDP) support.</description>
+    <copyright>Copyright © Microsoft Corporation</copyright>
+    <tags>wsl wslg wayland weston x11 native</tags>
   </metadata>
   <files>
     <file src="Microsoft.WSLg.targets" target="build/Microsoft.WSLg.targets" />
