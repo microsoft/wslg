@@ -161,19 +161,21 @@ RUN printf 'WSLg: %s\nArchitecture: %s\nBuilt: %s\nOS: %s\n\n' \
 
 ENV BUILDTYPE=${SYSTEMDISTRO_DEBUG_BUILD:+debug}
 ENV BUILDTYPE=${BUILDTYPE:-debugoptimized}
-RUN echo "== System distro build type:" ${BUILDTYPE} " =="
 
 ENV BUILDTYPE_NODEBUGSTRIP=${SYSTEMDISTRO_DEBUG_BUILD:+debug}
 ENV BUILDTYPE_NODEBUGSTRIP=${BUILDTYPE_NODEBUGSTRIP:-release}
-RUN echo "== System distro build type (no debug strip):" ${BUILDTYPE_NODEBUGSTRIP} " =="
 
 # FreeRDP is always built with RelWithDebInfo
 ENV BUILDTYPE_FREERDP=${BUILDTYPE_FREERDP:-RelWithDebInfo}
-RUN echo "== System distro build type (FreeRDP):" ${BUILDTYPE_FREERDP} " =="
 
 ENV WITH_DEBUG_FREERDP=${SYSTEMDISTRO_DEBUG_BUILD:+ON}
 ENV WITH_DEBUG_FREERDP=${WITH_DEBUG_FREERDP:-OFF}
-RUN echo "== System distro build type (FreeRDP Debug Options):" ${WITH_DEBUG_FREERDP} " =="
+
+RUN echo "== System distro build types ==" && \
+    echo "    BUILDTYPE:              ${BUILDTYPE}" && \
+    echo "    BUILDTYPE_NODEBUGSTRIP: ${BUILDTYPE_NODEBUGSTRIP}" && \
+    echo "    BUILDTYPE_FREERDP:      ${BUILDTYPE_FREERDP}" && \
+    echo "    WITH_DEBUG_FREERDP:     ${WITH_DEBUG_FREERDP}"
 
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
@@ -243,7 +245,6 @@ RUN cmake -G Ninja \
         -DWITH_SAMPLE=OFF && \
     ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
 RUN /work/debuginfo/strip_debuginfo.sh "FreeRDP" "/work/debuginfo/FreeRDP${FREERDP_VERSION}.list"
 
 # Build rdpapplist RDP virtual channel plugin
@@ -253,7 +254,6 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
     ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
 RUN /work/debuginfo/strip_debuginfo.sh "rdpapplist" "/work/debuginfo/rdpapplist.list"
 
 # Build Weston
@@ -286,7 +286,6 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dtest-junit-xml=false && \
     ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
 RUN /work/debuginfo/strip_debuginfo.sh "weston" "/work/debuginfo/weston.list"
 
 # Build WSLGd Daemon
@@ -299,14 +298,15 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
     ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
 RUN /work/debuginfo/strip_debuginfo.sh "WSLGd" "/work/debuginfo/WSLGd.list"
 
-# Gather debuginfo to a tar file
-WORKDIR /work/debuginfo
+# Gather debuginfo to a tar file. strip_debuginfo.sh above already
+# populated /work/build/debuginfo with per-binary .debug files; this
+# is a no-op for SYSTEMDISTRO_DEBUG_BUILD builds because nothing was
+# split out in the first place.
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         echo "== Compress debug info: /work/debuginfo/system-debuginfo.tar.gz ==" && \
-        tar -C /work/build/debuginfo -czf system-debuginfo.tar.gz ./ ; \
+        tar -C /work/build/debuginfo -czf /work/debuginfo/system-debuginfo.tar.gz ./ ; \
     fi
 
 ########################################################################
