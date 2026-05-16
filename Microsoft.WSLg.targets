@@ -5,6 +5,13 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 ***********************************************************************************************
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    $(Platform.ToLower()) is used (not $(Platform)) because the nupkg ships
+    per-arch binaries under lowercase folder names ("x64", "arm64"). MSBuild
+    consumers commonly set $(Platform) to "x64" or "ARM64" (mixed case) at the
+    project level; lowercasing here keeps both casings resolving to the same
+    physical path regardless of how the consumer spells it.
+  -->
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)native\bin\$(Platform.ToLower())\system.vhd">
       <Link>system.vhd</Link>

@@ -33,6 +33,10 @@ if [ "$describe" = "$base_tag" ]; then
 else
     rest="${describe#${base_tag}-}"
     revision="${rest%%-*}"
+    if ! [[ "$revision" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: parsed revision '$revision' from describe output '$describe' is not numeric." >&2
+        exit 1
+    fi
 fi
 
 if [ "$revision" = "0" ]; then

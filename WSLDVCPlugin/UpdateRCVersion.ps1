@@ -15,15 +15,29 @@ $rcPath = Join-Path $PSScriptRoot 'WSLDVCPlugin.rc'
 $content = Get-Content -Encoding 'windows-1252' -Path $rcPath -Raw
 
 $substitutions = @{
-    '__FILEVERSION_COMMAS__'  = $versionComma
-    '__FILEVERSION_DOTS__'    = $fileVersion
+    '__FILEVERSION_COMMAS__'    = $versionComma
+    '__FILEVERSION_DOTS__'      = $fileVersion
     '__INFORMATIONAL_VERSION__' = $informationalVersion
 }
 
+# Idempotent: a fully-substituted .rc (no sentinels left) is treated as
+# already-patched and skipped silently. A mixed state -- some sentinels
+# substituted and some not -- means the file is corrupt; re-running cannot
+# fix it without knowing the original values, so fail loud.
+$present = 0
+foreach ($key in $substitutions.Keys) {
+    if ($content.Contains($key)) { $present++ }
+}
+
+if ($present -eq 0) {
+    Write-Host "${rcPath} has no version placeholders (already substituted) - skipping."
+    return
+}
+if ($present -ne $substitutions.Count) {
+    throw "${rcPath} is partially substituted ($present of $($substitutions.Count) placeholders present). Restore from git and re-run."
+}
+
 foreach ($entry in $substitutions.GetEnumerator()) {
-    if (-not $content.Contains($entry.Key)) {
-        throw "Placeholder '$($entry.Key)' not found in $rcPath. Was the file edited or already substituted?"
-    }
     $content = $content.Replace($entry.Key, $entry.Value)
 }
 

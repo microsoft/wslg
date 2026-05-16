@@ -4,6 +4,10 @@
 #   "v1.0.77-3-gabc123" - HEAD is 3 commits past the tag (revision = 3)
 # Tags may or may not be prefixed with 'v'. Throws if no Major.Minor.Patch tag
 # is reachable.
+#
+# This is the PowerShell version. devops/get-nuget-version.sh is the bash
+# equivalent used by the Linux Dockerfile / build-and-export.sh. Both
+# implementations MUST stay in sync; if you touch one, update the other.
 function Get-DescribedVersion()
 {
 	# --match '*.*.*' --exclude '*.*.*.*' picks the most recent tag whose
@@ -12,13 +16,19 @@ function Get-DescribedVersion()
 	# 'v1.0.73.1' without confusing the version derivation -- the
 	# describe call will skip over them to the underlying 'v1.0.73' tag,
 	# and the patch-count we compute will be relative to that.
-	$output = git describe --tags --match '*.*.*' --exclude '*.*.*.*' --abbrev=1 2>&1
+	#
+	# `2>&1 | Out-String` is used instead of `2>&1` alone: PowerShell turns
+	# native stderr into ErrorRecord objects, which then mix with strings in
+	# the output array and break the `.Trim().Split('-')` chain. Out-String
+	# collapses everything to a single string for safe parsing on success
+	# (and a clean message in the failure path below).
+	$output = (& git describe --tags --match '*.*.*' --exclude '*.*.*.*' --abbrev=1 2>&1 | Out-String)
 	if ($LASTEXITCODE -ne 0)
 	{
 		throw "git describe failed (exit=$LASTEXITCODE): $output. Make sure tags are available -- a shallow clone usually isn't enough."
 	}
 
-	$parts = ([string]$output).Trim().Split('-')
+	$parts = $output.Trim().Split('-')
 	$base = $parts[0] -replace '^v', ''
 	if ($base -notmatch '^\d+\.\d+\.\d+$')
 	{

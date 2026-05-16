@@ -6,7 +6,11 @@ set -e
 # vendor component, all of which the Dockerfile bakes into
 # /etc/versions.txt. CI uses the same get-nuget-version.sh helper with
 # a branch-derived separator (see wslg-build's pipeline-shared.yml).
-WSLG_VERSION=$(./devops/get-nuget-version.sh "-Beta" 2>/dev/null || true)
+#
+# `|| true` lets shallow/tag-less local checkouts still build (falling
+# back to "dev"). Stderr is intentionally NOT silenced so the real
+# reason for a fallback (e.g. "make sure tags are available") is visible.
+WSLG_VERSION=$(./devops/get-nuget-version.sh "-Beta" || true)
 WSLG_VERSION=${WSLG_VERSION:-dev}
 WSLG_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
