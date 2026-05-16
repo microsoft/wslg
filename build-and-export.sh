@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+# `-o pipefail` so an in-pipeline `git describe` failure isn't masked by a
+# later cat/echo. `-u` is deliberately omitted: a few vendor-version vars
+# are intentionally derived with fall-through defaults below.
+set -eo pipefail
 
 # Local dev build: derive a clean NuGet-style version plus the full
 # commit SHA for the wslg repo, plus version identifiers for each

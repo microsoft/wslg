@@ -4,9 +4,17 @@ $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot "..\devops\version_functions.ps1")
 
-$fileVersion = Get-FileVersion $separator
-$nugetVersion = Get-NugetVersion $separator
-$sha = (git rev-parse --short HEAD).Trim()
+# Compute the version once, share it between Get-FileVersion and
+# Get-NugetVersion to avoid invoking `git describe` twice.
+$described = Get-DescribedVersion
+$fileVersion = Get-FileVersion $separator $described
+$nugetVersion = Get-NugetVersion $separator $described
+
+$sha = (& git rev-parse --short HEAD 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sha))
+{
+    throw "git rev-parse --short HEAD failed (exit=$LASTEXITCODE): $sha"
+}
 
 $versionComma = $fileVersion.Replace(".", ",")
 $informationalVersion = "$nugetVersion+sha.$sha"

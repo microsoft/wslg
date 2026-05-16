@@ -13,6 +13,11 @@
 #                gen_debuginfo.sh.
 set -euo pipefail
 
+if [ $# -lt 2 ]; then
+    echo "usage: $0 <label> <list-path> [build-root]" >&2
+    exit 2
+fi
+
 label="$1"
 list="$2"
 buildroot="${3:-/work/build}"

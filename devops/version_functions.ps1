@@ -72,9 +72,16 @@ function Get-DescribedVersion()
 # When HEAD is exactly on a tag the base version is returned unchanged
 # regardless of separator. $separator is required so that callers (notably CI
 # pipelines) cannot silently default to the wrong versioning convention.
-function Get-NugetVersion([Parameter(Mandatory = $true)][string]$separator)
+function Get-NugetVersion
 {
-	$v = Get-DescribedVersion
+	param(
+		[Parameter(Mandatory = $true)][string]$separator,
+		# Optional: caller can pass a pre-computed Get-DescribedVersion result
+		# to avoid re-invoking `git describe` when both Get-NugetVersion and
+		# Get-FileVersion are needed (e.g. UpdateRCVersion.ps1).
+		[Parameter(Mandatory = $false)]$describedVersion = $null
+	)
+	$v = if ($null -ne $describedVersion) { $describedVersion } else { Get-DescribedVersion }
 	if ($v.Revision -eq 0) { return $v.BaseVersion }
 
 	if ($separator -eq ".")
@@ -92,9 +99,13 @@ function Get-NugetVersion([Parameter(Mandatory = $true)][string]$separator)
 # is bumped on off-tag main/feature builds (separator != "."), preserved on
 # release/* and on-tag builds. $separator is required for the same reason as
 # Get-NugetVersion.
-function Get-FileVersion([Parameter(Mandatory = $true)][string]$separator)
+function Get-FileVersion
 {
-	$v = Get-DescribedVersion
+	param(
+		[Parameter(Mandatory = $true)][string]$separator,
+		[Parameter(Mandatory = $false)]$describedVersion = $null
+	)
+	$v = if ($null -ne $describedVersion) { $describedVersion } else { Get-DescribedVersion }
 	if ($separator -eq "." -or $v.Revision -eq 0)
 	{
 		return "$($v.BaseVersion).0"
