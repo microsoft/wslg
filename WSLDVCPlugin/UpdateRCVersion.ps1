@@ -4,7 +4,7 @@ param([Parameter(Mandatory = $true)][string] $separator)
 
 $fileVersion = Get-FileVersion $separator
 $nugetVersion = Get-NugetVersion $separator
-$sha = Get-Current-Commit-Hash
+$sha = (git rev-parse --short HEAD).Trim()
 
 $versionComma = $fileVersion.Replace(".", ",")
 $informationalVersion = "$nugetVersion+sha.$sha"

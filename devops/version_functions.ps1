@@ -1,8 +1,3 @@
-function Get-Current-Commit-Hash ()
-{
-	return ([string](git log -1 --pretty=%h)).Trim()
-}
-
 # Parses `git describe --tags --match *.*.* --abbrev=1` output into a
 # structured object. The describe output is one of:
 #   "v1.0.77"           - HEAD is exactly on the tag (revision = 0)
