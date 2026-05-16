@@ -126,6 +126,11 @@ FROM build-env AS dev
 ARG WSLG_VERSION="<current>"
 ARG WSLG_COMMIT="<unknown>"
 ARG WSLG_ARCH="x86_64"
+ARG DIRECTX_HEADERS_VERSION="<unknown>"
+ARG FREERDP_COMMIT="<unknown>"
+ARG MESA_VERSION="<unknown>"
+ARG PULSEAUDIO_COMMIT="<unknown>"
+ARG WESTON_COMMIT="<unknown>"
 ARG SYSTEMDISTRO_DEBUG_BUILD
 ARG FREERDP_VERSION=2
 
@@ -136,7 +141,14 @@ RUN printf 'WSLg: %s\nArchitecture: %s\nBuilt: %s\nOS: %s\n\n' \
         "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         "$(. /etc/os-release && echo "${PRETTY_NAME}")" \
         > /work/versions.txt && \
-    printf '%-16s %s\n' 'wslg:' "${WSLG_COMMIT}" >> /work/versions.txt
+    printf '%-16s %s\n' \
+        'wslg:'            "${WSLG_COMMIT}" \
+        'DirectX-Headers:' "${DIRECTX_HEADERS_VERSION}" \
+        'FreeRDP:'         "${FREERDP_COMMIT}" \
+        'mesa:'            "${MESA_VERSION}" \
+        'pulseaudio:'      "${PULSEAUDIO_COMMIT}" \
+        'weston:'          "${WESTON_COMMIT}" \
+        >> /work/versions.txt
 
 #
 # Build runtime dependencies.
@@ -178,8 +190,7 @@ WORKDIR /work/vendor/DirectX-Headers-1.0
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Dbuild-test=false && \
-    ninja -C build -j8 install && \
-    printf '%-16s %s\n' 'DirectX-Headers:' "$(git --git-dir=/work/vendor/DirectX-Headers-1.0/.git rev-parse --verify HEAD)" >> /work/versions.txt
+    ninja -C build -j8 install
 
 # Build mesa with the minimal options we need.
 COPY vendor/mesa /work/vendor/mesa
@@ -189,8 +200,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dgallium-drivers=swrast,d3d12 \
         -Dvulkan-drivers= \
         -Dllvm=disabled && \
-    ninja -C build -j8 install && \
-    printf '%-16s %s\n' 'mesa:' "$(git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD)" >> /work/versions.txt
+    ninja -C build -j8 install
 
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
@@ -201,8 +211,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Ddoxygen=false \
         -Dgsettings=disabled \
         -Dtests=false && \
-    ninja -C build -j8 install && \
-    printf '%-16s %s\n' 'pulseaudio:' "$(git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD)" >> /work/versions.txt
+    ninja -C build -j8 install
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -227,8 +236,7 @@ RUN cmake -G Ninja \
         -DWITH_PROXY=OFF \
         -DWITH_SHADOW=OFF \
         -DWITH_SAMPLE=OFF && \
-    ninja -C build -j8 install && \
-    printf '%-16s %s\n' 'FreeRDP:' "$(git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD)" >> /work/versions.txt
+    ninja -C build -j8 install
 
 WORKDIR /work/debuginfo
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
@@ -277,8 +285,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dresize-pool=false \
         -Dwcap-decode=false \
         -Dtest-junit-xml=false && \
-    ninja -C build -j8 install && \
-    printf '%-16s %s\n' 'weston:' "$(git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD)" >> /work/versions.txt
+    ninja -C build -j8 install
 
 WORKDIR /work/debuginfo
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
