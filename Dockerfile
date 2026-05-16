@@ -1,5 +1,10 @@
+# Base image for both the builder and the runtime stages. Override at build
+# time with --build-arg MARINER_IMAGE=... to track a different Azure Linux
+# base (e.g. test a new image revision before promoting it).
+ARG MARINER_IMAGE=mcr.microsoft.com/azurelinux/base/core:3.0
+
 # Create a builder image with the compilers, etc. needed
-FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS build-env
+FROM ${MARINER_IMAGE} AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -182,7 +187,7 @@ ENV CXX=/usr/bin/g++
 
 # Setup DebugInfo folder
 COPY debuginfo /work/debuginfo
-RUN chmod +x /work/debuginfo/gen_debuginfo.sh
+RUN chmod +x /work/debuginfo/*.sh
 
 # Build DirectX-Headers
 COPY vendor/DirectX-Headers-1.0 /work/vendor/DirectX-Headers-1.0
@@ -239,10 +244,7 @@ RUN cmake -G Ninja \
     ninja -C build -j8 install
 
 WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: FreeRDP ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/FreeRDP${FREERDP_VERSION}.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "FreeRDP" "/work/debuginfo/FreeRDP${FREERDP_VERSION}.list"
 
 # Build rdpapplist RDP virtual channel plugin
 COPY rdpapplist /work/rdpapplist
@@ -252,10 +254,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
     ninja -C build -j8 install
 
 WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: rdpapplist ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/rdpapplist.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "rdpapplist" "/work/debuginfo/rdpapplist.list"
 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
@@ -288,10 +287,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
     ninja -C build -j8 install
 
 WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: weston ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/weston.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "weston" "/work/debuginfo/weston.list"
 
 # Build WSLGd Daemon
 ENV CC=/usr/bin/clang
@@ -304,10 +300,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
     ninja -C build -j8 install
 
 WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: WSLGd ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/WSLGd.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "WSLGd" "/work/debuginfo/WSLGd.list"
 
 # Gather debuginfo to a tar file
 WORKDIR /work/debuginfo
@@ -321,7 +314,7 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 
 ## Create the distro image with just what's needed at runtime
 
-FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS runtime
+FROM ${MARINER_IMAGE} AS runtime
 
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
