@@ -56,7 +56,7 @@ The WSLg system distro is built using docker build. We essentially start from a 
     ./build-and-export.sh
     ```
 
-    This produces `system_x64.vhd` in the current directory. If you prefer to do it by hand, pass the same set of `--build-arg`s that `build-and-export.sh` and the production pipeline (wslg-build) use -- if any of these are omitted they default to `"<unknown>"` in `/etc/versions.txt`:
+    This produces `system_x64.vhd` in the current directory. If you prefer to do it by hand, pass the same set of `--build-arg`s that `build-and-export.sh` and the production pipeline (wslg-build) use. **All 8 are required** -- the Dockerfile fails fast at the start of the `dev` stage if any is unset or still holds the `<unknown>` / `unknown` / `<current>` placeholder. (Previously the build would silently complete and you'd discover `<unknown>` baked into `/etc/versions.txt` later.)
 
     ```bash
     sudo docker build -f wslg/Dockerfile -t system-distro-x64 wslg \

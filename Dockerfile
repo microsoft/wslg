@@ -139,6 +139,39 @@ ARG WESTON_COMMIT="<unknown>"
 ARG SYSTEMDISTRO_DEBUG_BUILD
 ARG FREERDP_VERSION=2
 
+# Fail fast if any required --build-arg is missing or still holds a
+# placeholder value. We have to validate up-front because the values
+# flow straight into /etc/versions.txt for supportability; a build
+# that silently produced "wslg: <unknown>" in the VHD was previously
+# a real footgun (CI misconfig surfacing 30 minutes into the build
+# instead of in the first step).
+#
+# Accepts either the angle-bracketed defaults declared above or the
+# bare 'unknown' that build-and-export.sh falls back to when a vendor
+# dir was sourced from a tarball without git metadata. If you really
+# need a partial build for local prototyping, pass --build-arg
+# WSLG_VERSION=dev (etc.) explicitly so the rejection here is opt-out
+# rather than accidental.
+RUN set -e; \
+    for kv in "WSLG_VERSION=${WSLG_VERSION}" \
+              "WSLG_COMMIT=${WSLG_COMMIT}" \
+              "WSLG_ARCH=${WSLG_ARCH}" \
+              "DIRECTX_HEADERS_VERSION=${DIRECTX_HEADERS_VERSION}" \
+              "FREERDP_COMMIT=${FREERDP_COMMIT}" \
+              "MESA_VERSION=${MESA_VERSION}" \
+              "PULSEAUDIO_COMMIT=${PULSEAUDIO_COMMIT}" \
+              "WESTON_COMMIT=${WESTON_COMMIT}"; do \
+        name=${kv%%=*}; val=${kv#*=}; \
+        case "$val" in \
+            ""|"<unknown>"|"<current>"|"unknown") \
+                echo "ERROR: required --build-arg $name is unset or a placeholder ('$val')." >&2; \
+                echo "       Pass an explicit value, or run ./build-and-export.sh from the wslg/" >&2; \
+                echo "       checkout (see CONTRIBUTING.md for the manual docker build recipe)." >&2; \
+                exit 1 ;; \
+        esac; \
+    done; \
+    echo "All 8 required --build-arg values present."
+
 WORKDIR /work
 RUN printf 'WSLg: %s\nArchitecture: %s\nBuilt: %s\nOS: %s\n\n' \
         "${WSLG_VERSION}" \
