@@ -10,14 +10,16 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
 
 0. Install and start Docker in a Linux or WSL2 environment.
 
-1. Clone the FreeRDP ,Weston and PulseAudio side by side this repo repositories and checkout the "working" branch from each:
+1. Clone the FreeRDP, Weston, PipeWire and WirePlumber repositories side by side and checkout the versions we build against:
 
     ```bash
     git clone https://github.com/microsoft/FreeRDP-mirror vendor/FreeRDP -b working
 
     git clone https://github.com/microsoft/weston-mirror.git vendor/weston -b working
 
-    git clone https://github.com/microsoft/pulseaudio-mirror.git vendor/pulseaudio -b working
+    git clone https://github.com/PipeWire/pipewire.git vendor/pipewire --branch 1.4.10
+
+    git clone https://github.com/PipeWire/wireplumber.git vendor/wireplumber --branch 0.5.13
     ```
 
 2. Download the mesa and directx headers code.
@@ -84,7 +86,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
     wsl --system [DistroName]
     ```
 
-    For instance you should check if weston and pulse audio are running inside the system distro using `ps -ax | grep weston` or `ps -ax | grep pulse`
+    For instance you should check if weston and PipeWire are running inside the system distro using `ps -ax | grep weston` or `ps -ax | grep pipewire` and verify the PulseAudio socket with `ls -la /mnt/wslg/PulseServer`.
     You should see something like this:
     
     ```bash
