@@ -49,7 +49,7 @@ docker export $(docker create system-distro-x64) > system_x64.tar
 echo ""
 echo "=== Converting tar to VHD ==="
 # Run tar2ext4 directly from GitHub
-go run github.com/Microsoft/hcsshim/cmd/tar2ext4@latest -vhd -i system_x64.tar -o system_x64.vhd
+go run github.com/Microsoft/hcsshim/cmd/tar2ext4@v0.13.0 -vhd -i system_x64.tar -o system_x64.vhd
 echo ""
 echo "=== Done! ==="
 echo "Output file: $(pwd)/system_x64.vhd"
