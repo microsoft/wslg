@@ -1,0 +1,31 @@
+# CODEOWNERS for microsoft/wslg
+#
+# Pull requests that touch the listed paths automatically request a review
+# from the listed owners. The catch-all entry at the top of the file applies
+# when no later rule matches.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-customization/customizing-your-repository/about-code-owners
+
+* @benhillis
+
+# Build / packaging
+/Dockerfile                @benhillis
+/azure-pipelines.yml       @benhillis
+/devops/                   @benhillis
+/package/                  @benhillis
+/msi/                      @benhillis
+/Microsoft.WSLg.nuspec     @benhillis
+/Microsoft.WSLg.targets    @benhillis
+/build-and-export.sh       @benhillis
+
+# Source components
+/WSLGd/                    @benhillis
+/WSLDVCPlugin/             @benhillis
+/rdpapplist/               @benhillis
+
+# Docs / community
+/docs/                     @benhillis
+/README.md                 @benhillis
+/CONTRIBUTING.md           @benhillis
+/SECURITY.md               @benhillis
+/.github/                  @benhillis
