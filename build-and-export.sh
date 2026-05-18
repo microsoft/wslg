@@ -25,7 +25,7 @@ WSLG_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "dev")
 # Vendor components: use rev-parse for the git-sourced ones, fall back
 # to the "dev" sentinel if a vendor dir was sourced from a tarball locally.
 vendor_commit() { git -C "$1" rev-parse HEAD 2>/dev/null || echo "dev"; }
-DIRECTX_HEADERS_VERSION=$(vendor_commit vendor/DirectX-Headers-1.0)
+DIRECTX_HEADERS_VERSION=$(vendor_commit vendor/DirectX-Headers)
 FREERDP_COMMIT=$(vendor_commit vendor/FreeRDP)
 MESA_VERSION=$(vendor_commit vendor/mesa)
 PULSEAUDIO_COMMIT=$(vendor_commit vendor/pulseaudio)

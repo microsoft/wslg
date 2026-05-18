@@ -29,7 +29,7 @@ For self-hosting WSLG check use this instructions https://github.com/microsoft/w
 
     wget https://github.com/microsoft/DirectX-Headers/archive/refs/tags/v1.608.0.tar.gz
     tar -xvf v1.608.0.tar.gz -C vendor
-    mv vendor/DirectX-Headers-1.608.0 vendor/DirectX-Headers-1.0
+    mv vendor/DirectX-Headers-1.608.0 vendor/DirectX-Headers
     ```
 
 3. Create the VHD:
