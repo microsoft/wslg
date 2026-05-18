@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generic stale (issues + PRs)
-        uses: actions/stale@v9
+        uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639  # v9
         with:
           days-before-issue-stale: 365
           days-before-issue-close: 30
@@ -27,7 +27,10 @@ jobs:
           # `enhancement` is exempted because top-voted feature requests
           # often stay valid forever; the team prefers to close those
           # manually with `wontfix` rather than via the bot.
-          exempt-issue-labels: 'pinned,security,help wanted,good first issue,fixinbound,weston-upstream-bug,enhancement'
+          # `Waiting User Info` is exempted defensively so that if the
+          # waiting-user job is ever disabled or its label is renamed,
+          # those issues are not swept by the 365-day timer.
+          exempt-issue-labels: 'pinned,security,help wanted,good first issue,fixinbound,weston-upstream-bug,enhancement,Waiting User Info'
           exempt-pr-labels: 'pinned,security,do-not-merge'
           exempt-draft-pr: true
           stale-issue-message: >
@@ -57,13 +60,17 @@ jobs:
           ascending: true
 
       - name: Waiting-on-user stale
-        uses: actions/stale@v9
+        uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639  # v9
         with:
           only-issue-labels: 'Waiting User Info'
           days-before-issue-stale: 30
           days-before-issue-close: 14
           days-before-pr-stale: -1
           days-before-pr-close: -1
+          # Defense in depth: PR processing is disabled above, but set
+          # this anyway so that re-enabling PR processing in a future
+          # edit cannot accidentally start sweeping draft PRs.
+          exempt-draft-pr: true
           # Use a distinct label so this policy can't collide with the
           # generic policy (an issue marked `stale` by one job would
           # otherwise be eligible to be closed by the other).

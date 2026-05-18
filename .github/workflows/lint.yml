@@ -2,7 +2,6 @@ name: Lint
 
 on:
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 
@@ -14,8 +13,8 @@ jobs:
     name: Hadolint (Dockerfile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: hadolint/hadolint-action@v3.1.0
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+      - uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf  # v3.1.0
         with:
           dockerfile: Dockerfile
           failure-threshold: error
@@ -25,9 +24,9 @@ jobs:
     name: ShellCheck (*.sh)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
       - name: Run shellcheck
-        uses: ludeeus/action-shellcheck@2.0.0
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38  # 2.0.0
         env:
           SHELLCHECK_OPTS: -e SC2046 -e SC2086 -S warning
 
@@ -35,7 +34,7 @@ jobs:
     name: actionlint (workflows)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
       - name: Run actionlint
         shell: bash
         env:
@@ -51,11 +50,16 @@ jobs:
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest
+    # Non-blocking for now: the existing YAML in this repo has not been
+    # cleaned up against yamllint. Flip `continue-on-error` to false (or
+    # remove it) once existing YAML is clean.
+    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
       - name: Install yamllint
         run: pip install --user yamllint==1.35.1
-      - name: Lint YAML files (non-blocking)
+      - name: Lint YAML files
         run: |
           yamllint -d "{extends: relaxed, rules: {line-length: disable, document-start: disable, truthy: {check-keys: false}}}" \
-            .github azure-pipelines.yml devops || true
+            .github azure-pipelines.yml devops
+

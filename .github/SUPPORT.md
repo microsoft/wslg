@@ -10,11 +10,13 @@ Open a [bug report](https://github.com/microsoft/wslg/issues/new?template=bug_re
 Please include:
 
 * The output of `wsl --version` from a Windows command prompt.
-* Your Windows build number (`[Environment]::OSVersion` in PowerShell).
+* Your Windows build number (`[Environment]::OSVersion.Version.Build` in
+  PowerShell, or `ver` in cmd).
 * Your distribution and version (`lsb_release -r` on Debian/Ubuntu).
 * WSLg logs from `\\wsl$\<Distro>\mnt\wslg` (`weston.log`, `stderr.log`,
   and `pulseaudio.log` where applicable).
-* Crash dumps from `%TEMP%\wsl-crashes` if WSLg crashed.
+* Crash dumps from `%tmp%\wsl-crashes` (or, on older WSL releases,
+  `/mnt/wslg/dumps`) if WSLg crashed.
 
 A current `wsl --version` is the single most useful piece of information.
 A large number of historic reports cannot be acted on because they were

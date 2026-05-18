@@ -22,7 +22,7 @@ apt install x11-apps -y
 
 ## Google Chrome
 
-cd /tmp
+cd /tmp || exit
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 dpkg -i google-chrome-stable_current_amd64.deb 
 apt install --fix-broken -y
@@ -30,7 +30,7 @@ dpkg -i google-chrome-stable_current_amd64.deb
 
 ## Microsoft teams
 
-cd /tmp
+cd /tmp || exit
 curl -L -o "./teams.deb" "https://teams.microsoft.com/downloads/desktopurl?env=production&plat=linux&arch=x64&download=true&linuxArchiveType=deb"
 apt install ./teams.deb -y
 
