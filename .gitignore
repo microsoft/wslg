@@ -14,3 +14,6 @@ WSLDVCPlugin/x64
 WSLDVCPlugin/ARM64/Debug/
 WSLDVCPlugin/ARM64/Release/
 WSLDVCPlugin/WSLDVCPlugin.aps
+# Generated from WSLDVCPlugin.rc.in by UpdateRCVersion.ps1
+# (run by the MSBuild Pre-Build target or the CI pipeline).
+WSLDVCPlugin/WSLDVCPlugin.rc

@@ -103,6 +103,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <!-- Separator between BaseVersion and the commits-past-tag count when
+         generating WSLDVCPlugin.rc from WSLDVCPlugin.rc.in. Defaults to
+         "-Beta" (NuGet prerelease) for local dev / standalone VS builds.
+         The CI pipeline overrides this with /p:WslgVersionSeparator=...
+         (a literal "." for release/* branches, "-Beta" for main/feature). -->
+    <WslgVersionSeparator Condition="'$(WslgVersionSeparator)' == ''">-Beta</WslgVersionSeparator>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>WSLDVCPlugin</TargetName>
@@ -256,6 +264,8 @@
   <ItemGroup>
     <None Include="cpp.hint" />
     <None Include="WSLDVCPlugin.def" />
+    <None Include="WSLDVCPlugin.rc.in" />
+    <None Include="UpdateRCVersion.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -290,4 +300,27 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <!-- Generate WSLDVCPlugin.rc from WSLDVCPlugin.rc.in before ResourceCompile
+       runs. The .rc file is intentionally not checked in: it carries the
+       FileVersion / InformationalVersion strings derived from `git describe`
+       and the current commit SHA, which are computed at build time.
+
+       Incremental rebuild semantics: MSBuild skips this target when the
+       generated .rc is newer than every input (the .in template, the
+       generator script, and the shared PowerShell helper). The CI pipeline
+       still invokes UpdateRCVersion.ps1 explicitly with the queue-time
+       separator before MSBuild runs, so this target sees the .rc as already
+       up-to-date and does not re-run (which would otherwise overwrite the
+       CI-correct separator with the local-dev default "-Beta"). -->
+  <Target Name="GenerateWslDvcPluginRc"
+          BeforeTargets="ResourceCompile"
+          Inputs="$(MSBuildThisFileDirectory)WSLDVCPlugin.rc.in;$(MSBuildThisFileDirectory)UpdateRCVersion.ps1;$(MSBuildThisFileDirectory)..\devops\version_functions.ps1"
+          Outputs="$(MSBuildThisFileDirectory)WSLDVCPlugin.rc">
+    <Message Importance="high" Text="Generating WSLDVCPlugin.rc (WslgVersionSeparator=$(WslgVersionSeparator))" />
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)UpdateRCVersion.ps1&quot; -separator &quot;$(WslgVersionSeparator)&quot;"
+          WorkingDirectory="$(MSBuildThisFileDirectory)" />
+  </Target>
+  <Target Name="CleanGeneratedWslDvcPluginRc" BeforeTargets="Clean">
+    <Delete Files="$(MSBuildThisFileDirectory)WSLDVCPlugin.rc" />
+  </Target>
 </Project>

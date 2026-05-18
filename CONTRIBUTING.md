@@ -130,6 +130,8 @@ This custom channel and associated plugin are quite small and simple. In a nutsh
 
 The [source code](https://github.com/microsoft/wslg/tree/main/WSLDVCPlugin) for the plugin has a visual studio project file that can be use to build it. You can download and install the free [Visual Studio Community Edition](https://visualstudio.microsoft.com/vs/community/) to build it.
 
+`WSLDVCPlugin.rc` (the resource script that carries the DLL's `FileVersion` / `InformationalVersion`) is generated at build time from `WSLDVCPlugin.rc.in` by a Pre-Build MSBuild target which invokes `WSLDVCPlugin/UpdateRCVersion.ps1`. The generated `.rc` is gitignored. A standalone `Build` from Visual Studio (or `msbuild WSLDVCPlugin.sln`) "just works"; no manual pre-step is required. The local default separator is `-Beta` (NuGet prerelease shape); CI overrides it via `/p:WslgVersionSeparator=...`.
+
 ## Registering a private mstsc plugin
 
 The plugin is registered with mstsc through the registry. By default this is set to load the plugin that ships as part of the official WSLg package. If you need to run a private, you'll nee to modify this registry key to reference your privately built plugin, for example using a registry file like below.

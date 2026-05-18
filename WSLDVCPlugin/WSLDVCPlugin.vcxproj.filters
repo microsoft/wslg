@@ -19,6 +19,12 @@
     <None Include="WSLDVCPlugin.def">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="WSLDVCPlugin.rc.in">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="UpdateRCVersion.ps1">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
