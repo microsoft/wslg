@@ -1,5 +1,10 @@
+# Base image for both the builder and the runtime stages. Override at build
+# time with --build-arg MARINER_IMAGE=... to track a different Azure Linux
+# base (e.g. test a new image revision before promoting it).
+ARG MARINER_IMAGE=mcr.microsoft.com/azurelinux/base/core:3.0
+
 # Create a builder image with the compilers, etc. needed
-FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS build-env
+FROM ${MARINER_IMAGE} AS build-env
 
 # Install all the required packages for building. This list is probably
 # longer than necessary.
@@ -124,15 +129,66 @@ RUN echo "== Install UI dependencies ==" && \
 FROM build-env AS dev
 
 ARG WSLG_VERSION="<current>"
+ARG WSLG_COMMIT="<unknown>"
 ARG WSLG_ARCH="x86_64"
+ARG DIRECTX_HEADERS_VERSION="<unknown>"
+ARG FREERDP_COMMIT="<unknown>"
+ARG MESA_VERSION="<unknown>"
+ARG PULSEAUDIO_COMMIT="<unknown>"
+ARG WESTON_COMMIT="<unknown>"
 ARG SYSTEMDISTRO_DEBUG_BUILD
 ARG FREERDP_VERSION=2
 
-WORKDIR /work
-RUN echo "WSLg (" ${WSLG_ARCH} "):" ${WSLG_VERSION} > /work/versions.txt
-RUN echo "Built at:" `date --utc` >> /work/versions.txt
+# Fail fast if any required --build-arg is missing or still holds a
+# placeholder value. We have to validate up-front because the values
+# flow straight into /etc/versions.txt for supportability; a build
+# that silently produced "wslg: <unknown>" in the VHD was previously
+# a real footgun (CI misconfig surfacing 30 minutes into the build
+# instead of in the first step).
+#
+# WSLG_ARCH is intentionally excluded from this loop -- it has a real
+# default ("x86_64") and is never a placeholder value.
+#
+# The reject list is "" / "<unknown>" / "<current>" / "unknown":
+#   - the angle-bracketed forms are the ARG defaults declared above and
+#     mean "caller forgot --build-arg";
+#   - bare "unknown" is reserved for "something went wrong" and is
+#     deliberately NOT what build-and-export.sh falls back to (it uses
+#     "dev" instead, which this loop permits).
+RUN set -e; \
+    for kv in "WSLG_VERSION=${WSLG_VERSION}" \
+              "WSLG_COMMIT=${WSLG_COMMIT}" \
+              "DIRECTX_HEADERS_VERSION=${DIRECTX_HEADERS_VERSION}" \
+              "FREERDP_COMMIT=${FREERDP_COMMIT}" \
+              "MESA_VERSION=${MESA_VERSION}" \
+              "PULSEAUDIO_COMMIT=${PULSEAUDIO_COMMIT}" \
+              "WESTON_COMMIT=${WESTON_COMMIT}"; do \
+        name=${kv%%=*}; val=${kv#*=}; \
+        case "$val" in \
+            ""|"<unknown>"|"<current>"|"unknown") \
+                echo "ERROR: required --build-arg $name is unset or a placeholder ('$val')." >&2; \
+                echo "       Pass an explicit value, or run ./build-and-export.sh from the wslg/" >&2; \
+                echo "       checkout (see CONTRIBUTING.md for the manual docker build recipe)." >&2; \
+                exit 1 ;; \
+        esac; \
+    done; \
+    echo "All 7 required --build-arg values present."
 
-RUN echo "Azure Linux:" `cat /etc/os-release | head -2 | tail -1` >> /work/versions.txt
+WORKDIR /work
+RUN printf 'WSLg: %s\nArchitecture: %s\nBuilt: %s\nOS: %s\n\n' \
+        "${WSLG_VERSION}" \
+        "${WSLG_ARCH}" \
+        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        "$(. /etc/os-release && echo "${PRETTY_NAME}")" \
+        > /work/versions.txt && \
+    printf '%-16s %s\n' \
+        'wslg:'            "${WSLG_COMMIT}" \
+        'DirectX-Headers:' "${DIRECTX_HEADERS_VERSION}" \
+        'FreeRDP:'         "${FREERDP_COMMIT}" \
+        'mesa:'            "${MESA_VERSION}" \
+        'pulseaudio:'      "${PULSEAUDIO_COMMIT}" \
+        'weston:'          "${WESTON_COMMIT}" \
+        >> /work/versions.txt
 
 #
 # Build runtime dependencies.
@@ -140,19 +196,21 @@ RUN echo "Azure Linux:" `cat /etc/os-release | head -2 | tail -1` >> /work/versi
 
 ENV BUILDTYPE=${SYSTEMDISTRO_DEBUG_BUILD:+debug}
 ENV BUILDTYPE=${BUILDTYPE:-debugoptimized}
-RUN echo "== System distro build type:" ${BUILDTYPE} " =="
 
 ENV BUILDTYPE_NODEBUGSTRIP=${SYSTEMDISTRO_DEBUG_BUILD:+debug}
 ENV BUILDTYPE_NODEBUGSTRIP=${BUILDTYPE_NODEBUGSTRIP:-release}
-RUN echo "== System distro build type (no debug strip):" ${BUILDTYPE_NODEBUGSTRIP} " =="
 
 # FreeRDP is always built with RelWithDebInfo
 ENV BUILDTYPE_FREERDP=${BUILDTYPE_FREERDP:-RelWithDebInfo}
-RUN echo "== System distro build type (FreeRDP):" ${BUILDTYPE_FREERDP} " =="
 
 ENV WITH_DEBUG_FREERDP=${SYSTEMDISTRO_DEBUG_BUILD:+ON}
 ENV WITH_DEBUG_FREERDP=${WITH_DEBUG_FREERDP:-OFF}
-RUN echo "== System distro build type (FreeRDP Debug Options):" ${WITH_DEBUG_FREERDP} " =="
+
+RUN echo "== System distro build types ==" && \
+    echo "    BUILDTYPE:              ${BUILDTYPE}" && \
+    echo "    BUILDTYPE_NODEBUGSTRIP: ${BUILDTYPE_NODEBUGSTRIP}" && \
+    echo "    BUILDTYPE_FREERDP:      ${BUILDTYPE_FREERDP}" && \
+    echo "    WITH_DEBUG_FREERDP:     ${WITH_DEBUG_FREERDP}"
 
 ENV DESTDIR=/work/build
 ENV PREFIX=/usr
@@ -166,7 +224,7 @@ ENV CXX=/usr/bin/g++
 
 # Setup DebugInfo folder
 COPY debuginfo /work/debuginfo
-RUN chmod +x /work/debuginfo/gen_debuginfo.sh
+RUN chmod +x /work/debuginfo/*.sh
 
 # Build DirectX-Headers
 COPY vendor/DirectX-Headers-1.0 /work/vendor/DirectX-Headers-1.0
@@ -174,8 +232,7 @@ WORKDIR /work/vendor/DirectX-Headers-1.0
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Dbuild-test=false && \
-    ninja -C build -j8 install && \
-    echo 'DirectX-Headers:' `git --git-dir=/work/vendor/DirectX-Headers-1.0/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install
 
 # Build mesa with the minimal options we need.
 COPY vendor/mesa /work/vendor/mesa
@@ -185,8 +242,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dgallium-drivers=swrast,d3d12 \
         -Dvulkan-drivers= \
         -Dllvm=disabled && \
-    ninja -C build -j8 install && \
-    echo 'mesa:' `git --git-dir=/work/vendor/mesa/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install
 
 # Build PulseAudio
 COPY vendor/pulseaudio /work/vendor/pulseaudio
@@ -197,8 +253,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Ddoxygen=false \
         -Dgsettings=disabled \
         -Dtests=false && \
-    ninja -C build -j8 install && \
-    echo 'pulseaudio:' `git --git-dir=/work/vendor/pulseaudio/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install
 
 # Build FreeRDP
 COPY vendor/FreeRDP /work/vendor/FreeRDP
@@ -223,14 +278,9 @@ RUN cmake -G Ninja \
         -DWITH_PROXY=OFF \
         -DWITH_SHADOW=OFF \
         -DWITH_SAMPLE=OFF && \
-    ninja -C build -j8 install && \
-    echo 'FreeRDP:' `git --git-dir=/work/vendor/FreeRDP/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: FreeRDP ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/FreeRDP${FREERDP_VERSION}.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "FreeRDP" "/work/debuginfo/FreeRDP${FREERDP_VERSION}.list"
 
 # Build rdpapplist RDP virtual channel plugin
 COPY rdpapplist /work/rdpapplist
@@ -239,11 +289,7 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
     ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: rdpapplist ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/rdpapplist.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "rdpapplist" "/work/debuginfo/rdpapplist.list"
 
 # Build Weston
 COPY vendor/weston /work/vendor/weston
@@ -273,14 +319,9 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         -Dresize-pool=false \
         -Dwcap-decode=false \
         -Dtest-junit-xml=false && \
-    ninja -C build -j8 install && \
-    echo 'weston:' `git --git-dir=/work/vendor/weston/.git rev-parse --verify HEAD` >> /work/versions.txt
+    ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: weston ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/weston.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "weston" "/work/debuginfo/weston.list"
 
 # Build WSLGd Daemon
 ENV CC=/usr/bin/clang
@@ -292,17 +333,15 @@ RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE} && \
     ninja -C build -j8 install
 
-WORKDIR /work/debuginfo
-RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
-        echo "== Strip debug info: WSLGd ==" && \
-        /work/debuginfo/gen_debuginfo.sh /work/debuginfo/WSLGd.list /work/build; \
-    fi
+RUN /work/debuginfo/strip_debuginfo.sh "WSLGd" "/work/debuginfo/WSLGd.list"
 
-# Gather debuginfo to a tar file
-WORKDIR /work/debuginfo
+# Gather debuginfo to a tar file. strip_debuginfo.sh above already
+# populated /work/build/debuginfo with per-binary .debug files; this
+# is a no-op for SYSTEMDISTRO_DEBUG_BUILD builds because nothing was
+# split out in the first place.
 RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
         echo "== Compress debug info: /work/debuginfo/system-debuginfo.tar.gz ==" && \
-        tar -C /work/build/debuginfo -czf system-debuginfo.tar.gz ./ ; \
+        tar -C /work/build/debuginfo -czf /work/debuginfo/system-debuginfo.tar.gz ./ ; \
     fi
 
 ########################################################################
@@ -310,7 +349,7 @@ RUN if [ -z "$SYSTEMDISTRO_DEBUG_BUILD" ] ; then \
 
 ## Create the distro image with just what's needed at runtime
 
-FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS runtime
+FROM ${MARINER_IMAGE} AS runtime
 
 RUN echo "== Install Core/UI Runtime Dependencies ==" && \
     tdnf    install -y \
