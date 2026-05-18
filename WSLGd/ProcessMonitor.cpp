@@ -89,7 +89,7 @@ int wslgd::ProcessMonitor::Run() try {
     std::map<std::string, int> totalCrashes;
 
     constexpr int c_maxCrashesPerMinute = 10;
-    constexpr int c_maxTotalCrashes = 20;
+    constexpr int c_maxTotalCrashes = 50;
 
     for (;;) {
         // Reap any zombie child processes and re-launch any tracked processes.
