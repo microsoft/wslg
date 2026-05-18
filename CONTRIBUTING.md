@@ -45,7 +45,7 @@ The WSLg system distro is built using docker build. We essentially start from a 
     git clone https://github.com/microsoft/FreeRDP-mirror wslg/vendor/FreeRDP -b working
     git clone https://github.com/microsoft/weston-mirror wslg/vendor/weston -b working
     git clone https://github.com/microsoft/PulseAudio-mirror wslg/vendor/pulseaudio -b working
-    git clone https://github.com/microsoft/DirectX-Headers.git wslg/vendor/DirectX-Headers-1.0 -b v1.608.0
+    git clone https://github.com/microsoft/DirectX-Headers.git wslg/vendor/DirectX-Headers -b v1.608.0
     git clone https://gitlab.freedesktop.org/mesa/mesa.git wslg/vendor/mesa -b mesa-23.1.0
     ```
 
@@ -63,7 +63,7 @@ The WSLg system distro is built using docker build. We essentially start from a 
         --build-arg WSLG_VERSION="$(cd wslg && ./devops/get-nuget-version.sh -Beta)" \
         --build-arg WSLG_COMMIT="$(git -C wslg rev-parse HEAD)" \
         --build-arg WSLG_ARCH=x86_64 \
-        --build-arg DIRECTX_HEADERS_VERSION="$(git -C wslg/vendor/DirectX-Headers-1.0 rev-parse HEAD)" \
+        --build-arg DIRECTX_HEADERS_VERSION="$(git -C wslg/vendor/DirectX-Headers rev-parse HEAD)" \
         --build-arg FREERDP_COMMIT="$(git -C wslg/vendor/FreeRDP rev-parse HEAD)" \
         --build-arg MESA_VERSION="$(git -C wslg/vendor/mesa rev-parse HEAD)" \
         --build-arg PULSEAUDIO_COMMIT="$(git -C wslg/vendor/pulseaudio rev-parse HEAD)" \
@@ -107,7 +107,7 @@ To build a debug version of the system distro, append `--build-arg SYSTEMDISTRO_
         --build-arg WSLG_VERSION="$(cd wslg && ./devops/get-nuget-version.sh -Beta)" \
         --build-arg WSLG_COMMIT="$(git -C wslg rev-parse HEAD)" \
         --build-arg WSLG_ARCH=x86_64 \
-        --build-arg DIRECTX_HEADERS_VERSION="$(git -C wslg/vendor/DirectX-Headers-1.0 rev-parse HEAD)" \
+        --build-arg DIRECTX_HEADERS_VERSION="$(git -C wslg/vendor/DirectX-Headers rev-parse HEAD)" \
         --build-arg FREERDP_COMMIT="$(git -C wslg/vendor/FreeRDP rev-parse HEAD)" \
         --build-arg MESA_VERSION="$(git -C wslg/vendor/mesa rev-parse HEAD)" \
         --build-arg PULSEAUDIO_COMMIT="$(git -C wslg/vendor/pulseaudio rev-parse HEAD)" \
