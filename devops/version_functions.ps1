@@ -1,117 +1,158 @@
-function Get-XmlNamespaceManager([xml]$XmlDocument, [string]$NamespaceURI = "")
+# Parses `git describe --tags --match *.*.* --abbrev=1` output into a
+# structured object. The describe output is one of:
+#   "v1.0.77"           - HEAD is exactly on the tag (revision = 0)
+#   "v1.0.77-3-gabc123" - HEAD is 3 commits past the tag (revision = 3)
+# Tags may or may not be prefixed with 'v'. Throws if no Major.Minor.Patch tag
+# is reachable.
+#
+# This is the PowerShell version. devops/get-nuget-version.sh is the bash
+# equivalent used by the Linux Dockerfile / build-and-export.sh. Both
+# implementations MUST stay in sync; if you touch one, update the other.
+function Get-DescribedVersion()
 {
-    # If a Namespace URI was not given, use the Xml document's default namespace.
-	if ([string]::IsNullOrEmpty($NamespaceURI)) { $NamespaceURI = $XmlDocument.DocumentElement.NamespaceURI }	
-	
-	# In order for SelectSingleNode() to actually work, we need to use the fully qualified node path along with an Xml Namespace Manager, so set them up.
-	[System.Xml.XmlNamespaceManager]$xmlNsManager = New-Object System.Xml.XmlNamespaceManager($XmlDocument.NameTable)
-	$xmlNsManager.AddNamespace("ns", $NamespaceURI)
-    return ,$xmlNsManager		# Need to put the comma before the variable name so that PowerShell doesn't convert it into an Object[].
-}
-
-function Get-FullyQualifiedXmlNodePath([string]$NodePath, [string]$NodeSeparatorCharacter = '.')
-{
-    return "/ns:$($NodePath.Replace($('.'), '/ns:'))"
-}
-
-function Get-XmlNode([xml]$XmlDocument, [string]$NodePath, [string]$NamespaceURI = "", [string]$NodeSeparatorCharacter = '.')
-{
-	$xmlNsManager = Get-XmlNamespaceManager -XmlDocument $XmlDocument -NamespaceURI $NamespaceURI
-	[string]$fullyQualifiedNodePath = Get-FullyQualifiedXmlNodePath -NodePath $NodePath -NodeSeparatorCharacter $NodeSeparatorCharacter
-	
-	# Try and get the node, then return it. Returns $null if the node was not found.
-	$node = $XmlDocument.SelectSingleNode($fullyQualifiedNodePath, $xmlNsManager)
-	return $node
-}
-
-function Set-XmlAttributeValue([xml]$XmlDocument, [string]$ElementPath, [string]$AttributeName, [string]$AttributeValue, [string]$NamespaceURI = "", [string]$NodeSeparatorCharacter = '.')
-{
-	# Try and get the node.	
-	$node = Get-XmlNode -XmlDocument $XmlDocument -NodePath $ElementPath -NamespaceURI $NamespaceURI -NodeSeparatorCharacter $NodeSeparatorCharacter
-	$node.SetAttribute($AttributeName, $AttributeValue)
-}
-
-function Set-XmlElementsTextValue([xml]$XmlDocument, [string]$ElementPath, [string]$TextValue, [string]$NamespaceURI = "", [string]$NodeSeparatorCharacter = '.')
-{
-	# Try and get the node.	
-	$node = Get-XmlNode -XmlDocument $XmlDocument -NodePath $ElementPath -NamespaceURI $NamespaceURI -NodeSeparatorCharacter $NodeSeparatorCharacter
-	
-	# If the node already exists, update its value.
-	if ($node)
-	{ 
-		$node.InnerText = $TextValue
+	# --match '*.*.*' --exclude '*.*.*.*' picks the most recent tag whose
+	# name looks like Major.Minor.Patch (3 numeric segments). Excluding
+	# 4-segment tags lets us cosmetically tag built releases like
+	# 'v1.0.73.1' without confusing the version derivation -- the
+	# describe call will skip over them to the underlying 'v1.0.73' tag,
+	# and the patch-count we compute will be relative to that.
+	#
+	# `2>&1 | Out-String` is used instead of `2>&1` alone: PowerShell turns
+	# native stderr into ErrorRecord objects, which then mix with strings in
+	# the output array and break the `.Trim().Split('-')` chain. Out-String
+	# collapses everything to a single string for safe parsing on success
+	# (and a clean message in the failure path below).
+	$output = (& git describe --tags --match '*.*.*' --exclude '*.*.*.*' --abbrev=1 2>&1 | Out-String)
+	if ($LASTEXITCODE -ne 0)
+	{
+		throw "git describe failed (exit=$LASTEXITCODE): $output. Make sure tags are available -- a shallow clone usually isn't enough."
 	}
-	# Else the node doesn't exist yet, so create it with the given value.
+
+	$parts = $output.Trim().Split('-')
+	$base = $parts[0] -replace '^v', ''
+	if ($base -notmatch '^\d+\.\d+\.\d+$')
+	{
+		throw "git describe output '$output' does not start with a Major.Minor.Patch tag (parsed base: '$base')."
+	}
+	$semver = $base.Split('.')
+
+	# Validate revision explicitly (mirrors get-nuget-version.sh). The
+	# implicit [int] cast would throw a generic "Cannot convert" if a tag
+	# like 'v1.0.0-rc1' ever sneaks in; the explicit check gives a useful
+	# message naming the actual describe output.
+	if ($parts.Length -lt 2)
+	{
+		$revision = 0
+	}
 	else
 	{
-		# Create the new element with the given value.
-		$elementName = $ElementPath.Substring($ElementPath.LastIndexOf($NodeSeparatorCharacter) + 1)
- 		$element = $XmlDocument.CreateElement($elementName, $XmlDocument.DocumentElement.NamespaceURI)		
-		$textNode = $XmlDocument.CreateTextNode($TextValue)
-		$element.AppendChild($textNode) > $null
-		
-		# Try and get the parent node.
-		$parentNodePath = $ElementPath.Substring(0, $ElementPath.LastIndexOf($NodeSeparatorCharacter))
-		$parentNode = Get-XmlNode -XmlDocument $XmlDocument -NodePath $parentNodePath -NamespaceURI $NamespaceURI -NodeSeparatorCharacter $NodeSeparatorCharacter
-		
-		if ($parentNode)
+		$rev = $parts[1]
+		if ($rev -notmatch '^\d+$')
 		{
-			$parentNode.AppendChild($element) > $null
+			throw "Parsed revision '$rev' from describe output '$output' is not numeric."
 		}
-		else
+		$revision = [int]$rev
+	}
+
+	return [pscustomobject]@{
+		BaseVersion = $base
+		Major       = [int]$semver[0]
+		Minor       = [int]$semver[1]
+		Patch       = [int]$semver[2]
+		Revision    = $revision
+	}
+}
+
+# Validates that an object passed to Get-NugetVersion / Get-FileVersion as a
+# pre-computed describe result has all the expected members with sensible
+# types. Returns the object unchanged on success; throws a clear error on the
+# first missing/wrong-typed property. This catches the case where a caller
+# passes a hashtable (which PowerShell will silently coerce to PSObject and
+# then yield $null .Major / .Revision, producing meaningless "0.0.1-Beta"
+# versions).
+function Assert-DescribedVersion($v)
+{
+	$required = @{
+		BaseVersion = 'string'
+		Major       = 'int'
+		Minor       = 'int'
+		Patch       = 'int'
+		Revision    = 'int'
+	}
+	foreach ($name in $required.Keys)
+	{
+		if (-not ($v.PSObject.Properties.Name -contains $name))
 		{
-			throw "$parentNodePath does not exist in the xml."
+			throw "describedVersion is missing required property '$name' (got: $($v.PSObject.Properties.Name -join ', '))."
+		}
+		$value = $v.$name
+		if ($null -eq $value)
+		{
+			throw "describedVersion.$name is `$null."
+		}
+		$expected = $required[$name]
+		if ($expected -eq 'string' -and -not ($value -is [string]))
+		{
+			throw "describedVersion.$name must be a string, got [$($value.GetType().FullName)]."
+		}
+		if ($expected -eq 'int' -and -not ($value -is [int]))
+		{
+			throw "describedVersion.$name must be an int, got [$($value.GetType().FullName)]."
 		}
 	}
+	return $v
 }
 
-function Update-XML-Attribute($File, $xpath, $name, $value) 
+# Returns the NuGet package version. The $separator argument selects the
+# convention to apply to off-tag builds:
+#   "."      -> release/* convention: keep the base tag, append ".$revision"
+#               (e.g. v1.0.73 + 1 commit  ->  "1.0.73.1")
+#   anything -> main/feature convention: bump Patch, append "$separator$revision"
+#               (e.g. v1.0.77 + 3 commits, "-Beta"  ->  "1.0.78-Beta3")
+# When HEAD is exactly on a tag the base version is returned unchanged
+# regardless of separator. $separator is required so that callers (notably CI
+# pipelines) cannot silently default to the wrong versioning convention.
+function Get-NugetVersion
 {
-		$File = Resolve-Path $File
-	
-		[xml] $fileContents = Get-Content -Encoding UTF8 -Path $File
-	
-		if ($null -ne $value -and $value -ne "") {
-			Set-XmlAttributeValue -XmlDocument $fileContents -ElementPath $xpath -AttributeName $name -AttributeValue $value
-		}
-		$fileContents.Save($File)
-}
+	param(
+		[Parameter(Mandatory = $true)][string]$separator,
+		# Optional: caller can pass a pre-computed Get-DescribedVersion result
+		# to avoid re-invoking `git describe` when both Get-NugetVersion and
+		# Get-FileVersion are needed (e.g. UpdateRCVersion.ps1). Typed as
+		# [pscustomobject] and shape-checked below so that a caller passing
+		# the wrong shape (a hashtable, an empty object, $null wrapped, ...)
+		# fails loudly here instead of silently producing "0.0.1-Beta".
+		[Parameter(Mandatory = $false)][pscustomobject]$describedVersion = $null
+	)
+	$v = if ($null -ne $describedVersion) { Assert-DescribedVersion $describedVersion } else { Get-DescribedVersion }
+	if ($v.Revision -eq 0) { return $v.BaseVersion }
 
-function Update-XML-Text($File, $xpath, $value)
-{
-	$File = Resolve-Path $File
-
-	[xml] $fileContents = Get-Content -Encoding UTF8 -Path $File
-
-	if ($null -ne $value -and $value -ne "") {
-		Set-XmlElementsTextValue -XmlDocument $fileContents -ElementPath $xpath -TextValue $value
-	}
-
-	$fileContents.Save($File)
-}
-function Get-Current-Commit-Hash ()
-{
-	return ([string](git log -1 --pretty=%h)).Trim()
-}
-
-function Get-VersionInfo($type, $separator)
-{
-	if ($type -eq "hash")
+	if ($separator -eq ".")
 	{
-		return Get-Current-Commit-Hash
+		return "$($v.BaseVersion).$($v.Revision)"
 	}
 
-	$major = [string](gitversion /showvariable Major)
-	$minor = [string](gitversion /showvariable Minor)
-	$patch = [string](gitversion /showvariable Patch)
-	$build = [string](gitversion /showvariable BuildMetaData)
+	$bumped = "{0}.{1}.{2}" -f $v.Major, $v.Minor, ($v.Patch + 1)
+	return "$bumped$separator$($v.Revision)"
+}
 
-	$version = "$major.$minor.$patch"
-
-	if ($build -ne "")
+# Returns the 4-part Major.Minor.Patch.0 file version stamped into the
+# WSLDVCPlugin DLL resource. The 4th part is intentionally fixed at 0 -- the
+# DLL's release identity is the Major.Minor.Patch tag it was built from. Patch
+# is bumped on off-tag main/feature builds (separator != "."), preserved on
+# release/* and on-tag builds. $separator is required for the same reason as
+# Get-NugetVersion.
+function Get-FileVersion
+{
+	param(
+		[Parameter(Mandatory = $true)][string]$separator,
+		[Parameter(Mandatory = $false)][pscustomobject]$describedVersion = $null
+	)
+	$v = if ($null -ne $describedVersion) { Assert-DescribedVersion $describedVersion } else { Get-DescribedVersion }
+	if ($separator -eq "." -or $v.Revision -eq 0)
 	{
-		$version = $version + $separator + $build
+		return "$($v.BaseVersion).0"
 	}
 
-	return $version
+	return ("{0}.{1}.{2}.0" -f $v.Major, $v.Minor, ($v.Patch + 1))
 }
