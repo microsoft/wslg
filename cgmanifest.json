@@ -45,7 +45,7 @@
                 "Type": "git", 
                 "Git": {
                     "RepositoryUrl": "https://github.com/microsoft/DirectX-Headers.git", 
-                    "CommitHash": "cf123266ce6f1e9a6e700642edb6356bff1e3d55"
+                    "CommitHash": "9e393d6d8a3b30dcc6f2806ef604ec16a27b0d7e"
                 }
             },
             "DevelopmentDependency": false
