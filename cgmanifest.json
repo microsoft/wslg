@@ -35,7 +35,17 @@
                 "Type": "mesa", 
                 "Git": {
                     "RepositoryUrl": "https://github.com/mesa3d/mesa", 
-                    "CommitHash": "731ea06758663a2de3a2bd1f12eb8809d4c136fd"
+                    "CommitHash": "3e361635b8db45dbb4896ed3cc1bda54c138334b"
+                }
+            },
+            "DevelopmentDependency": false
+        },
+        {
+            "Component": {
+                "Type": "git",
+                "Git": {
+                    "RepositoryUrl": "https://github.com/microsoft/DirectX-Headers",
+                    "CommitHash": "9e393d6d8a3b30dcc6f2806ef604ec16a27b0d7e"
                 }
             },
             "DevelopmentDependency": false
