@@ -40,5 +40,15 @@
             },
             "DevelopmentDependency": false
         },
+        {
+            "Component": {
+                "Type": "git",
+                "Git": {
+                    "RepositoryUrl": "https://github.com/microsoft/DirectX-Headers",
+                    "CommitHash": "9e393d6d8a3b30dcc6f2806ef604ec16a27b0d7e"
+                }
+            },
+            "DevelopmentDependency": false
+        },
     ]
 }
