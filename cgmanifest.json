@@ -35,7 +35,7 @@
                 "Type": "git", 
                 "Git": {
                     "RepositoryUrl": "https://gitlab.freedesktop.org/mesa/mesa.git", 
-                    "CommitHash": "be4f7fb656180ab55a50eff01f36672b0bf5f146"
+                    "CommitHash": "3e361635b8db45dbb4896ed3cc1bda54c138334b"
                 }
             },
             "DevelopmentDependency": false
