@@ -25,7 +25,7 @@
                 "Type": "git", 
                 "Git": {
                     "RepositoryUrl": "https://github.com/FreeRDP/FreeRDP", 
-                    "CommitHash": "39f56443f2dc50e0dcfa52d4f8f15008d5b8ed8e"
+                    "CommitHash": "3f6d7cb1f8973cc84c66b258a9a61c4e2b2f30a6"
                 }
             },
             "DevelopmentDependency": false
