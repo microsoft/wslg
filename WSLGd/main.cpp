@@ -165,9 +165,13 @@ void SetupOptionalEnv()
     wIniFile* wslgConfigIniFile = IniFile_New();
     if (wslgConfigIniFile) {
         if (IniFile_ReadFile(wslgConfigIniFile, configFilePath.c_str()) > 0) {
+#if WINPR_VERSION_MAJOR >= 3
+            size_t numKeys = 0;
+#else
             int numKeys = 0;
+#endif
             char **keyNames = IniFile_GetSectionKeyNames(wslgConfigIniFile, c_systemDistroEnvSection, &numKeys);
-            for (int n = 0; keyNames && n < numKeys; n++) {
+            for (decltype(numKeys) n = 0; keyNames && n < numKeys; n++) {
                 const char *value = IniFile_GetKeyValueString(wslgConfigIniFile, c_systemDistroEnvSection, keyNames[n]);
                 if (value) {
                     setenv(keyNames[n], value, true);
