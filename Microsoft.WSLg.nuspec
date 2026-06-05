@@ -12,7 +12,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <projectUrl>https://github.com/microsoft/wslg</projectUrl>
     <repository type="git" url="https://github.com/microsoft/wslg.git" commit="$commit$" />
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <license type="file">LICENSE.txt</license>
+    <license type="expression">MIT</license>
     <description>WSLg system distribution and WSLDVCPlugin for the Windows Subsystem for Linux: Wayland, X11, audio (PulseAudio), and RemoteApp (RDP) support.</description>
     <copyright>Copyright © Microsoft Corporation</copyright>
     <tags>wsl wslg wayland weston x11 native</tags>
