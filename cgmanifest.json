@@ -29,7 +29,7 @@
                 }
             },
             "DevelopmentDependency": false
-        },        
+        },
         {
             "Component": { 
                 "Type": "git", 
