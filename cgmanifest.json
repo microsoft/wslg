@@ -32,13 +32,23 @@
         },        
         {
             "Component": { 
-                "Type": "mesa", 
+                "Type": "git", 
                 "Git": {
-                    "RepositoryUrl": "https://github.com/mesa3d/mesa", 
-                    "CommitHash": "731ea06758663a2de3a2bd1f12eb8809d4c136fd"
+                    "RepositoryUrl": "https://gitlab.freedesktop.org/mesa/mesa", 
+                    "CommitHash": "be4f7fb656180ab55a50eff01f36672b0bf5f146"
                 }
             },
             "DevelopmentDependency": false
         },
+        {
+            "Component": { 
+                "Type": "git", 
+                "Git": {
+                    "RepositoryUrl": "https://github.com/microsoft/DirectX-Headers", 
+                    "CommitHash": "cf123266ce6f1e9a6e700642edb6356bff1e3d55"
+                }
+            },
+            "DevelopmentDependency": false
+        }
     ]
 }
