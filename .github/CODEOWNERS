@@ -1,0 +1,11 @@
+# CODEOWNERS for microsoft/wslg
+#
+# Pull requests automatically request a review from the listed owners
+# when they touch matching paths. The catch-all entry below applies to
+# every path; per-path overrides can be added as the reviewer roster
+# grows beyond a single maintainer.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-customization/customizing-your-repository/about-code-owners
+
+* @benhillis
+

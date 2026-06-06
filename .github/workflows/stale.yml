@@ -1,0 +1,94 @@
+name: Stale issues and PRs
+
+on:
+  schedule:
+    # Daily at 07:00 UTC
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark and close stale items
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generic stale (issues + PRs)
+        uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639  # v9
+        with:
+          days-before-issue-stale: 365
+          days-before-issue-close: 30
+          days-before-pr-stale: 120
+          days-before-pr-close: 30
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          # `enhancement` is exempted because top-voted feature requests
+          # often stay valid forever; the team prefers to close those
+          # manually with `wontfix` rather than via the bot.
+          # `Waiting User Info` is exempted defensively so that if the
+          # waiting-user job is ever disabled or its label is renamed,
+          # those issues are not swept by the 365-day timer.
+          exempt-issue-labels: 'pinned,security,help wanted,good first issue,fixinbound,weston-upstream-bug,enhancement,Waiting User Info'
+          exempt-pr-labels: 'pinned,security,do-not-merge'
+          exempt-draft-pr: true
+          stale-issue-message: >
+            This issue has had no activity for a year. WSLg has a small
+            maintainer team and a large backlog, so we use inactivity as
+            a triage signal. If this is still reproducible on a current
+            WSL release, please add a comment with up-to-date
+            `wsl --version` output and any new reproduction details and
+            we'll keep it open. Otherwise it will be closed in 30 days.
+          close-issue-message: >
+            Closing as stale. If you can still reproduce this on a
+            current WSL release, please open a new issue (with current
+            `wsl --version` output and fresh logs) and reference this
+            one. Thank you.
+          stale-pr-message: >
+            This pull request has had no activity for 120 days. If
+            you'd like to land it, please rebase on `main` and address
+            any outstanding review feedback. Otherwise it will be
+            closed in 30 days.
+          close-pr-message: >
+            Closing as stale. Feel free to reopen with a rebase if
+            you'd like to pick the work back up.
+          # Keep ops low so the first runs don't flood subscriber
+          # inboxes with hundreds of notifications in a single day.
+          operations-per-run: 30
+          remove-stale-when-updated: true
+          ascending: true
+
+      - name: Waiting-on-user stale
+        uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639  # v9
+        with:
+          only-issue-labels: 'Waiting User Info'
+          days-before-issue-stale: 30
+          days-before-issue-close: 14
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          # Defense in depth: PR processing is disabled above, but set
+          # this anyway so that re-enabling PR processing in a future
+          # edit cannot accidentally start sweeping draft PRs.
+          exempt-draft-pr: true
+          # Use a distinct label so this policy can't collide with the
+          # generic policy (an issue marked `stale` by one job would
+          # otherwise be eligible to be closed by the other).
+          stale-issue-label: 'waiting-user-info-stale'
+          exempt-issue-labels: 'pinned,security,help wanted,good first issue,fixinbound,weston-upstream-bug'
+          # When the author responds, drop both the bot's stale marker
+          # and the `Waiting User Info` label so it routes back to the
+          # normal triage queue.
+          labels-to-remove-when-unstale: 'Waiting User Info'
+          stale-issue-message: >
+            We're waiting on additional information to triage this
+            issue. If we don't hear back in 14 days this will be
+            closed; please reopen with the requested details and
+            we'll take another look.
+          close-issue-message: >
+            Closing because we never received the requested
+            information. Please open a new issue (or comment here)
+            with the requested details and we'll reopen.
+          operations-per-run: 20
+          remove-stale-when-updated: true
+          ascending: true
