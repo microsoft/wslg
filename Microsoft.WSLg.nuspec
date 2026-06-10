@@ -31,6 +31,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <file src="package/wslg.rdp" target="build/native/bin/wslg.rdp" />
     <file src="package/wslg_desktop.rdp" target="build/native/bin/wslg_desktop.rdp" />
 
+    <file src="cgmanifest.json" target="cgmanifest.json" />
     <file src="package/NOTICE.txt" target="NOTICE.txt" />
     <file src="LICENSE" target="LICENSE.txt" />
   </files>
