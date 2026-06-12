@@ -34,7 +34,7 @@
             "Component": { 
                 "Type": "git", 
                 "Git": {
-                    "RepositoryUrl": "https://gitlab.freedesktop.org/mesa/mesa.git", 
+                    "RepositoryUrl": "https://gitlab.com/mesa/mesa", 
                     "CommitHash": "be4f7fb656180ab55a50eff01f36672b0bf5f146"
                 }
             },
