@@ -227,8 +227,8 @@ COPY debuginfo /work/debuginfo
 RUN chmod +x /work/debuginfo/*.sh
 
 # Build DirectX-Headers
-COPY vendor/DirectX-Headers-1.0 /work/vendor/DirectX-Headers-1.0
-WORKDIR /work/vendor/DirectX-Headers-1.0
+COPY vendor/DirectX-Headers /work/vendor/DirectX-Headers
+WORKDIR /work/vendor/DirectX-Headers
 RUN /usr/bin/meson --prefix=${PREFIX} build \
         --buildtype=${BUILDTYPE_NODEBUGSTRIP} \
         -Dbuild-test=false && \
