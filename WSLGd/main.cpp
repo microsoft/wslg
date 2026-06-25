@@ -311,7 +311,7 @@ try {
 
     std::filesystem::create_directories(c_xdgRuntimeDir);
     THROW_LAST_ERROR_IF(chown(c_xdgRuntimeDir, passwordEntry->pw_uid, passwordEntry->pw_gid) < 0);
-    THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0777) < 0);
+    THROW_LAST_ERROR_IF(chmod(c_xdgRuntimeDir, 0700) < 0);
 
     // Attempt to mount the virtiofs share for shared memory.
     bool isSharedMemoryMounted = false; 
