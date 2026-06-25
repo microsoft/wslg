@@ -35,7 +35,7 @@
                 "Type": "git", 
                 "Git": {
                     "RepositoryUrl": "https://gitlab.freedesktop.org/mesa/mesa.git", 
-                    "CommitHash": "be4f7fb656180ab55a50eff01f36672b0bf5f146"
+                    "CommitHash": "3e361635b8db45dbb4896ed3cc1bda54c138334b"
                 }
             },
             "DevelopmentDependency": false
@@ -45,7 +45,7 @@
                 "Type": "git", 
                 "Git": {
                     "RepositoryUrl": "https://github.com/microsoft/DirectX-Headers.git", 
-                    "CommitHash": "cf123266ce6f1e9a6e700642edb6356bff1e3d55"
+                    "CommitHash": "9e393d6d8a3b30dcc6f2806ef604ec16a27b0d7e"
                 }
             },
             "DevelopmentDependency": false

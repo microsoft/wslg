@@ -45,8 +45,8 @@ The WSLg system distro is built using docker build. We essentially start from a 
     git clone https://github.com/microsoft/FreeRDP-mirror wslg/vendor/FreeRDP -b working
     git clone https://github.com/microsoft/weston-mirror wslg/vendor/weston -b working
     git clone https://github.com/microsoft/PulseAudio-mirror wslg/vendor/pulseaudio -b working
-    git clone https://github.com/microsoft/DirectX-Headers.git wslg/vendor/DirectX-Headers-1.0 -b v1.608.0
-    git clone https://gitlab.freedesktop.org/mesa/mesa.git wslg/vendor/mesa -b mesa-23.1.0
+    git clone https://github.com/microsoft/DirectX-Headers.git wslg/vendor/DirectX-Headers-1.0 -b v1.619.1
+    git clone https://gitlab.freedesktop.org/mesa/mesa.git wslg/vendor/mesa -b mesa-24.0.1
     ```
 
     > **NOTE:** Mesa is hosted on GitLab (`gitlab.freedesktop.org`), which `notice@0` / ClearlyDefined does not auto-harvest, so its license attribution is maintained manually in [`NOTICE-manual.txt`](NOTICE-manual.txt). When bumping the Mesa version, update the commit hash in both [`cgmanifest.json`](cgmanifest.json) and [`NOTICE-manual.txt`](NOTICE-manual.txt) together so the generated NOTICE stays in sync.
