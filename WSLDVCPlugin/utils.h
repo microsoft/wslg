@@ -20,6 +20,14 @@ void DebugPrint(const wchar_t* format, ...);
 BOOL
 IsDirectoryPresent(_In_z_ LPCWSTR lpszPath);
 
+// Make a string safe to use as a Windows filename component, in place: replace
+// reserved/control characters with '_' and trim trailing space/dot. If anything
+// was changed, append a short stable hash of uniqueId so distinct names that
+// sanitize to the same leaf don't collide on disk. Used to derive a safe .lnk/.ico
+// leaf from app names that may contain ':' '/' etc. (wslg#1009).
+void
+SanitizeFileName(_Inout_updates_z_(cch) LPWSTR name, size_t cch, _In_z_ LPCWSTR uniqueId);
+
 HRESULT
 CreateShellLink(_In_z_ LPCWSTR lpszPathLink,
     _In_z_ LPCWSTR lpszPathObj, 

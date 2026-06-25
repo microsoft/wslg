@@ -652,8 +652,17 @@ public:
                     }
                 }
             }
+            // Sanitize the appId-derived leaf for the same reason as the .lnk
+            // leaf below: a reserved char (e.g. ':') yields an illegal path and
+            // CreateIconFile/IPersistFile::Save fails (wslg#1009).
+            WCHAR iconLeaf[MAX_PATH] = {};
+            if (wcscpy_s(iconLeaf, ARRAYSIZE(iconLeaf), updateAppList.appId) != 0)
+            {
+                return E_FAIL;
+            }
+            SanitizeFileName(iconLeaf, ARRAYSIZE(iconLeaf), updateAppList.appId);
             if ((wcscat_s(iconPath, ARRAYSIZE(iconPath), L"\\") != 0) ||
-                (wcscat_s(iconPath, ARRAYSIZE(iconPath), updateAppList.appId) != 0) ||
+                (wcscat_s(iconPath, ARRAYSIZE(iconPath), iconLeaf) != 0) ||
                 (wcscat_s(iconPath, ARRAYSIZE(iconPath), L".ico") != 0))
             {
                 return E_FAIL;
@@ -688,11 +697,20 @@ public:
                 }
             }
         }
-        // Use description to name link file since this is name shows up
-        // at StartMenu UI. SHSetLocalizedName can't be uses since this 
-        // is not in resource.
+        // Use the description to name the link file since this is the name shown
+        // at the StartMenu UI. SHSetLocalizedName can't be used since this
+        // is not in a resource.
+        // Sanitize only the filename leaf (appDesc is kept intact for
+        // SetDescription); names like "Code::Blocks" otherwise produce an
+        // illegal .lnk path and the shortcut is silently dropped (wslg#1009).
+        WCHAR linkLeaf[MAX_PATH] = {};
+        if (wcscpy_s(linkLeaf, ARRAYSIZE(linkLeaf), updateAppList.appDesc) != 0)
+        {
+            return E_FAIL;
+        }
+        SanitizeFileName(linkLeaf, ARRAYSIZE(linkLeaf), updateAppList.appId);
         if ((wcscat_s(linkPath, ARRAYSIZE(linkPath), L"\\") != 0) ||
-            (wcscat_s(linkPath, ARRAYSIZE(linkPath), updateAppList.appDesc) != 0) ||
+            (wcscat_s(linkPath, ARRAYSIZE(linkPath), linkLeaf) != 0) ||
             (wcscat_s(linkPath, ARRAYSIZE(linkPath), L".lnk") != 0))
         {
             return E_FAIL;

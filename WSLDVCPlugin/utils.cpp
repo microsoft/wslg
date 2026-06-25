@@ -17,6 +17,101 @@ void DebugPrint(const wchar_t* format, ...)
 }
 #endif // DBG_MESSAGE
 
+// True if the filename base (the token before the first '.') is a reserved DOS
+// device name. These are illegal as a filename even with an extension, e.g.
+// "NUL.txt", and contain no reserved character, so they must be checked separately.
+static bool IsReservedDeviceName(LPCWSTR name)
+{
+    size_t base = 0;
+    while (name[base] && name[base] != L'.')
+        ++base;
+
+    if (base == 3 &&
+        (_wcsnicmp(name, L"CON", 3) == 0 || _wcsnicmp(name, L"PRN", 3) == 0 ||
+         _wcsnicmp(name, L"AUX", 3) == 0 || _wcsnicmp(name, L"NUL", 3) == 0))
+        return true;
+
+    if (base == 4 &&
+        (_wcsnicmp(name, L"COM", 3) == 0 || _wcsnicmp(name, L"LPT", 3) == 0) &&
+        name[3] >= L'1' && name[3] <= L'9')
+        return true;
+
+    return false;
+}
+
+_Use_decl_annotations_
+void SanitizeFileName(LPWSTR name, size_t cch, LPCWSTR uniqueId)
+{
+    // Replace characters that are illegal in a Windows filename component with '_'.
+    // The Start-Menu tile text is this filename (SetDescription only sets the
+    // tooltip), so the displayed name changes for such apps -- acceptable and
+    // predictable, and it renders in any font (unlike look-alike glyph substitution).
+    bool changed = false;
+    for (LPWSTR p = name; *p; ++p)
+    {
+        switch (*p)
+        {
+        case L'\\': case L'/':  case L':': case L'*':
+        case L'?':  case L'"':  case L'<': case L'>': case L'|':
+            *p = L'_'; changed = true; break;
+        default:
+            if (*p < 0x20) { *p = L'_'; changed = true; }
+            break;
+        }
+    }
+    // Win32: a trailing space or dot in a filename component is illegal.
+    size_t n = wcslen(name);
+    while (n > 0 && (name[n - 1] == L' ' || name[n - 1] == L'.'))
+    {
+        name[--n] = L'\0';
+        changed = true;
+    }
+
+    // A reserved DOS device name (CON, PRN, AUX, NUL, COM1..9, LPT1..9) is illegal
+    // as a filename base on its own. Windows keys this on the token before the first
+    // '.', so a trailing hash suffix wouldn't help "NUL.txt" -- prepend '_' to
+    // neutralize the base instead.
+    if (IsReservedDeviceName(name))
+    {
+        if (n + 1 < cch)
+        {
+            memmove(name + 1, name, (n + 1) * sizeof(WCHAR));
+            name[0] = L'_';
+            ++n;
+        }
+        changed = true;
+    }
+
+    // If nothing was altered the leaf is already a valid, unambiguous filename --
+    // keep it verbatim (the common case, byte-for-byte as before).
+    if (!changed)
+        return;
+
+    // '_' substitution can map distinct names (e.g. "A:B" and "A/B") onto the same
+    // leaf, which would make two apps' .lnk/.ico files overwrite each other. Append
+    // a short, stable hash of the app's unique id so a sanitized leaf is always
+    // unique per app and deterministic across syncs. (wslg#1009)
+    UINT32 h = 2166136261u;                       // FNV-1a (32-bit)
+    for (LPCWSTR q = uniqueId; q && *q; ++q)
+    {
+        h ^= (UINT16)*q;
+        h *= 16777619u;
+    }
+    WCHAR suffix[10];                             // "~" + 8 hex digits + NUL
+    swprintf_s(suffix, ARRAYSIZE(suffix), L"~%08X", h);
+
+    // Ensure leaf + suffix fits in cch; truncate the leaf if needed.
+    size_t suffixLen = wcslen(suffix);
+    if (n + suffixLen + 1 > cch)
+    {
+        n = (cch > suffixLen + 1) ? (cch - suffixLen - 1) : 0;
+        name[n] = L'\0';
+        while (n > 0 && (name[n - 1] == L' ' || name[n - 1] == L'.'))
+            name[--n] = L'\0';
+    }
+    wcscat_s(name, cch, suffix);
+}
+
 _Use_decl_annotations_
 BOOL IsDirectoryPresent(LPCWSTR lpszPath)
 {
