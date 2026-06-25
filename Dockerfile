@@ -137,7 +137,7 @@ ARG MESA_VERSION="<unknown>"
 ARG PULSEAUDIO_COMMIT="<unknown>"
 ARG WESTON_COMMIT="<unknown>"
 ARG SYSTEMDISTRO_DEBUG_BUILD
-ARG FREERDP_VERSION=2
+ARG FREERDP_VERSION=3
 
 # Fail fast if any required --build-arg is missing or still holds a
 # placeholder value. We have to validate up-front because the values
@@ -265,9 +265,13 @@ RUN cmake -G Ninja \
         -DCMAKE_BUILD_TYPE=${BUILDTYPE_FREERDP} \
         -DWITH_DEBUG_ALL=${WITH_DEBUG_FREERDP} \
         -DWITH_ICU=ON \
+        -DWITH_FFMPEG=OFF \
+        -DWITH_DSP_FFMPEG=OFF \
+        -DWITH_VIDEO_FFMPEG=OFF \
+        -DWITH_SWSCALE=OFF \
+        -DWITH_KRB5=OFF \
         -DWITH_SERVER=ON \
-        -DWITH_CHANNEL_GFXREDIR=ON \
-        -DWITH_CHANNEL_RDPAPPLIST=ON \
+        -DCHANNEL_GFXREDIR=ON \
         -DWITH_CLIENT=OFF \
         -DWITH_CLIENT_COMMON=OFF \
         -DWITH_CLIENT_CHANNELS=OFF \

@@ -35,5 +35,6 @@
 #include "config.h"
 #include "lxwil.h"
 #if HAVE_WINPR
+#include "winpr/version.h"
 #include "winpr/ini.h"
 #endif // HAVE_WINPR
