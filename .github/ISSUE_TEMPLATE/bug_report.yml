@@ -51,9 +51,8 @@ body:
 
       You can access the wslg logs using explorer at: `\\wsl$\<Distro-Name>\mnt\wslg` (e.g.: `\\wsl$\Ubuntu-20.04\mnt\wslg`)
 
-      * `pulseaudio.log`
+      * `stderr.log` (default log for the PipeWire / pipewire-pulse daemons; attach `pipewire-pulse.log` only if you set `WSLG_PIPEWIRE_PULSE_LOG_PATH` to write a dedicated file)
       * `weston.log`
-      * `stderr.log`
     label: "WSL logs:"
     placeholder: |
       Drag and drop files into this input field to upload them.

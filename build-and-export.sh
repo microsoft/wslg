@@ -28,7 +28,8 @@ vendor_commit() { git -C "$1" rev-parse HEAD 2>/dev/null || echo "dev"; }
 DIRECTX_HEADERS_VERSION=$(vendor_commit vendor/DirectX-Headers-1.0)
 FREERDP_COMMIT=$(vendor_commit vendor/FreeRDP)
 MESA_VERSION=$(vendor_commit vendor/mesa)
-PULSEAUDIO_COMMIT=$(vendor_commit vendor/pulseaudio)
+PIPEWIRE_COMMIT=$(vendor_commit vendor/pipewire)
+WIREPLUMBER_COMMIT=$(vendor_commit vendor/wireplumber)
 WESTON_COMMIT=$(vendor_commit vendor/weston)
 
 echo "=== Building Docker image (WSLG_VERSION=$WSLG_VERSION WSLG_COMMIT=$WSLG_COMMIT) ==="
@@ -39,7 +40,8 @@ docker build -f Dockerfile -t system-distro-x64 . \
     --build-arg DIRECTX_HEADERS_VERSION="$DIRECTX_HEADERS_VERSION" \
     --build-arg FREERDP_COMMIT="$FREERDP_COMMIT" \
     --build-arg MESA_VERSION="$MESA_VERSION" \
-    --build-arg PULSEAUDIO_COMMIT="$PULSEAUDIO_COMMIT" \
+    --build-arg PIPEWIRE_COMMIT="$PIPEWIRE_COMMIT" \
+    --build-arg WIREPLUMBER_COMMIT="$WIREPLUMBER_COMMIT" \
     --build-arg WESTON_COMMIT="$WESTON_COMMIT"
 
 echo ""
